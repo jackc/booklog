@@ -1,0 +1,6 @@
+[database]
+host = /var/run/postgresql
+database = booklog_dev
+
+[data]
+app_user = booklog
