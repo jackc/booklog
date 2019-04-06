@@ -8,11 +8,12 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/gorilla/csrf"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/hlog"
 )
 
-func Serve(listenAddress string) {
+func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool) {
 	log := zerolog.New(os.Stdout).With().
 		Timestamp().
 		Logger()
@@ -27,6 +28,9 @@ func Serve(listenAddress string) {
 	r.Use(hlog.URLHandler("url"))
 
 	r.Use(middleware.Recoverer)
+
+	CSRF := csrf.Protect(csrfKey, csrf.Secure(!insecureDevMode))
+	r.Use(CSRF)
 
 	templates, err := loadTemplates()
 	if err != nil {

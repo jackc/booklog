@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/http"
 
+	"github.com/gorilla/csrf"
 	"github.com/jackc/booklog/validate"
 	"github.com/jackc/pgconn"
 	"github.com/spf13/viper"
@@ -49,7 +50,7 @@ func (action *BookCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := createBook(bcr)
 	if err != nil {
 		tmpl := action.templates.Lookup("book_new")
-		err := tmpl.Execute(w, map[string]interface{}{"fields": bcr, "errors": err})
+		err := tmpl.Execute(w, map[string]interface{}{"fields": bcr, "errors": err, csrf.TemplateTag: csrf.TemplateField(r)})
 		if err != nil {
 			panic(err)
 		}

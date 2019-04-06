@@ -6,6 +6,7 @@
   </head>
   <body>
     <form action="{{ createBookPath }}" method="post">
+      {{ .csrfField }}
       <div>
         <label for="title">Title</label>
         <input type="text" name="title" id="title" value="{{ .fields.Title }}">

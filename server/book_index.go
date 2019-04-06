@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/http"
 
+	"github.com/gorilla/csrf"
 	"github.com/jackc/pgconn"
 	"github.com/spf13/viper"
 )
@@ -36,14 +37,8 @@ func (action *BookIndex) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	data := struct {
-		Books []BookRow001
-	}{
-		Books: books,
-	}
-
 	tmpl := action.templates.Lookup("book_index")
-	err = tmpl.Execute(w, data)
+	err = tmpl.Execute(w, map[string]interface{}{"Books": books, csrf.TemplateTag: csrf.TemplateField(r)})
 	if err != nil {
 		panic(err)
 	}

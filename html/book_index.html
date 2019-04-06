@@ -7,13 +7,14 @@
   <body>
     <a href="{{ newBookPath }}">New Book</a>
     <table>
+      {{ $csrfField := .csrfField }}
     {{range .Books}}
       <tr>
         <td>{{ .Title }}</td>
         <td>{{ .Author }}</td>
         <td>{{ .DateFinished }}</td>
         <td>{{ .Media }}</td>
-        <td><form action="{{ deleteBookPath .ID }}" method="post"><button type="submit">Delete</button></form></td>
+        <td><form action="{{ deleteBookPath .ID }}" method="post">{{ $csrfField }}<button type="submit">Delete</button></form></td>
       </tr>
     {{end}}
     </table>
