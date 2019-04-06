@@ -10,6 +10,7 @@ import (
 )
 
 type BookIndex struct {
+	templates *template.Template
 }
 
 func (action *BookIndex) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -41,40 +42,7 @@ func (action *BookIndex) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Books: books,
 	}
 
-	tmpl := template.New("index")
-	tmpl.Funcs(template.FuncMap{
-		"newBookPath":    NewBookPath,
-		"deleteBookPath": DeleteBookPath,
-	})
-
-	tmpl, err = tmpl.Parse(`
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8">
-    <title>Books I Have Read</title>
-  </head>
-  <body>
-    <a href="{{ newBookPath }}">New Book</a>
-    <table>
-    {{range .Books}}
-    	<tr>
-    		<td>{{ .Title }}</td>
-    		<td>{{ .Author }}</td>
-    		<td>{{ .DateFinished }}</td>
-    		<td>{{ .Media }}</td>
-    		<td><form action="{{ deleteBookPath .ID }}" method="post"><button type="submit">Delete</button></form></td>
-    	</tr>
-    {{end}}
-    </table>
-
-  </body>
-</html>`)
-
-	if err != nil {
-		panic(err)
-	}
-
+	tmpl := action.templates.Lookup("book_index")
 	err = tmpl.Execute(w, data)
 	if err != nil {
 		panic(err)

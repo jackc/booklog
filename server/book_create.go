@@ -2,23 +2,29 @@ package server
 
 import (
 	"context"
+	"html/template"
 	"net/http"
 
+	"github.com/jackc/booklog/validate"
 	"github.com/jackc/pgconn"
 	"github.com/spf13/viper"
 )
 
 type BookCreate struct {
-}
-
-type BookCreateRequest struct {
-	Title        string
-	Author       string
-	DateFinished string
-	Media        string
+	templates *template.Template
 }
 
 func createBook(bcr *BookCreateRequest) error {
+	v := validate.New()
+	v.Presence("title", bcr.Title)
+	v.Presence("author", bcr.Author)
+	v.Presence("dateFinished", bcr.DateFinished)
+	v.Presence("media", bcr.Media)
+
+	if v.Err() != nil {
+		return v.Err()
+	}
+
 	conn, err := pgconn.Connect(context.Background(), viper.GetString("database_uri"))
 	if err != nil {
 		return err
@@ -42,7 +48,12 @@ func (action *BookCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	err := createBook(bcr)
 	if err != nil {
-		panic(err)
+		tmpl := action.templates.Lookup("book_new")
+		err := tmpl.Execute(w, map[string]interface{}{"fields": bcr, "errors": err})
+		if err != nil {
+			panic(err)
+		}
+		return
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
