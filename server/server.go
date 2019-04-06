@@ -27,5 +27,8 @@ func Serve(listenAddress string) {
 	r.Use(middleware.Recoverer)
 
 	r.Method("GET", "/", &BookIndex{})
+	r.Method("GET", "/new", &BookNew{})
+	r.Method("POST", "/books", &BookCreate{})
+	r.Method("POST", "/books/{id}/delete", &BookDelete{})
 	http.ListenAndServe(listenAddress, r)
 }

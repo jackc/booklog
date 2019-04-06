@@ -41,7 +41,13 @@ func (action *BookIndex) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Books: books,
 	}
 
-	tmpl, err := template.New("index").Parse(`
+	tmpl := template.New("index")
+	tmpl.Funcs(template.FuncMap{
+		"newBookPath":    NewBookPath,
+		"deleteBookPath": DeleteBookPath,
+	})
+
+	tmpl, err = tmpl.Parse(`
 <!DOCTYPE html>
 <html>
   <head>
@@ -49,8 +55,19 @@ func (action *BookIndex) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     <title>Books I Have Read</title>
   </head>
   <body>
+    <a href="{{ newBookPath }}">New Book</a>
     <table>
-    {{range .Books}}<tr><td>{{ .Title }}</td><td>{{ .Author }}</td><td>{{ .DateFinished }}</td><td>{{ .Media }}</td></tr>{{end}}
+    {{range .Books}}
+    	<tr>
+    		<td>{{ .Title }}</td>
+    		<td>{{ .Author }}</td>
+    		<td>{{ .DateFinished }}</td>
+    		<td>{{ .Media }}</td>
+    		<td><form action="{{ deleteBookPath .ID }}" method="post"><button type="submit">Delete</button></form></td>
+    	</tr>
+    {{end}}
+    </table>
+
   </body>
 </html>`)
 
