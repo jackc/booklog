@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Books I Have Read</title>
+  </head>
+  <body>
+    <form action="{{ bookPath .bookID }}" method="post">
+      <input type="hidden" name="_method" value="PATCH">
+      {{ .csrfField }}
+      <div>
+        <label for="title">Title</label>
+        <input type="text" name="title" id="title" value="{{ .fields.Title }}">
+        {{ range .errors.title }}{{ . }}{{ end }}
+      </div>
+
+      <div>
+        <label for="author">Author</label>
+        <input type="text" name="author" id="author" value="{{ .fields.Author }}">
+        {{ range .errors.author }}{{ . }}{{ end }}
+      </div>
+
+      <div>
+        <label for="dateFinished">Date Finished</label>
+        <input type="date" name="dateFinished" id="dateFinished" value="{{ .fields.DateFinished }}">
+        {{ range .errors.dateFinished }}{{ . }}{{ end }}
+      </div>
+
+      <div>
+        <label for="media">Media</label>
+        <input type="text" name="media" id="media" value="{{ .fields.DateFinished }}">
+        {{ range .errors.media }}{{ . }}{{ end }}
+      </div>
+
+      <button type="submit">Save</button>
+
+    </form>
+  </body>
+</html>

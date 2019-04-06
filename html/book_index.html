@@ -15,6 +15,7 @@
         <td>{{ .DateFinished }}</td>
         <td>{{ .Media }}</td>
         <td>
+          <a href="{{ editBookPath .ID }}">Edit</a>
           <form action="{{ bookPath .ID }}" method="post">
             <input type="hidden" name="_method" value="DELETE">
             {{ $csrfField }}

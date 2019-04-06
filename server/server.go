@@ -45,6 +45,8 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool) {
 	r.Method("GET", "/books", &BookIndex{templates: templates})
 	r.Method("GET", "/books/new", &BookNew{templates: templates})
 	r.Method("POST", "/books", &BookCreate{templates: templates})
+	r.Method("GET", "/books/{id}/edit", &BookEdit{templates: templates})
+	r.Method("PATCH", "/books/{id}", &BookUpdate{templates: templates})
 	r.Method("DELETE", "/books/{id}", &BookDelete{})
 	http.ListenAndServe(listenAddress, r)
 }
@@ -52,9 +54,10 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool) {
 func loadTemplates() (*template.Template, error) {
 	root := template.New("root")
 	root.Funcs(template.FuncMap{
-		"newBookPath": NewBookPath,
-		"bookPath":    BookPath,
-		"booksPath":   BooksPath,
+		"newBookPath":  NewBookPath,
+		"bookPath":     BookPath,
+		"editBookPath": EditBookPath,
+		"booksPath":    BooksPath,
 	})
 
 	targets := []struct {
@@ -63,6 +66,7 @@ func loadTemplates() (*template.Template, error) {
 	}{
 		{name: "book_index", filepath: "html/book_index.html"},
 		{name: "book_new", filepath: "html/book_new.html"},
+		{name: "book_edit", filepath: "html/book_edit.html"},
 	}
 
 	for _, t := range targets {
