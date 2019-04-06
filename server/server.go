@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/gorilla/csrf"
+	"github.com/gorilla/handlers"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/hlog"
 )
@@ -22,6 +23,9 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool) {
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
+
+	r.Use(handlers.HTTPMethodOverrideHandler)
+
 	r.Use(middleware.Logger)
 
 	r.Use(hlog.NewHandler(log))
@@ -38,18 +42,19 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool) {
 	}
 
 	r.Method("GET", "/", &BookIndex{templates: templates})
-	r.Method("GET", "/new", &BookNew{templates: templates})
+	r.Method("GET", "/books", &BookIndex{templates: templates})
+	r.Method("GET", "/books/new", &BookNew{templates: templates})
 	r.Method("POST", "/books", &BookCreate{templates: templates})
-	r.Method("POST", "/books/{id}/delete", &BookDelete{})
+	r.Method("DELETE", "/books/{id}", &BookDelete{})
 	http.ListenAndServe(listenAddress, r)
 }
 
 func loadTemplates() (*template.Template, error) {
 	root := template.New("root")
 	root.Funcs(template.FuncMap{
-		"newBookPath":    NewBookPath,
-		"createBookPath": CreateBookPath,
-		"deleteBookPath": DeleteBookPath,
+		"newBookPath": NewBookPath,
+		"bookPath":    BookPath,
+		"booksPath":   BooksPath,
 	})
 
 	targets := []struct {

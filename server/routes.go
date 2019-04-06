@@ -2,14 +2,14 @@ package server
 
 import "fmt"
 
-func NewBookPath() string {
-	return "/new"
-}
-
-func CreateBookPath() string {
+func BooksPath() string {
 	return "/books"
 }
 
-func DeleteBookPath(id string) string {
-	return fmt.Sprintf("/books/%s/delete", id)
+func BookPath(id string) string {
+	return fmt.Sprintf("/books/%s", id)
+}
+
+func NewBookPath() string {
+	return "/books/new"
 }

@@ -14,7 +14,13 @@
         <td>{{ .Author }}</td>
         <td>{{ .DateFinished }}</td>
         <td>{{ .Media }}</td>
-        <td><form action="{{ deleteBookPath .ID }}" method="post">{{ $csrfField }}<button type="submit">Delete</button></form></td>
+        <td>
+          <form action="{{ bookPath .ID }}" method="post">
+            <input type="hidden" name="_method" value="DELETE">
+            {{ $csrfField }}
+            <button type="submit">Delete</button>
+          </form>
+        </td>
       </tr>
     {{end}}
     </table>

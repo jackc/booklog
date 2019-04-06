@@ -40,6 +40,6 @@ func (action *BookDelete) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	http.Redirect(w, r, BooksPath(), http.StatusSeeOther)
 
 }
