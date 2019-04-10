@@ -9,7 +9,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/gorilla/csrf"
 	"github.com/jackc/booklog/validate"
-	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx"
 	"github.com/spf13/viper"
 )
 
@@ -28,17 +28,17 @@ func updateBook(id string, bcr *BookCreateRequest) error {
 		return v.Err()
 	}
 
-	conn, err := pgconn.Connect(context.Background(), viper.GetString("database_uri"))
+	conn, err := pgx.Connect(context.Background(), viper.GetString("database_uri"))
 	if err != nil {
-		return err
+		panic(err)
 	}
 	defer conn.Close(context.Background())
 
-	result := conn.ExecParams(context.Background(), "update book set title=$1, author=$2, date_finished=$3, media=$4 where id=$5", [][]byte{[]byte(bcr.Title), []byte(bcr.Author), []byte(bcr.DateFinished), []byte(bcr.Media), []byte(id)}, nil, nil, nil).Read()
-	if result.Err != nil {
+	commandTag, err := conn.Exec(context.Background(), "update book set title=$1, author=$2, date_finished=$3, media=$4 where id=$5", bcr.Title, bcr.Author, bcr.DateFinished, bcr.Media, id)
+	if err != nil {
 		return err
 	}
-	if result.CommandTag != "UPDATE 1" {
+	if commandTag != "UPDATE 1" {
 		return errors.New("not found")
 	}
 

@@ -7,7 +7,7 @@ import (
 
 	"github.com/gorilla/csrf"
 	"github.com/jackc/booklog/validate"
-	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx"
 	"github.com/spf13/viper"
 )
 
@@ -26,14 +26,14 @@ func createBook(bcr *BookCreateRequest) error {
 		return v.Err()
 	}
 
-	conn, err := pgconn.Connect(context.Background(), viper.GetString("database_uri"))
+	conn, err := pgx.Connect(context.Background(), viper.GetString("database_uri"))
 	if err != nil {
-		return err
+		panic(err)
 	}
 	defer conn.Close(context.Background())
 
-	result := conn.ExecParams(context.Background(), "insert into book(title, author, date_finished, media) values($1, $2, $3, $4)", [][]byte{[]byte(bcr.Title), []byte(bcr.Author), []byte(bcr.DateFinished), []byte(bcr.Media)}, nil, nil, nil).Read()
-	if result.Err != nil {
+	_, err = conn.Exec(context.Background(), "insert into book(title, author, date_finished, media) values($1, $2, $3, $4)", bcr.Title, bcr.Author, bcr.DateFinished, bcr.Media)
+	if err != nil {
 		return err
 	}
 

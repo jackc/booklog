@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/gorilla/csrf"
-	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx"
 	"github.com/spf13/viper"
 )
 
@@ -16,27 +16,21 @@ type BookEdit struct {
 }
 
 func (action *BookEdit) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	conn, err := pgconn.Connect(context.Background(), viper.GetString("database_uri"))
+	conn, err := pgx.Connect(context.Background(), viper.GetString("database_uri"))
 	if err != nil {
 		panic(err)
 	}
 	defer conn.Close(context.Background())
 
-	result := conn.ExecParams(context.Background(), "select title, author, date_finished, media from book where id=$1", [][]byte{[]byte(chi.URLParam(r, "id"))}, nil, nil, nil).Read()
-	if result.Err != nil {
-		panic(result.Err)
-	}
-
-	if len(result.Rows) == 0 {
-		http.NotFound(w, r)
-		return
-	}
-
-	bcr := &BookCreateRequest{
-		Title:        string(result.Rows[0][0]),
-		Author:       string(result.Rows[0][1]),
-		DateFinished: string(result.Rows[0][2]),
-		Media:        string(result.Rows[0][3]),
+	bcr := &BookCreateRequest{}
+	err = conn.QueryRow(context.Background(), "select title, author, date_finished::text, media from book where id=$1", chi.URLParam(r, "id")).Scan(&bcr.Title, &bcr.Author, &bcr.DateFinished, &bcr.Media)
+	// TODO - handle not found error
+	// if len(result.Rows) == 0 {
+	// 	http.NotFound(w, r)
+	// 	return
+	// }
+	if err != nil {
+		panic(err)
 	}
 
 	tmpl := action.templates.Lookup("book_edit")

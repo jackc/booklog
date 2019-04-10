@@ -12,7 +12,7 @@
       <tr>
         <td>{{ .Title }}</td>
         <td>{{ .Author }}</td>
-        <td>{{ .DateFinished }}</td>
+        <td>{{ .DateFinished.Format "1/2/2006" }}</td>
         <td>{{ .Media }}</td>
         <td>
           <a href="{{ editBookPath .ID }}">Edit</a>

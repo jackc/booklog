@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
-	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx"
 	"github.com/spf13/viper"
 )
 
@@ -17,14 +17,14 @@ type BookDeleteRequest struct {
 }
 
 func deleteBook(bcr *BookDeleteRequest) error {
-	conn, err := pgconn.Connect(context.Background(), viper.GetString("database_uri"))
+	conn, err := pgx.Connect(context.Background(), viper.GetString("database_uri"))
 	if err != nil {
-		return err
+		panic(err)
 	}
 	defer conn.Close(context.Background())
 
-	result := conn.ExecParams(context.Background(), "delete from book where id=$1", [][]byte{[]byte(bcr.ID)}, nil, nil, nil).Read()
-	if result.Err != nil {
+	_, err = conn.Exec(context.Background(), "delete from book where id=$1", bcr.ID)
+	if err != nil {
 		return err
 	}
 
