@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/gorilla/csrf"
-	"github.com/jackc/pgx"
-	"github.com/spf13/viper"
 )
 
 type BookIndex struct {
@@ -16,14 +14,11 @@ type BookIndex struct {
 }
 
 func (action *BookIndex) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	conn, err := pgx.Connect(context.Background(), viper.GetString("database_uri"))
-	if err != nil {
-		panic(err)
-	}
-	defer conn.Close(context.Background())
+	ctx := r.Context()
+	db := ctx.Value(RequestDBKey).(queryExecer)
 
 	var books []BookRow001
-	rows, _ := conn.Query(context.Background(), "select id, title, author, date_finished, media from book order by date_finished asc")
+	rows, _ := db.Query(context.Background(), "select id, title, author, date_finished, media from book order by date_finished asc")
 	for rows.Next() {
 		var b BookRow001
 		rows.Scan(&b.ID, &b.Title, &b.Author, &b.DateFinished, &b.Media)
@@ -34,7 +29,7 @@ func (action *BookIndex) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tmpl := action.templates.Lookup("book_index")
-	err = tmpl.Execute(w, map[string]interface{}{"Books": books, csrf.TemplateTag: csrf.TemplateField(r)})
+	err := tmpl.Execute(w, map[string]interface{}{"Books": books, csrf.TemplateTag: csrf.TemplateField(r)})
 	if err != nil {
 		panic(err)
 	}

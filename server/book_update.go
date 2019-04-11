@@ -9,15 +9,13 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/gorilla/csrf"
 	"github.com/jackc/booklog/validate"
-	"github.com/jackc/pgx"
-	"github.com/spf13/viper"
 )
 
 type BookUpdate struct {
 	templates *template.Template
 }
 
-func updateBook(id string, bcr *BookCreateRequest) error {
+func updateBook(ctx context.Context, db queryExecer, id string, bcr *BookCreateRequest) error {
 	v := validate.New()
 	v.Presence("title", bcr.Title)
 	v.Presence("author", bcr.Author)
@@ -28,13 +26,7 @@ func updateBook(id string, bcr *BookCreateRequest) error {
 		return v.Err()
 	}
 
-	conn, err := pgx.Connect(context.Background(), viper.GetString("database_uri"))
-	if err != nil {
-		panic(err)
-	}
-	defer conn.Close(context.Background())
-
-	commandTag, err := conn.Exec(context.Background(), "update book set title=$1, author=$2, date_finished=$3, media=$4 where id=$5", bcr.Title, bcr.Author, bcr.DateFinished, bcr.Media, id)
+	commandTag, err := db.Exec(ctx, "update book set title=$1, author=$2, date_finished=$3, media=$4 where id=$5", bcr.Title, bcr.Author, bcr.DateFinished, bcr.Media, id)
 	if err != nil {
 		return err
 	}
@@ -46,13 +38,16 @@ func updateBook(id string, bcr *BookCreateRequest) error {
 }
 
 func (action *BookUpdate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	db := ctx.Value(RequestDBKey).(queryExecer)
+
 	bcr := &BookCreateRequest{}
 	bcr.Title = r.FormValue("title")
 	bcr.Author = r.FormValue("author")
 	bcr.DateFinished = r.FormValue("dateFinished")
 	bcr.Media = r.FormValue("media")
 
-	err := updateBook(chi.URLParam(r, "id"), bcr)
+	err := updateBook(ctx, db, chi.URLParam(r, "id"), bcr)
 	if err != nil {
 		tmpl := action.templates.Lookup("book_edit")
 		// TODO - if errors is not a map this fails

@@ -7,15 +7,13 @@ import (
 
 	"github.com/gorilla/csrf"
 	"github.com/jackc/booklog/validate"
-	"github.com/jackc/pgx"
-	"github.com/spf13/viper"
 )
 
 type BookCreate struct {
 	templates *template.Template
 }
 
-func createBook(bcr *BookCreateRequest) error {
+func createBook(ctx context.Context, db queryExecer, bcr *BookCreateRequest) error {
 	v := validate.New()
 	v.Presence("title", bcr.Title)
 	v.Presence("author", bcr.Author)
@@ -26,13 +24,7 @@ func createBook(bcr *BookCreateRequest) error {
 		return v.Err()
 	}
 
-	conn, err := pgx.Connect(context.Background(), viper.GetString("database_uri"))
-	if err != nil {
-		panic(err)
-	}
-	defer conn.Close(context.Background())
-
-	_, err = conn.Exec(context.Background(), "insert into book(title, author, date_finished, media) values($1, $2, $3, $4)", bcr.Title, bcr.Author, bcr.DateFinished, bcr.Media)
+	_, err := db.Exec(ctx, "insert into book(title, author, date_finished, media) values($1, $2, $3, $4)", bcr.Title, bcr.Author, bcr.DateFinished, bcr.Media)
 	if err != nil {
 		return err
 	}
@@ -41,13 +33,16 @@ func createBook(bcr *BookCreateRequest) error {
 }
 
 func (action *BookCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	db := ctx.Value(RequestDBKey).(queryExecer)
+
 	bcr := &BookCreateRequest{}
 	bcr.Title = r.FormValue("title")
 	bcr.Author = r.FormValue("author")
 	bcr.DateFinished = r.FormValue("dateFinished")
 	bcr.Media = r.FormValue("media")
 
-	err := createBook(bcr)
+	err := createBook(ctx, db, bcr)
 	if err != nil {
 		tmpl := action.templates.Lookup("book_new")
 		err := tmpl.Execute(w, map[string]interface{}{"fields": bcr, "errors": err, csrf.TemplateTag: csrf.TemplateField(r)})

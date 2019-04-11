@@ -8,8 +8,8 @@ require (
 	github.com/gorilla/csrf v1.5.1
 	github.com/gorilla/handlers v1.4.0
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/jackc/pgconn v0.0.0-20190405211011-0ebe322ac360 // indirect
-	github.com/jackc/pgx v0.0.0-20190410195614-3e87a8b3639e
+	github.com/jackc/pgconn v0.0.0-20190405211011-0ebe322ac360
+	github.com/jackc/pgx v0.0.0-20190411225816-938ee9f434a1
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/rs/xid v1.2.1 // indirect
 	github.com/rs/zerolog v1.13.0

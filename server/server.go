@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -10,9 +11,25 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/handlers"
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/pool"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/hlog"
+	"github.com/spf13/viper"
 )
+
+// Key to use when setting the DB.
+type ctxKeyDB int
+
+// RequestDBKey is the key that holds the DB for this request.
+const RequestDBKey ctxKeyDB = 0
+
+type queryExecer interface {
+	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
+	Query(ctx context.Context, sql string, optionsAndArgs ...interface{}) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, optionsAndArgs ...interface{}) pgx.Row
+}
 
 func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool) {
 	log := zerolog.New(os.Stdout).With().
@@ -40,6 +57,20 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool) {
 	if err != nil {
 		panic(err)
 	}
+
+	dbpool, err := pool.Connect(context.Background(), viper.GetString("database_uri"))
+	if err != nil {
+		panic(err)
+	}
+	r.Use(func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, RequestDBKey, dbpool)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
+
+		return http.HandlerFunc(fn)
+	})
 
 	r.Method("GET", "/", &BookIndex{templates: templates})
 	r.Method("GET", "/books", &BookIndex{templates: templates})
