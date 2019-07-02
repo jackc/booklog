@@ -1,3 +1,4 @@
+/build
 /.envrc
 /migration/development.conf
 /migration/production.conf
