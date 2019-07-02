@@ -1,5 +1,5 @@
-/migration/development.conf
-/migration/test.conf
-/migration/production.conf
-
 /.envrc
+/migration/development.conf
+/migration/production.conf
+/migration/test.conf
+node_modules

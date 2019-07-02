@@ -1,2 +1,4 @@
+PATH_add node_modules/.bin
+
 export PGDATABASE=booklog_dev
 export CSRF_KEY=change-me-to-at-least-64-characters

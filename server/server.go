@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -79,6 +80,9 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool) {
 	r.Method("GET", "/books/{id}/edit", &BookEdit{templates: templates})
 	r.Method("PATCH", "/books/{id}", &BookUpdate{templates: templates})
 	r.Method("DELETE", "/books/{id}", &BookDelete{})
+
+	fileServer(r, "/static", http.Dir("build/static"))
+
 	http.ListenAndServe(listenAddress, r)
 }
 
@@ -114,4 +118,22 @@ func loadTemplates() (*template.Template, error) {
 	}
 
 	return root, nil
+}
+
+func fileServer(r chi.Router, path string, root http.FileSystem) {
+	if strings.ContainsAny(path, "{}*") {
+		panic("FileServer does not permit URL parameters.")
+	}
+
+	fs := http.StripPrefix(path, http.FileServer(root))
+
+	if path != "/" && path[len(path)-1] != '/' {
+		r.Get(path, http.RedirectHandler(path+"/", 301).ServeHTTP)
+		path += "/"
+	}
+	path += "*"
+
+	r.Get(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fs.ServeHTTP(w, r)
+	}))
 }

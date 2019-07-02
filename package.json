@@ -1,0 +1,24 @@
+{
+  "name": "booklog",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "bulma": "^0.7.5",
+    "node-sass": "^4.12.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jackc/booklog.git"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/jackc/booklog/issues"
+  },
+  "homepage": "https://github.com/jackc/booklog#readme"
+}
