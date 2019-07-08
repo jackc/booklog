@@ -2,8 +2,6 @@ package server
 
 import (
 	"context"
-	"html/template"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -54,7 +52,7 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool) {
 	CSRF := csrf.Protect(csrfKey, csrf.Secure(!insecureDevMode))
 	r.Use(CSRF)
 
-	templates, err := loadTemplates()
+	err := LoadTemplates("html")
 	if err != nil {
 		panic(err)
 	}
@@ -73,51 +71,17 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool) {
 		return http.HandlerFunc(fn)
 	})
 
-	r.Method("GET", "/", &BookIndex{templates: templates})
-	r.Method("GET", "/books", &BookIndex{templates: templates})
-	r.Method("GET", "/books/new", &BookNew{templates: templates})
-	r.Method("POST", "/books", &BookCreate{templates: templates})
-	r.Method("GET", "/books/{id}/edit", &BookEdit{templates: templates})
-	r.Method("PATCH", "/books/{id}", &BookUpdate{templates: templates})
+	r.Method("GET", "/", &BookIndex{})
+	r.Method("GET", "/books", &BookIndex{})
+	r.Method("GET", "/books/new", &BookNew{})
+	r.Method("POST", "/books", &BookCreate{})
+	r.Method("GET", "/books/{id}/edit", &BookEdit{})
+	r.Method("PATCH", "/books/{id}", &BookUpdate{})
 	r.Method("DELETE", "/books/{id}", &BookDelete{})
 
 	fileServer(r, "/static", http.Dir("build/static"))
 
 	http.ListenAndServe(listenAddress, r)
-}
-
-func loadTemplates() (*template.Template, error) {
-	root := template.New("root")
-	root.Funcs(template.FuncMap{
-		"newBookPath":  NewBookPath,
-		"bookPath":     BookPath,
-		"editBookPath": EditBookPath,
-		"booksPath":    BooksPath,
-	})
-
-	targets := []struct {
-		name     string
-		filepath string
-	}{
-		{name: "book_index", filepath: "html/book_index.html"},
-		{name: "book_new", filepath: "html/book_new.html"},
-		{name: "book_edit", filepath: "html/book_edit.html"},
-	}
-
-	for _, t := range targets {
-		src, err := ioutil.ReadFile(t.filepath)
-		if err != nil {
-			return nil, err
-		}
-
-		tmpl := root.New(t.name)
-		tmpl, err = tmpl.Parse(string(src))
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return root, nil
 }
 
 func fileServer(r chi.Router, path string, root http.FileSystem) {

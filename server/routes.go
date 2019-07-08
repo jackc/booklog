@@ -1,6 +1,14 @@
 package server
 
 import "fmt"
+import "html/template"
+
+var RouteFuncMap = template.FuncMap{
+	"newBookPath":  NewBookPath,
+	"bookPath":     BookPath,
+	"editBookPath": EditBookPath,
+	"booksPath":    BooksPath,
+}
 
 func BooksPath() string {
 	return "/books"

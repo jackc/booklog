@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"html/template"
 	"net/http"
 	"time"
 
@@ -10,7 +9,6 @@ import (
 )
 
 type BookIndex struct {
-	templates *template.Template
 }
 
 func (action *BookIndex) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -28,8 +26,7 @@ func (action *BookIndex) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		panic(rows.Err())
 	}
 
-	tmpl := action.templates.Lookup("book_index")
-	err := tmpl.Execute(w, map[string]interface{}{"Books": books, csrf.TemplateTag: csrf.TemplateField(r)})
+	err := RenderBookIndex(w, csrf.TemplateField(r), books)
 	if err != nil {
 		panic(err)
 	}

@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"errors"
-	"html/template"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -12,7 +11,6 @@ import (
 )
 
 type BookUpdate struct {
-	templates *template.Template
 }
 
 func updateBook(ctx context.Context, db queryExecer, id string, bcr *BookCreateRequest) error {
@@ -49,9 +47,8 @@ func (action *BookUpdate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	err := updateBook(ctx, db, chi.URLParam(r, "id"), bcr)
 	if err != nil {
-		tmpl := action.templates.Lookup("book_edit")
 		// TODO - if errors is not a map this fails
-		err := tmpl.Execute(w, map[string]interface{}{"bookID": chi.URLParam(r, "id"), "fields": bcr, "errors": err, csrf.TemplateTag: csrf.TemplateField(r)})
+		err := RenderBookEdit(w, csrf.TemplateField(r), chi.URLParam(r, "id"), bcr, err)
 		if err != nil {
 			panic(err)
 		}

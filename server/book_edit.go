@@ -1,7 +1,6 @@
 package server
 
 import (
-	"html/template"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -9,7 +8,6 @@ import (
 )
 
 type BookEdit struct {
-	templates *template.Template
 }
 
 func (action *BookEdit) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -27,10 +25,8 @@ func (action *BookEdit) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	tmpl := action.templates.Lookup("book_edit")
-	err = tmpl.Execute(w, map[string]interface{}{"bookID": chi.URLParam(r, "id"), "fields": bcr, "errors": map[string]string{}, csrf.TemplateTag: csrf.TemplateField(r)})
+	err = RenderBookEdit(w, csrf.TemplateField(r), chi.URLParam(r, "id"), bcr, map[string]string{})
 	if err != nil {
 		panic(err)
 	}
-
 }

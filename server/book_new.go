@@ -1,14 +1,12 @@
 package server
 
 import (
-	"html/template"
 	"net/http"
 
 	"github.com/gorilla/csrf"
 )
 
 type BookNew struct {
-	templates *template.Template
 }
 
 type BookCreateRequest struct {
@@ -20,9 +18,7 @@ type BookCreateRequest struct {
 
 func (action *BookNew) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	bcr := &BookCreateRequest{}
-
-	tmpl := action.templates.Lookup("book_new")
-	err := tmpl.Execute(w, map[string]interface{}{"fields": bcr, "errors": map[string]string{}, csrf.TemplateTag: csrf.TemplateField(r)})
+	err := RenderBookNew(w, csrf.TemplateField(r), bcr, map[string]string{})
 	if err != nil {
 		panic(err)
 	}
