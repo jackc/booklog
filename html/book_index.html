@@ -1,22 +1,57 @@
 {{define "content"}}
-<h1>Books I Have Read</h1>
-<div class="text-danger">Haha</div>
+
+<style>
+  section.year {
+    display: flex;
+  }
+
+@media (max-width: 32rem) {
+  body {
+    background-color: aqua;
+  }
+
+  .year-display {
+    display: none;
+  }
+}
+
+@media not (max-width: 32rem) {
+  body {
+    background-color: black;
+  }
+
+  .year-display {
+    font-size: 4rem;
+    line-height: 4rem;
+    vertical-align: top;
+  }
+}
+</style>
+
+<h1>Booklog</h1>
 <a href="{{ newBookPath }}">New Book</a>
-  {{ $csrfField := .csrfField }}
-  {{range .Books}}
-    <div class="row">
-      <div class="col">{{ .Title }}</div>
-      <div class="col">{{ .Author }}</div>
-      <div class="col">{{ .DateFinished.Format "1/2/2006" }}</div>
-      <div class="col">{{ .Media }}</div>
-      <div class="col">
-        <a href="{{ editBookPath .ID }}">Edit</a>
-        <form action="{{ bookPath .ID }}" method="post">
-          <input type="hidden" name="_method" value="DELETE">
-          {{ $csrfField }}
-          <button type="submit">Delete</button>
-        </form>
-      </div>
+
+{{ range .BooksForYears }}
+  <section class="year">
+    <div class="year-display text-muted">{{ .Year }}</div>
+    <div class="">
+      {{ range .Books }}
+        <article class="d-flex ml-3 mb-3">
+          <div class="text-muted text-right pr-3" style="min-width: 9rem">{{ .DateFinished.Format "January 2" }}
+            <div>{{ if eq .Media "audiobook"  }}🎧{{ else if eq .Media "book" }}📖{{ else if eq .Media "video" }}📺{{ end }}
+            </div>
+          </div>
+          <div class="">
+            <a class="d-block" href="{{ editBookPath .ID }}">
+              {{ .Title }}
+
+            </a>
+            <div class="">{{ .Author }}</div>
+          </div>
+        </article>
+      {{end}}
     </div>
-  {{end}}
+  </section>
+{{end}}
+
 {{end}}

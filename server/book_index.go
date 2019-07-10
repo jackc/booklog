@@ -15,21 +15,33 @@ func (action *BookIndex) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
 
-	var books []BookRow001
-	rows, _ := db.Query(context.Background(), "select id, title, author, date_finished, media from book order by date_finished asc")
+	var booksForYears []*BooksForYear
+	var booksForYear *BooksForYear
+	rows, _ := db.Query(context.Background(), "select id, title, author, date_finished, media from book order by date_finished desc")
 	for rows.Next() {
 		var b BookRow001
 		rows.Scan(&b.ID, &b.Title, &b.Author, &b.DateFinished, &b.Media)
-		books = append(books, b)
+		year := b.DateFinished.Year()
+		if booksForYear == nil || year != booksForYear.Year {
+			booksForYear = &BooksForYear{Year: year}
+			booksForYears = append(booksForYears, booksForYear)
+		}
+
+		booksForYear.Books = append(booksForYear.Books, b)
 	}
 	if rows.Err() != nil {
 		panic(rows.Err())
 	}
 
-	err := RenderBookIndex(w, csrf.TemplateField(r), books)
+	err := RenderBookIndex(w, csrf.TemplateField(r), booksForYears)
 	if err != nil {
 		panic(err)
 	}
+}
+
+type BooksForYear struct {
+	Year  int
+	Books []BookRow001
 }
 
 type BookRow001 struct {

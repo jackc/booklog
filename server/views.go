@@ -53,9 +53,9 @@ func loadTemplate(name string, files []string, funcMap template.FuncMap) (*templ
 	return tmpl, nil
 }
 
-func RenderBookIndex(w io.Writer, csrfTemplateTag template.HTML, books []BookRow001) error {
+func RenderBookIndex(w io.Writer, csrfTemplateTag template.HTML, books []*BooksForYear) error {
 	return bookIndex.Execute(w, map[string]interface{}{
-		"Books":          books,
+		"BooksForYears":  books,
 		csrf.TemplateTag: csrfTemplateTag,
 	})
 }
