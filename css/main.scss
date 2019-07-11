@@ -1,3 +1,46 @@
 $danger: rgb(100,250,255);
 
-@import "node_modules/bootstrap/scss/bootstrap";
+// @import "node_modules/bootstrap/scss/bootstrap";
+@import "node_modules/normalize.css/normalize";
+
+:root {
+   --link-color: blue;
+}
+
+body {
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: white;
+}
+
+ol, li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+body > header {
+  background-color: gray;
+  padding: 0.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+body > header > h1 {
+  margin: 0;
+}
+
+body > .content {
+  padding: 0.5rem;
+}
+
+a {
+  text-decoration: none;
+}
+
+a:visited {
+  color: var(--link-color);
+}
+
+a:hover {
+  color: red;
+}

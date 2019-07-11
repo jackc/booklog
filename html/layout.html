@@ -7,7 +7,15 @@
     <link rel="stylesheet" href="/static/css/main.css">
   </head>
   <body>
-    <div class="container-fluid">
+    <header>
+      <h1>Booklog</h1>
+      <nav>
+        <ul>
+          <li><a href="{{ newBookPath }}">New Book</a></li>
+        </ul>
+      </nav>
+    </header>
+    <div class="content">
       {{template "content" .}}
     </div>
   </body>

@@ -1,59 +1,99 @@
 {{define "content"}}
 
 <style>
-  section.year {
-    display: flex;
+  ol.years {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  ol.years > li {
+    margin-bottom: 2rem;
+  }
+
+   ol.years > li > h2 {
+    font-size: 3rem;
+    color: gray;
+  }
+
+  ol.books {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  ol.books > li {
+    margin: 1rem 0;
+    display: grid;
+   }
+
+   ol.books time.finished, ol.books .media {
+    color: gray;
+  }
+
+  ol.books > li .title {
+    display: block;
+    font-weight: bold;
   }
 
 @media (max-width: 32rem) {
-  body {
-    background-color: aqua;
+  ol.years > li > h2 {
+    margin: 0;
   }
 
-  .year-display {
-    display: none;
+  ol.books > li > .what {
+    margin-left: 2rem;
   }
 }
 
 @media not (max-width: 32rem) {
-  body {
-    background-color: black;
+  ol.books > li {
+    display: grid;
+    grid-template-columns: auto 1fr;
   }
 
-  .year-display {
-    font-size: 4rem;
-    line-height: 4rem;
-    vertical-align: top;
-    color: gray;
+  ol.years > li > h2 {
+    margin: 0 0 0 9rem;
+  }
+
+  ol.books time.finished, ol.books .media {
+    display: block;
+    min-width: 8rem;
+    text-align: right;
+    margin-right: 1rem;
   }
 }
 </style>
 
-<h1>Booklog</h1>
-<a href="{{ newBookPath }}">New Book</a>
-
 {{ range .BooksForYears }}
-  <section class="year">
-    <div class="year-display">{{ .Year }}</div>
-    <div class="">
-      {{ range .Books }}
-        <article class="d-flex ml-3 mb-3">
-          <div class="text-muted text-right pr-3" style="min-width: 9rem">
-            <time datetime="{{ .DateFinished.Format "2006-01-02" }}">{{ .DateFinished.Format "January 2" }}</time>
-            <div>{{ if eq .Media "audiobook"  }}🎧{{ else if eq .Media "book" }}📖{{ else if eq .Media "video" }}📺{{ end }}
+  <ol class="years">
+    <li>
+      <h2>{{ .Year }}</h2>
+      <ol class="books">
+        {{ range .Books }}
+          <li>
+            <div class="when-and-how">
+              <time class="finished"
+                datetime="{{ .DateFinished.Format "2006-01-02" }}"
+                title="{{ .DateFinished.Format "January 2, 2006" }}"
+              >
+                {{ .DateFinished.Format "January 2" }}
+              </time>
+              <span class="media">
+                {{ if eq .Media "audiobook"  }}🎧{{ else if eq .Media "book" }}📖{{ else if eq .Media "video" }}📺{{ end }}
+              </span>
             </div>
-          </div>
-          <div class="">
-            <a class="d-block" href="{{ editBookPath .ID }}">
-              {{ .Title }}
-
-            </a>
-            <div class="">{{ .Author }}</div>
-          </div>
-        </article>
-      {{end}}
-    </div>
-  </section>
+            <div class="what">
+              <a class="title" href="{{ editBookPath .ID }}">
+                {{ .Title }}
+              </a>
+              <div class="author">{{ .Author }}</div>
+            </div>
+          </li>
+        {{end}}
+      </ol>
+    </li>
+  </ol>
 {{end}}
 
 {{end}}
