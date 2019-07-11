@@ -24,6 +24,7 @@
     font-size: 4rem;
     line-height: 4rem;
     vertical-align: top;
+    color: gray;
   }
 }
 </style>
@@ -33,11 +34,12 @@
 
 {{ range .BooksForYears }}
   <section class="year">
-    <div class="year-display text-muted">{{ .Year }}</div>
+    <div class="year-display">{{ .Year }}</div>
     <div class="">
       {{ range .Books }}
         <article class="d-flex ml-3 mb-3">
-          <div class="text-muted text-right pr-3" style="min-width: 9rem">{{ .DateFinished.Format "January 2" }}
+          <div class="text-muted text-right pr-3" style="min-width: 9rem">
+            <time datetime="{{ .DateFinished.Format "2006-01-02" }}">{{ .DateFinished.Format "January 2" }}</time>
             <div>{{ if eq .Media "audiobook"  }}🎧{{ else if eq .Media "book" }}📖{{ else if eq .Media "video" }}📺{{ end }}
             </div>
           </div>
