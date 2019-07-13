@@ -1,15 +1,28 @@
-$danger: rgb(100,250,255);
+// $danger: rgb(100,250,255);
 
 // @import "node_modules/bootstrap/scss/bootstrap";
 @import "node_modules/normalize.css/normalize";
 
 :root {
-   --link-color: blue;
+   --text-color: #2a2824;
+   --light-text-color: #7d786c;
+   --background-color: #f7f5ef;
+   --card-background-color: #eee8da;
+   --card-shadow-color: #7d786c;
+   --link-color: #006992;
+   --hover-link-color: #27476e;
+
+   --form-error-color: #eca400;
+}
+
+* {
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  box-sizing: border-box;
+  color: var(--text-color);
 }
 
 body {
-  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background-color: white;
+  background-color: var(--background-color);
 }
 
 ol, li {
@@ -19,22 +32,44 @@ ol, li {
 }
 
 body > header {
-  background-color: gray;
-  padding: 0.5rem;
+  // background-color: var(--contrast-color);
+  margin: 1rem 1rem 0 1rem;
+  padding: 0 1rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
 }
 
 body > header > h1 {
   margin: 0;
+  font-size: 1rem;
 }
 
-body > .content {
-  padding: 0.5rem;
+body > header > nav > ul {
+  margin: 0;
+}
+
+.card {
+  margin: 1rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background-color: var(--card-background-color);
+  box-shadow: 1px 1px 4px var(--card-shadow-color);
+}
+
+.card > header {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: var(--light-text-color);
+}
+
+h1, h2 {
+  color: var(--light-text-color);
 }
 
 a {
   text-decoration: none;
+  color: var(--link-color);
 }
 
 a:visited {
@@ -42,5 +77,42 @@ a:visited {
 }
 
 a:hover {
-  color: red;
+  color: var(--hover-link-color);
+}
+
+input {
+  color: var(--light-text-color);
+}
+
+form .field {
+  margin-bottom: 1rem;
+}
+
+form .field label {
+  display: block;
+  color: var(--light-text-color);
+}
+
+form .field input {
+  display: block;
+  font-size: 2rem;
+  width: 100%;
+}
+
+form button {
+  margin-top: 1rem;
+  display: block;
+  font-size: 2rem;
+  border: none;
+  border-radius: 4px;
+  color: var(--background-color);
+  background-color: var(--link-color);
+}
+
+form button:hover {
+  background-color: var(--hover-link-color);
+}
+
+form .error {
+  color: var(--form-error-color);
 }

@@ -12,8 +12,8 @@
   }
 
    ol.years > li > h2 {
-    font-size: 3rem;
-    color: gray;
+    font-size: 2rem;
+    color: var(--light-text-color);
   }
 
   ol.books {
@@ -27,8 +27,8 @@
     display: grid;
    }
 
-   ol.books time.finished, ol.books .media {
-    color: gray;
+  ol.books time.finished, ol.books .media, ol.books .author {
+    color: var(--light-text-color);
   }
 
   ol.books > li .title {
@@ -65,35 +65,37 @@
 }
 </style>
 
-{{ range .BooksForYears }}
-  <ol class="years">
-    <li>
-      <h2>{{ .Year }}</h2>
-      <ol class="books">
-        {{ range .Books }}
-          <li>
-            <div class="when-and-how">
-              <time class="finished"
-                datetime="{{ .DateFinished.Format "2006-01-02" }}"
-                title="{{ .DateFinished.Format "January 2, 2006" }}"
-              >
-                {{ .DateFinished.Format "January 2" }}
-              </time>
-              <span class="media">
-                {{ if eq .Media "audiobook"  }}🎧{{ else if eq .Media "book" }}📖{{ else if eq .Media "video" }}📺{{ end }}
-              </span>
-            </div>
-            <div class="what">
-              <a class="title" href="{{ editBookPath .ID }}">
-                {{ .Title }}
-              </a>
-              <div class="author">{{ .Author }}</div>
-            </div>
-          </li>
-        {{end}}
-      </ol>
-    </li>
-  </ol>
-{{end}}
+<div class="card">
+  {{ range .BooksForYears }}
+    <ol class="years">
+      <li>
+        <h2>{{ .Year }}</h2>
+        <ol class="books">
+          {{ range .Books }}
+            <li>
+              <div class="when-and-how">
+                <time class="finished"
+                  datetime="{{ .DateFinished.Format "2006-01-02" }}"
+                  title="{{ .DateFinished.Format "January 2, 2006" }}"
+                >
+                  {{ .DateFinished.Format "January 2" }}
+                </time>
+                <span class="media">
+                  {{ if eq .Media "audiobook"  }}🎧{{ else if eq .Media "book" }}📖{{ else if eq .Media "video" }}📺{{ end }}
+                </span>
+              </div>
+              <div class="what">
+                <a class="title" href="{{ editBookPath .ID }}">
+                  {{ .Title }}
+                </a>
+                <div class="author">{{ .Author }}</div>
+              </div>
+            </li>
+          {{end}}
+        </ol>
+      </li>
+    </ol>
+  {{end}}
+</div>
 
 {{end}}
