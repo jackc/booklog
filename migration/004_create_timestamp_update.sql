@@ -1,5 +1,3 @@
-create extension pgcrypto;
-
 create function timestamp_update() returns trigger
 language plpgsql
 as $$

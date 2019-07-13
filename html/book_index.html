@@ -65,6 +65,8 @@
 }
 </style>
 
+{{ $username := .username }}
+
 <div class="card">
   {{ range .BooksForYears }}
     <ol class="years">
@@ -85,7 +87,7 @@
                 </span>
               </div>
               <div class="what">
-                <a class="title" href="{{ editBookPath .ID }}">
+                <a class="title" href="{{ editBookPath $username .ID }}">
                   {{ .Title }}
                 </a>
                 <div class="author">{{ .Author }}</div>

@@ -1,7 +1,9 @@
 package server
 
-import "fmt"
-import "html/template"
+import (
+	"fmt"
+	"html/template"
+)
 
 var RouteFuncMap = template.FuncMap{
 	"newBookPath":  NewBookPath,
@@ -10,18 +12,18 @@ var RouteFuncMap = template.FuncMap{
 	"booksPath":    BooksPath,
 }
 
-func BooksPath() string {
-	return "/books"
+func BooksPath(username string) string {
+	return fmt.Sprintf("/users/%s/books", username)
 }
 
-func BookPath(id string) string {
-	return fmt.Sprintf("/books/%s", id)
+func BookPath(username string, id int64) string {
+	return fmt.Sprintf("/users/%s/books/%d", username, id)
 }
 
-func EditBookPath(id string) string {
-	return fmt.Sprintf("/books/%s/edit", id)
+func EditBookPath(username string, id int64) string {
+	return fmt.Sprintf("/users/%s/books/%d/edit", username, id)
 }
 
-func NewBookPath() string {
-	return "/books/new"
+func NewBookPath(username string) string {
+	return fmt.Sprintf("/users/%s/books/new", username)
 }

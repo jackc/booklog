@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 
+	"github.com/go-chi/chi"
 	"github.com/gorilla/csrf"
 )
 
@@ -17,8 +18,10 @@ type BookCreateRequest struct {
 }
 
 func (action *BookNew) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	username := chi.URLParam(r, "username")
+
 	bcr := &BookCreateRequest{}
-	err := RenderBookNew(w, csrf.TemplateField(r), bcr, map[string]string{})
+	err := RenderBookNew(w, csrf.TemplateField(r), bcr, map[string]string{}, username)
 	if err != nil {
 		panic(err)
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/go-chi/chi"
 	"github.com/gorilla/csrf"
 	"github.com/jackc/booklog/validate"
 )
@@ -11,7 +12,7 @@ import (
 type BookCreate struct {
 }
 
-func createBook(ctx context.Context, db queryExecer, bcr *BookCreateRequest) error {
+func createBook(ctx context.Context, db queryExecer, bcr *BookCreateRequest, readerID int64) error {
 	v := validate.New()
 	v.Presence("title", bcr.Title)
 	v.Presence("author", bcr.Author)
@@ -22,7 +23,7 @@ func createBook(ctx context.Context, db queryExecer, bcr *BookCreateRequest) err
 		return v.Err()
 	}
 
-	_, err := db.Exec(ctx, "insert into book(title, author, date_finished, media) values($1, $2, $3, $4)", bcr.Title, bcr.Author, bcr.DateFinished, bcr.Media)
+	_, err := db.Exec(ctx, "insert into finished_book(reader_id, title, author, date_finished, media) values($1, $2, $3, $4, $5)", readerID, bcr.Title, bcr.Author, bcr.DateFinished, bcr.Media)
 	if err != nil {
 		return err
 	}
@@ -33,6 +34,12 @@ func createBook(ctx context.Context, db queryExecer, bcr *BookCreateRequest) err
 func (action *BookCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
+	username := chi.URLParam(r, "username")
+	var readerID int64
+	err := db.QueryRow(ctx, "select id from login_account where username=$1", username).Scan(&readerID)
+	if err != nil {
+		panic(err)
+	}
 
 	bcr := &BookCreateRequest{}
 	bcr.Title = r.FormValue("title")
@@ -40,9 +47,9 @@ func (action *BookCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	bcr.DateFinished = r.FormValue("dateFinished")
 	bcr.Media = r.FormValue("media")
 
-	err := createBook(ctx, db, bcr)
+	err = createBook(ctx, db, bcr, readerID)
 	if err != nil {
-		err := RenderBookNew(w, csrf.TemplateField(r), bcr, err)
+		err := RenderBookNew(w, csrf.TemplateField(r), bcr, err, username)
 		if err != nil {
 			panic(err)
 		}
@@ -53,6 +60,6 @@ func (action *BookCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, BooksPath(), http.StatusSeeOther)
+	http.Redirect(w, r, BooksPath(username), http.StatusSeeOther)
 
 }

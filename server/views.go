@@ -53,26 +53,29 @@ func loadTemplate(name string, files []string, funcMap template.FuncMap) (*templ
 	return tmpl, nil
 }
 
-func RenderBookIndex(w io.Writer, csrfTemplateTag template.HTML, books []*BooksForYear) error {
+func RenderBookIndex(w io.Writer, csrfTemplateTag template.HTML, books []*BooksForYear, username string) error {
 	return bookIndex.Execute(w, map[string]interface{}{
 		"BooksForYears":  books,
 		csrf.TemplateTag: csrfTemplateTag,
+		"username":       username,
 	})
 }
 
-func RenderBookEdit(w io.Writer, csrfTemplateTag template.HTML, bookId string, bcr *BookCreateRequest, errors interface{}) error {
+func RenderBookEdit(w io.Writer, csrfTemplateTag template.HTML, bookId int64, bcr *BookCreateRequest, errors interface{}, username string) error {
 	return bookEdit.Execute(w, map[string]interface{}{
 		"bookID":         bookId,
 		"fields":         bcr,
 		"errors":         errors,
 		csrf.TemplateTag: csrfTemplateTag,
+		"username":       username,
 	})
 }
 
-func RenderBookNew(w io.Writer, csrfTemplateTag template.HTML, bcr *BookCreateRequest, errors interface{}) error {
+func RenderBookNew(w io.Writer, csrfTemplateTag template.HTML, bcr *BookCreateRequest, errors interface{}, username string) error {
 	return bookNew.Execute(w, map[string]interface{}{
 		"fields":         bcr,
 		"errors":         errors,
 		csrf.TemplateTag: csrfTemplateTag,
+		"username":       username,
 	})
 }

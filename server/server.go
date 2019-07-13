@@ -71,13 +71,13 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool) {
 		return http.HandlerFunc(fn)
 	})
 
-	r.Method("GET", "/", &BookIndex{})
-	r.Method("GET", "/books", &BookIndex{})
-	r.Method("GET", "/books/new", &BookNew{})
-	r.Method("POST", "/books", &BookCreate{})
-	r.Method("GET", "/books/{id}/edit", &BookEdit{})
-	r.Method("PATCH", "/books/{id}", &BookUpdate{})
-	r.Method("DELETE", "/books/{id}", &BookDelete{})
+	// r.Method("GET", "/", &BookIndex{})
+	r.Method("GET", "/users/{username}/books", &BookIndex{})
+	r.Method("GET", "/users/{username}/books/new", &BookNew{})
+	r.Method("POST", "/users/{username}/books", &BookCreate{})
+	r.Method("GET", "/users/{username}/books/{id}/edit", &BookEdit{})
+	r.Method("PATCH", "/users/{username}/books/{id}", &BookUpdate{})
+	r.Method("DELETE", "/users/{username}/books/{id}", &BookDelete{})
 
 	fileServer(r, "/static", http.Dir("build/static"))
 
