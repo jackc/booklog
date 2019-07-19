@@ -6,10 +6,11 @@ import (
 )
 
 var RouteFuncMap = template.FuncMap{
-	"newBookPath":  NewBookPath,
-	"bookPath":     BookPath,
-	"editBookPath": EditBookPath,
-	"booksPath":    BooksPath,
+	"newBookPath":          NewBookPath,
+	"bookPath":             BookPath,
+	"editBookPath":         EditBookPath,
+	"booksPath":            BooksPath,
+	"userRegistrationPath": UserRegistrationPath,
 }
 
 func BooksPath(username string) string {
@@ -26,4 +27,8 @@ func EditBookPath(username string, id int64) string {
 
 func NewBookPath(username string) string {
 	return fmt.Sprintf("/users/%s/books/new", username)
+}
+
+func UserRegistrationPath() string {
+	return "/user_registration"
 }

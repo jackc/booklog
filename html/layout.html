@@ -11,7 +11,9 @@
       <h1><a href="/">Booklog</a></h1>
       <nav>
         <ul>
+          {{ if .username }}
           <li><a href="{{ newBookPath .username }}">New Book</a></li>
+          {{ end }}
         </ul>
       </nav>
     </header>

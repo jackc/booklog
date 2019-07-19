@@ -23,3 +23,12 @@ type PresenceError struct {
 func (e PresenceError) Error() string {
 	return fmt.Sprintf("%s cannot be blank", e.attr)
 }
+
+type MinLengthError struct {
+	attr      string
+	minLength int
+}
+
+func (e MinLengthError) Error() string {
+	return fmt.Sprintf("%s must have a minimum length of %d", e.attr, e.minLength)
+}

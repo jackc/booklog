@@ -72,6 +72,9 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool) {
 	})
 
 	// r.Method("GET", "/", &BookIndex{})
+	r.Method("GET", "/user_registration/new", http.HandlerFunc(UserRegistrationNew))
+	r.Method("POST", "/user_registration", http.HandlerFunc(UserRegistrationCreate))
+
 	r.Method("GET", "/users/{username}/books", &BookIndex{})
 	r.Method("GET", "/users/{username}/books/new", &BookNew{})
 	r.Method("POST", "/users/{username}/books", &BookCreate{})

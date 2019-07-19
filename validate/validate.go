@@ -16,6 +16,12 @@ func (v *Validator) Presence(attr string, value string) {
 	}
 }
 
+func (v *Validator) MinLength(attr string, value string, minLength int) {
+	if len(value) < minLength {
+		v.e.Add(attr, MinLengthError{attr: attr, minLength: minLength})
+	}
+}
+
 func (v *Validator) Err() error {
 	if len(v.e) == 0 {
 		return nil

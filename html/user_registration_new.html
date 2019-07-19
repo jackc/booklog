@@ -1,0 +1,22 @@
+{{define "content"}}
+<div class="card">
+  <header>Sign Up</header>
+
+  <form action="{{ userRegistrationPath }}" method="post">
+    {{ .csrfField }}
+    <div class="field">
+      <label for="username">Username</label>
+      <input type="text" name="username" id="username" value="{{ .fields.Username }}" autofocus required>
+      {{ range .errors.username }}<div class="error">{{ . }}</div>{{ end }}
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" name="password" id="password" value="{{ .fields.Password }}" required minlength="8">
+      {{ range .errors.password }}<div class="error">{{ . }}</div>{{ end }}
+    </div>
+
+    <button type="submit">Sign up</button>
+  </form>
+</div>
+{{end}}

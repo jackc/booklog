@@ -16,5 +16,6 @@ require (
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.3.2
 	github.com/zenazn/goji v0.9.0 // indirect
+	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
 	golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3 // indirect
 )
