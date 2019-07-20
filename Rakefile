@@ -7,6 +7,7 @@ end
 
 require "rake/clean"
 require "fileutils"
+require "rake/testtask"
 
 CLOBBER.include("build")
 
@@ -32,3 +33,13 @@ desc "Watch for source changes and rebuild and rerun"
 task :rerun do
   exec "react2fs -dir cmd,css,html,server,validate rake run"
 end
+
+desc "Run tests"
+task test: :build
+Rake::TestTask.new(:test) do |t|
+  t.libs << "test"
+  t.test_files = FileList['test/**/*_test.rb']
+  t.warning = false # Watir generates a lot of warnings.
+end
+
+task default: :test

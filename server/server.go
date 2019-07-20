@@ -57,7 +57,7 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool) {
 		panic(err)
 	}
 
-	dbpool, err := pool.Connect(context.Background(), viper.GetString("database_uri"))
+	dbpool, err := pool.Connect(context.Background(), viper.GetString("database_url"))
 	if err != nil {
 		panic(err)
 	}

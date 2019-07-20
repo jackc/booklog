@@ -4,3 +4,10 @@
 /migration/production.conf
 /migration/test.conf
 node_modules
+
+/test/config.yml
+
+/tmp/*
+!/tmp/test
+/tmp/test/*
+!/tmp/test/.keep

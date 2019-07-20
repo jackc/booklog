@@ -32,7 +32,7 @@ func LoadTemplates(path string) error {
 		return err
 	}
 
-	bookNew, err = loadTemplate("user_registration_new", []string{filepath.Join(path, "layout.html"), filepath.Join(path, "user_registration_new.html")}, RouteFuncMap)
+	userRegistrationNew, err = loadTemplate("user_registration_new", []string{filepath.Join(path, "layout.html"), filepath.Join(path, "user_registration_new.html")}, RouteFuncMap)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func RenderBookNew(w io.Writer, csrfTemplateTag template.HTML, bcr *BookCreateRe
 }
 
 func RenderUserRegistrationNew(w io.Writer, csrfTemplateTag template.HTML, urr *UserRegistrationRequest, errors interface{}) error {
-	return bookNew.Execute(w, map[string]interface{}{
+	return userRegistrationNew.Execute(w, map[string]interface{}{
 		"fields":         urr,
 		"errors":         errors,
 		csrf.TemplateTag: csrfTemplateTag,

@@ -34,3 +34,21 @@ Run server with rake:
 ```
 rake rerun
 ```
+
+## Testing
+
+The `N` environment variable must be set to determine how many parallel browser tests are run.
+
+The following examples offer examples of test setup of all test databases.
+
+Create all browser test databases.
+
+```
+ruby -e '(1..ENV["N"].to_i).each { |n| `createdb booklog_browser_test_#{n}` }'
+```
+
+Migrate all browser test databases.
+
+```
+ruby -e '(1..ENV["N"].to_i).each { |n| `PGDATABASE=booklog_browser_test_#{n} tern migrate -c migration/test.conf -m migration` }'
+```
