@@ -88,9 +88,9 @@ func RenderBookNew(w io.Writer, csrfTemplateTag template.HTML, cba domain.Create
 	})
 }
 
-func RenderUserRegistrationNew(w io.Writer, csrfTemplateTag template.HTML, urr *UserRegistrationRequest, verr validate.Errors) error {
+func RenderUserRegistrationNew(w io.Writer, csrfTemplateTag template.HTML, rua domain.RegisterUserArgs, verr validate.Errors) error {
 	return userRegistrationNew.Execute(w, map[string]interface{}{
-		"fields":         urr,
+		"fields":         rua,
 		"errors":         verr,
 		csrf.TemplateTag: csrfTemplateTag,
 	})

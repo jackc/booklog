@@ -4,17 +4,13 @@ import (
 	"net/http"
 
 	"github.com/gorilla/csrf"
+	"github.com/jackc/booklog/domain"
 )
 
-type UserRegistrationRequest struct {
-	Username string
-	Password string
-}
-
 func UserRegistrationNew(w http.ResponseWriter, r *http.Request) {
-	urr := &UserRegistrationRequest{}
+	var rua domain.RegisterUserArgs
 
-	err := RenderUserRegistrationNew(w, csrf.TemplateField(r), urr, nil)
+	err := RenderUserRegistrationNew(w, csrf.TemplateField(r), rua, nil)
 	if err != nil {
 		panic(err)
 	}
