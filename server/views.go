@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/gorilla/csrf"
+	"github.com/jackc/booklog/domain"
 )
 
 var bookIndex *template.Template
@@ -67,19 +68,19 @@ func RenderBookIndex(w io.Writer, csrfTemplateTag template.HTML, books []*BooksF
 	})
 }
 
-func RenderBookEdit(w io.Writer, csrfTemplateTag template.HTML, bookId int64, bcr *BookCreateRequest, errors interface{}, username string) error {
+func RenderBookEdit(w io.Writer, csrfTemplateTag template.HTML, bookId int64, uba domain.UpdateBookArgs, errors interface{}, username string) error {
 	return bookEdit.Execute(w, map[string]interface{}{
 		"bookID":         bookId,
-		"fields":         bcr,
+		"fields":         uba,
 		"errors":         errors,
 		csrf.TemplateTag: csrfTemplateTag,
 		"username":       username,
 	})
 }
 
-func RenderBookNew(w io.Writer, csrfTemplateTag template.HTML, bcr *BookCreateRequest, errors interface{}, username string) error {
+func RenderBookNew(w io.Writer, csrfTemplateTag template.HTML, cba domain.CreateBookArgs, errors interface{}, username string) error {
 	return bookNew.Execute(w, map[string]interface{}{
-		"fields":         bcr,
+		"fields":         cba,
 		"errors":         errors,
 		csrf.TemplateTag: csrfTemplateTag,
 		"username":       username,

@@ -1,39 +1,35 @@
 package server
 
 import (
-	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi"
+	"github.com/jackc/booklog/domain"
 )
 
 type BookDelete struct {
 }
 
-type BookDeleteRequest struct {
-	ID string
-}
-
-func deleteBook(ctx context.Context, db queryExecer, bcr *BookDeleteRequest) error {
-	_, err := db.Exec(ctx, "delete from finished_book where id=$1", bcr.ID)
-	return err
-}
-
 func (action *BookDelete) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
-	bookID := chi.URLParam(r, "id")
-
-	var username string
-	err := db.QueryRow(ctx, "select username from login_account join finished_book on login_account.id=finished_book.reader_id where finished_book.id=$1", bookID).Scan(&username)
+	bookID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
 		panic(err)
 	}
 
-	bcr := &BookDeleteRequest{}
-	bcr.ID = bookID
+	var username string
+	err = db.QueryRow(ctx, "select username from login_account join finished_book on login_account.id=finished_book.reader_id where finished_book.id=$1", bookID).Scan(&username)
+	if err != nil {
+		panic(err)
+	}
 
-	err = deleteBook(ctx, db, bcr)
+	dba := domain.DeleteBookArgs{
+		ID: bookID,
+	}
+
+	err = domain.DeleteBook(ctx, db, dba)
 	if err != nil {
 		panic(err)
 	}

@@ -1,34 +1,14 @@
 package server
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/go-chi/chi"
 	"github.com/gorilla/csrf"
-	"github.com/jackc/booklog/validate"
+	"github.com/jackc/booklog/domain"
 )
 
 type BookCreate struct {
-}
-
-func createBook(ctx context.Context, db queryExecer, bcr *BookCreateRequest, readerID int64) error {
-	v := validate.New()
-	v.Presence("title", bcr.Title)
-	v.Presence("author", bcr.Author)
-	v.Presence("dateFinished", bcr.DateFinished)
-	v.Presence("media", bcr.Media)
-
-	if v.Err() != nil {
-		return v.Err()
-	}
-
-	_, err := db.Exec(ctx, "insert into finished_book(reader_id, title, author, date_finished, media) values($1, $2, $3, $4, $5)", readerID, bcr.Title, bcr.Author, bcr.DateFinished, bcr.Media)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (action *BookCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -41,15 +21,17 @@ func (action *BookCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	bcr := &BookCreateRequest{}
-	bcr.Title = r.FormValue("title")
-	bcr.Author = r.FormValue("author")
-	bcr.DateFinished = r.FormValue("dateFinished")
-	bcr.Media = r.FormValue("media")
+	cba := domain.CreateBookArgs{
+		ReaderID:     readerID,
+		Title:        r.FormValue("title"),
+		Author:       r.FormValue("author"),
+		DateFinished: r.FormValue("dateFinished"),
+		Media:        r.FormValue("media"),
+	}
 
-	err = createBook(ctx, db, bcr, readerID)
+	err = domain.CreateBook(ctx, db, cba)
 	if err != nil {
-		err := RenderBookNew(w, csrf.TemplateField(r), bcr, err, username)
+		err := RenderBookNew(w, csrf.TemplateField(r), cba, err, username)
 		if err != nil {
 			panic(err)
 		}

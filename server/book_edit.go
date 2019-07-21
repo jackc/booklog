@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/gorilla/csrf"
+	"github.com/jackc/booklog/domain"
 )
 
 type BookEdit struct {
@@ -20,8 +21,8 @@ func (action *BookEdit) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	bcr := &BookCreateRequest{}
-	err = db.QueryRow(ctx, "select title, author, date_finished::text, media from finished_book where id=$1", bookID).Scan(&bcr.Title, &bcr.Author, &bcr.DateFinished, &bcr.Media)
+	uba := domain.UpdateBookArgs{}
+	err = db.QueryRow(ctx, "select title, author, date_finished::text, media from finished_book where id=$1", bookID).Scan(&uba.Title, &uba.Author, &uba.DateFinished, &uba.Media)
 	// TODO - handle not found error
 	// if len(result.Rows) == 0 {
 	// 	http.NotFound(w, r)
@@ -31,7 +32,7 @@ func (action *BookEdit) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	err = RenderBookEdit(w, csrf.TemplateField(r), bookID, bcr, map[string]string{}, username)
+	err = RenderBookEdit(w, csrf.TemplateField(r), bookID, uba, map[string]string{}, username)
 	if err != nil {
 		panic(err)
 	}

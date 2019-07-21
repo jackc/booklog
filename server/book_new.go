@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/gorilla/csrf"
+	"github.com/jackc/booklog/domain"
 )
 
 type BookNew struct {
@@ -20,8 +21,8 @@ type BookCreateRequest struct {
 func (action *BookNew) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	username := chi.URLParam(r, "username")
 
-	bcr := &BookCreateRequest{}
-	err := RenderBookNew(w, csrf.TemplateField(r), bcr, map[string]string{}, username)
+	var createBookArgs domain.CreateBookArgs
+	err := RenderBookNew(w, csrf.TemplateField(r), createBookArgs, map[string]string{}, username)
 	if err != nil {
 		panic(err)
 	}

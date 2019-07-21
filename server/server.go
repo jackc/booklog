@@ -11,8 +11,8 @@ import (
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/handlers"
 	"github.com/jackc/pgconn"
-	"github.com/jackc/pgx"
-	"github.com/jackc/pgx/pool"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/hlog"
 	"github.com/spf13/viper"
@@ -57,7 +57,7 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool) {
 		panic(err)
 	}
 
-	dbpool, err := pool.Connect(context.Background(), viper.GetString("database_url"))
+	dbpool, err := pgxpool.Connect(context.Background(), viper.GetString("database_url"))
 	if err != nil {
 		panic(err)
 	}
