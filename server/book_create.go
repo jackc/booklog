@@ -6,6 +6,8 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/gorilla/csrf"
 	"github.com/jackc/booklog/domain"
+	"github.com/jackc/booklog/validate"
+	errors "golang.org/x/xerrors"
 )
 
 type BookCreate struct {
@@ -31,17 +33,18 @@ func (action *BookCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	err = domain.CreateBook(ctx, db, cba)
 	if err != nil {
-		err := RenderBookNew(w, csrf.TemplateField(r), cba, err, username)
-		if err != nil {
-			panic(err)
+		var verr validate.Errors
+		if errors.As(err, &verr) {
+			err := RenderBookNew(w, csrf.TemplateField(r), cba, verr, username)
+			if err != nil {
+				panic(err)
+			}
+
+			return
 		}
 
-		if err != nil {
-			panic(err)
-		}
-		return
+		panic(err)
 	}
 
 	http.Redirect(w, r, BooksPath(username), http.StatusSeeOther)
-
 }

@@ -7,6 +7,8 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/gorilla/csrf"
 	"github.com/jackc/booklog/domain"
+	"github.com/jackc/booklog/validate"
+	errors "golang.org/x/xerrors"
 )
 
 type BookUpdate struct {
@@ -36,12 +38,17 @@ func (action *BookUpdate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	err = domain.UpdateBook(ctx, db, uba)
 	if err != nil {
-		// TODO - if errors is not a map this fails
-		err := RenderBookEdit(w, csrf.TemplateField(r), bookID, uba, err, username)
-		if err != nil {
-			panic(err)
+		var verr validate.Errors
+		if errors.As(err, &verr) {
+			err := RenderBookEdit(w, csrf.TemplateField(r), bookID, uba, verr, username)
+			if err != nil {
+				panic(err)
+			}
+
+			return
 		}
-		return
+
+		panic(err)
 	}
 
 	http.Redirect(w, r, BooksPath(username), http.StatusSeeOther)

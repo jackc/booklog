@@ -16,6 +16,14 @@ func (e Errors) Error() string {
 	return "TODO"
 }
 
+func (e Errors) Get(attr string) []error {
+	if e == nil {
+		return nil
+	}
+
+	return e[attr]
+}
+
 type PresenceError struct {
 	attr string
 }

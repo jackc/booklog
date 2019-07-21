@@ -14,7 +14,7 @@ type UserRegistrationRequest struct {
 func UserRegistrationNew(w http.ResponseWriter, r *http.Request) {
 	urr := &UserRegistrationRequest{}
 
-	err := RenderUserRegistrationNew(w, csrf.TemplateField(r), urr, map[string]string{})
+	err := RenderUserRegistrationNew(w, csrf.TemplateField(r), urr, nil)
 	if err != nil {
 		panic(err)
 	}

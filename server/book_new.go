@@ -22,7 +22,7 @@ func (action *BookNew) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	username := chi.URLParam(r, "username")
 
 	var createBookArgs domain.CreateBookArgs
-	err := RenderBookNew(w, csrf.TemplateField(r), createBookArgs, map[string]string{}, username)
+	err := RenderBookNew(w, csrf.TemplateField(r), createBookArgs, nil, username)
 	if err != nil {
 		panic(err)
 	}

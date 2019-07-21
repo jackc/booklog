@@ -32,7 +32,7 @@ func (action *BookEdit) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	err = RenderBookEdit(w, csrf.TemplateField(r), bookID, uba, map[string]string{}, username)
+	err = RenderBookEdit(w, csrf.TemplateField(r), bookID, uba, nil, username)
 	if err != nil {
 		panic(err)
 	}

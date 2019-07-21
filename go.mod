@@ -20,5 +20,6 @@ require (
 	github.com/zenazn/goji v0.9.0 // indirect
 	golang.org/x/crypto v0.0.0-20190411191339-88737f569e3a
 	golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3 // indirect
+	golang.org/x/xerrors v0.0.0-20190513163551-3ee3066db522
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 )

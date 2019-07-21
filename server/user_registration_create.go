@@ -2,12 +2,12 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/csrf"
 	"github.com/jackc/booklog/validate"
 	"golang.org/x/crypto/bcrypt"
+	errors "golang.org/x/xerrors"
 )
 
 func registerUser(ctx context.Context, db queryExecer, urr *UserRegistrationRequest) error {
@@ -43,16 +43,17 @@ func UserRegistrationCreate(w http.ResponseWriter, r *http.Request) {
 
 	err := registerUser(ctx, db, urr)
 	if err != nil {
-		fmt.Println(err)
-		err := RenderUserRegistrationNew(w, csrf.TemplateField(r), urr, err)
-		if err != nil {
-			panic(err)
+		var verr validate.Errors
+		if errors.As(err, &verr) {
+			err := RenderUserRegistrationNew(w, csrf.TemplateField(r), urr, verr)
+			if err != nil {
+				panic(err)
+			}
+
+			return
 		}
 
-		if err != nil {
-			panic(err)
-		}
-		return
+		panic(err)
 	}
 
 	http.Redirect(w, r, BooksPath(urr.Username), http.StatusSeeOther)

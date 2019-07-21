@@ -6,25 +6,25 @@
     <div class="field">
       <label for="title">Title</label>
       <input type="text" name="title" id="title" value="{{ .fields.Title }}" required>
-      {{ range .errors.title }}<div class="error">{{ . }}</div>{{ end }}
+      {{ range .errors.Get "title" }}<div class="error">{{ . }}</div>{{ end }}
     </div>
 
     <div class="field">
       <label for="author">Author</label>
       <input type="text" name="author" id="author" value="{{ .fields.Author }}" required>
-      {{ range .errors.author }}<div class="error">{{ . }}</div>{{ end }}
+      {{ range .errors.Get "author" }}<div class="error">{{ . }}</div>{{ end }}
     </div>
 
     <div class="field">
       <label for="dateFinished">Date Finished</label>
       <input type="date" name="dateFinished" id="dateFinished" value="{{ .fields.DateFinished }}" required>
-      {{ range .errors.dateFinished }}<div class="error">{{ . }}</div>{{ end }}
+      {{ range .errors.Get "dateFinished" }}<div class="error">{{ . }}</div>{{ end }}
     </div>
 
     <div class="field">
       <label for="media">Media</label>
       <input type="text" name="media" id="media" value="{{ .fields.Media }}" required>
-      {{ range .errors.media }}<div class="error">{{ . }}</div>{{ end }}
+      {{ range .errors.Get "media" }}<div class="error">{{ . }}</div>{{ end }}
     </div>
 
     <button type="submit">Save</button>

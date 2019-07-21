@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/csrf"
 	"github.com/jackc/booklog/domain"
+	"github.com/jackc/booklog/validate"
 )
 
 var bookIndex *template.Template
@@ -68,29 +69,29 @@ func RenderBookIndex(w io.Writer, csrfTemplateTag template.HTML, books []*BooksF
 	})
 }
 
-func RenderBookEdit(w io.Writer, csrfTemplateTag template.HTML, bookId int64, uba domain.UpdateBookArgs, errors interface{}, username string) error {
+func RenderBookEdit(w io.Writer, csrfTemplateTag template.HTML, bookId int64, uba domain.UpdateBookArgs, verr validate.Errors, username string) error {
 	return bookEdit.Execute(w, map[string]interface{}{
 		"bookID":         bookId,
 		"fields":         uba,
-		"errors":         errors,
+		"errors":         verr,
 		csrf.TemplateTag: csrfTemplateTag,
 		"username":       username,
 	})
 }
 
-func RenderBookNew(w io.Writer, csrfTemplateTag template.HTML, cba domain.CreateBookArgs, errors interface{}, username string) error {
+func RenderBookNew(w io.Writer, csrfTemplateTag template.HTML, cba domain.CreateBookArgs, verr validate.Errors, username string) error {
 	return bookNew.Execute(w, map[string]interface{}{
 		"fields":         cba,
-		"errors":         errors,
+		"errors":         verr,
 		csrf.TemplateTag: csrfTemplateTag,
 		"username":       username,
 	})
 }
 
-func RenderUserRegistrationNew(w io.Writer, csrfTemplateTag template.HTML, urr *UserRegistrationRequest, errors interface{}) error {
+func RenderUserRegistrationNew(w io.Writer, csrfTemplateTag template.HTML, urr *UserRegistrationRequest, verr validate.Errors) error {
 	return userRegistrationNew.Execute(w, map[string]interface{}{
 		"fields":         urr,
-		"errors":         errors,
+		"errors":         verr,
 		csrf.TemplateTag: csrfTemplateTag,
 	})
 }
