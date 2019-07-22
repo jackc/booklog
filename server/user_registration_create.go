@@ -3,7 +3,6 @@ package server
 import (
 	"net/http"
 
-	"github.com/gorilla/csrf"
 	"github.com/jackc/booklog/domain"
 	"github.com/jackc/booklog/validate"
 	errors "golang.org/x/xerrors"
@@ -22,7 +21,7 @@ func UserRegistrationCreate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := RenderUserRegistrationNew(w, csrf.TemplateField(r), rua, verr)
+			err := RenderUserRegistrationNew(w, baseViewDataFromRequest(r), rua, verr)
 			if err != nil {
 				panic(err)
 			}

@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
-	"github.com/gorilla/csrf"
 	"github.com/jackc/booklog/domain"
 	"github.com/jackc/booklog/validate"
 	errors "golang.org/x/xerrors"
@@ -35,7 +34,7 @@ func (action *BookCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := RenderBookNew(w, csrf.TemplateField(r), cba, verr, username)
+			err := RenderBookNew(w, baseViewDataFromRequest(r), cba, verr, username)
 			if err != nil {
 				panic(err)
 			}

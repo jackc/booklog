@@ -10,6 +10,10 @@ func New() *Validator {
 	return v
 }
 
+func (v *Validator) Add(attr string, err error) {
+	v.e.Add(attr, err)
+}
+
 func (v *Validator) Presence(attr string, value string) {
 	if value == "" {
 		v.e.Add(attr, PresenceError{attr: attr})

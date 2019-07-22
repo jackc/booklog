@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
-	"github.com/gorilla/csrf"
 	"github.com/jackc/booklog/domain"
 )
 
@@ -22,7 +21,7 @@ func (action *BookNew) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	username := chi.URLParam(r, "username")
 
 	var createBookArgs domain.CreateBookArgs
-	err := RenderBookNew(w, csrf.TemplateField(r), createBookArgs, nil, username)
+	err := RenderBookNew(w, baseViewDataFromRequest(r), createBookArgs, nil, username)
 	if err != nil {
 		panic(err)
 	}

@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi"
-	"github.com/gorilla/csrf"
 	"github.com/jackc/booklog/domain"
 	"github.com/jackc/booklog/validate"
 	errors "golang.org/x/xerrors"
@@ -40,7 +39,7 @@ func (action *BookUpdate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := RenderBookEdit(w, csrf.TemplateField(r), bookID, uba, verr, username)
+			err := RenderBookEdit(w, baseViewDataFromRequest(r), bookID, uba, verr, username)
 			if err != nil {
 				panic(err)
 			}

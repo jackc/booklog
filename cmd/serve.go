@@ -17,19 +17,27 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Start web server",
 	Run: func(cmd *cobra.Command, args []string) {
-		csrfKey := make([]byte, 32)
-		if s := viper.GetString("csrf_key"); len(s) >= 64 {
-			h := sha256.Sum256([]byte(s))
-			copy(csrfKey, h[:])
-		} else {
-			fmt.Fprintln(os.Stderr, "CSRF key not set or too short. Using random key.")
-			if _, err := io.ReadFull(rand.Reader, csrfKey); err != nil {
-				fmt.Fprintf(os.Stderr, "error creating random CSRF key: %v\n", err)
-				os.Exit(1)
+		digestKey := func(size int, keyName string) []byte {
+			buf := make([]byte, size)
+			if s := viper.GetString(keyName); len(s) >= size {
+				h := sha256.Sum256([]byte(s))
+				copy(buf, h[:])
+			} else {
+				fmt.Fprintf(os.Stderr, "%s not set or too short. Using random key.\n", keyName)
+				if _, err := io.ReadFull(rand.Reader, buf); err != nil {
+					fmt.Fprintf(os.Stderr, "error creating random %s: %v\n", keyName, err)
+					os.Exit(1)
+				}
 			}
+
+			return buf
 		}
 
-		server.Serve(viper.GetString("http_service_address"), csrfKey, viper.GetBool("insecure_dev_mode"))
+		csrfKey := digestKey(32, "csrf_key")
+		cookieHashKey := digestKey(32, "cookie_hash_key")
+		cookieBlockKey := digestKey(32, "cookie_block_key")
+
+		server.Serve(viper.GetString("http_service_address"), csrfKey, viper.GetBool("insecure_dev_mode"), cookieHashKey, cookieBlockKey)
 	},
 }
 
@@ -41,6 +49,12 @@ func init() {
 
 	serveCmd.Flags().String("csrf-key", "", "CSRF key")
 	viper.BindPFlag("csrf_key", serveCmd.Flags().Lookup("csrf-key"))
+
+	serveCmd.Flags().String("cookie-hash-key", "", "Cookie hash key")
+	viper.BindPFlag("cookie_hash_key", serveCmd.Flags().Lookup("cookie-hash-key"))
+
+	serveCmd.Flags().String("cookie-block-key", "", "Cookie block key")
+	viper.BindPFlag("cookie_block_key", serveCmd.Flags().Lookup("cookie-block-key"))
 
 	serveCmd.Flags().Bool("insecure-dev-mode", false, "Insecure development mode")
 	viper.BindPFlag("insecure_dev_mode", serveCmd.Flags().Lookup("insecure-dev-mode"))

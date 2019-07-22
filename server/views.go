@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"path/filepath"
 
 	"github.com/gorilla/csrf"
@@ -15,6 +16,7 @@ var bookIndex *template.Template
 var bookEdit *template.Template
 var bookNew *template.Template
 var userRegistrationNew *template.Template
+var loginForm *template.Template
 
 func LoadTemplates(path string) error {
 	var err error
@@ -35,6 +37,11 @@ func LoadTemplates(path string) error {
 	}
 
 	userRegistrationNew, err = loadTemplate("user_registration_new", []string{filepath.Join(path, "layout.html"), filepath.Join(path, "user_registration_new.html")}, RouteFuncMap)
+	if err != nil {
+		return err
+	}
+
+	loginForm, err = loadTemplate("login_form", []string{filepath.Join(path, "layout.html"), filepath.Join(path, "login.html")}, RouteFuncMap)
 	if err != nil {
 		return err
 	}
@@ -61,37 +68,62 @@ func loadTemplate(name string, files []string, funcMap template.FuncMap) (*templ
 	return tmpl, nil
 }
 
-func RenderBookIndex(w io.Writer, csrfTemplateTag template.HTML, books []*BooksForYear, username string) error {
+type baseViewData struct {
+	csrfTemplateTag template.HTML
+	session         *Session
+}
+
+func baseViewDataFromRequest(r *http.Request) baseViewData {
+	return baseViewData{
+		csrfTemplateTag: csrf.TemplateField(r),
+		session:         r.Context().Value(RequestSessionKey).(*Session),
+	}
+}
+
+func RenderBookIndex(w io.Writer, b baseViewData, books []*BooksForYear, username string) error {
 	return bookIndex.Execute(w, map[string]interface{}{
 		"BooksForYears":  books,
-		csrf.TemplateTag: csrfTemplateTag,
+		csrf.TemplateTag: b.csrfTemplateTag,
+		"session":        b.session,
 		"username":       username,
 	})
 }
 
-func RenderBookEdit(w io.Writer, csrfTemplateTag template.HTML, bookId int64, uba domain.UpdateBookArgs, verr validate.Errors, username string) error {
+func RenderBookEdit(w io.Writer, b baseViewData, bookId int64, uba domain.UpdateBookArgs, verr validate.Errors, username string) error {
 	return bookEdit.Execute(w, map[string]interface{}{
 		"bookID":         bookId,
 		"fields":         uba,
 		"errors":         verr,
-		csrf.TemplateTag: csrfTemplateTag,
+		csrf.TemplateTag: b.csrfTemplateTag,
+		"session":        b.session,
 		"username":       username,
 	})
 }
 
-func RenderBookNew(w io.Writer, csrfTemplateTag template.HTML, cba domain.CreateBookArgs, verr validate.Errors, username string) error {
+func RenderBookNew(w io.Writer, b baseViewData, cba domain.CreateBookArgs, verr validate.Errors, username string) error {
 	return bookNew.Execute(w, map[string]interface{}{
 		"fields":         cba,
 		"errors":         verr,
-		csrf.TemplateTag: csrfTemplateTag,
+		csrf.TemplateTag: b.csrfTemplateTag,
+		"session":        b.session,
 		"username":       username,
 	})
 }
 
-func RenderUserRegistrationNew(w io.Writer, csrfTemplateTag template.HTML, rua domain.RegisterUserArgs, verr validate.Errors) error {
+func RenderUserRegistrationNew(w io.Writer, b baseViewData, rua domain.RegisterUserArgs, verr validate.Errors) error {
 	return userRegistrationNew.Execute(w, map[string]interface{}{
 		"fields":         rua,
 		"errors":         verr,
-		csrf.TemplateTag: csrfTemplateTag,
+		csrf.TemplateTag: b.csrfTemplateTag,
+		"session":        b.session,
+	})
+}
+
+func RenderUserLoginForm(w io.Writer, b baseViewData, la domain.UserLoginArgs, verr validate.Errors) error {
+	return loginForm.Execute(w, map[string]interface{}{
+		"fields":         la,
+		"errors":         verr,
+		csrf.TemplateTag: b.csrfTemplateTag,
+		"session":        b.session,
 	})
 }

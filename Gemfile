@@ -1,5 +1,6 @@
 source 'https://rubygems.org'
 
+gem 'bcrypt'
 gem 'minitest'
 gem 'minitest-reporters'
 gem 'pg'

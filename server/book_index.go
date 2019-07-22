@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
-	"github.com/gorilla/csrf"
 )
 
 type BookIndex struct {
@@ -39,7 +38,7 @@ order by date_finished desc`, username)
 		panic(rows.Err())
 	}
 
-	err := RenderBookIndex(w, csrf.TemplateField(r), booksForYears, username)
+	err := RenderBookIndex(w, baseViewDataFromRequest(r), booksForYears, username)
 	if err != nil {
 		panic(err)
 	}

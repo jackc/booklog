@@ -7,6 +7,7 @@ require (
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/gorilla/csrf v1.5.1
 	github.com/gorilla/handlers v1.4.0
+	github.com/gorilla/securecookie v1.1.1
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jackc/pgconn v0.0.0-20190528115420-71ec1f782113
 	github.com/jackc/pgproto3 v1.1.0 // indirect

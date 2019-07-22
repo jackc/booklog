@@ -11,6 +11,9 @@ var RouteFuncMap = template.FuncMap{
 	"editBookPath":         EditBookPath,
 	"booksPath":            BooksPath,
 	"userRegistrationPath": UserRegistrationPath,
+	"newLoginPath":         NewLoginPath,
+	"loginPath":            LoginPath,
+	"logoutPath":           LogoutPath,
 }
 
 func BooksPath(username string) string {
@@ -31,4 +34,16 @@ func NewBookPath(username string) string {
 
 func UserRegistrationPath() string {
 	return "/user_registration"
+}
+
+func NewLoginPath() string {
+	return "/login"
+}
+
+func LoginPath() string {
+	return "/login/handle"
+}
+
+func LogoutPath() string {
+	return "/logout"
 }

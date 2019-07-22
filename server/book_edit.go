@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi"
-	"github.com/gorilla/csrf"
 	"github.com/jackc/booklog/domain"
 )
 
@@ -32,7 +31,7 @@ func (action *BookEdit) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	err = RenderBookEdit(w, csrf.TemplateField(r), bookID, uba, nil, username)
+	err = RenderBookEdit(w, baseViewDataFromRequest(r), bookID, uba, nil, username)
 	if err != nil {
 		panic(err)
 	}
