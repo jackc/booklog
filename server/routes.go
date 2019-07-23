@@ -6,16 +6,17 @@ import (
 )
 
 var RouteFuncMap = template.FuncMap{
-	"newBookPath":           NewBookPath,
-	"bookPath":              BookPath,
-	"editBookPath":          EditBookPath,
-	"booksPath":             BooksPath,
-	"userRegistrationPath":  UserRegistrationPath,
-	"newLoginPath":          NewLoginPath,
-	"loginPath":             LoginPath,
-	"logoutPath":            LogoutPath,
-	"importBookCSVFormPath": ImportBookCSVFormPath,
-	"importBookCSVPath":     ImportBookCSVPath,
+	"newBookPath":             NewBookPath,
+	"bookPath":                BookPath,
+	"editBookPath":            EditBookPath,
+	"booksPath":               BooksPath,
+	"NewUserRegistrationPath": NewUserRegistrationPath,
+	"userRegistrationPath":    UserRegistrationPath,
+	"newLoginPath":            NewLoginPath,
+	"loginPath":               LoginPath,
+	"logoutPath":              LogoutPath,
+	"importBookCSVFormPath":   ImportBookCSVFormPath,
+	"importBookCSVPath":       ImportBookCSVPath,
 }
 
 func BooksPath(username string) string {
@@ -40,6 +41,10 @@ func ImportBookCSVFormPath(username string) string {
 
 func ImportBookCSVPath(username string) string {
 	return fmt.Sprintf("/users/%s/books/import_csv", username)
+}
+
+func NewUserRegistrationPath() string {
+	return "/user_registration/new"
 }
 
 func UserRegistrationPath() string {
