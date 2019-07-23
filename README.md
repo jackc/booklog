@@ -17,7 +17,7 @@ https://github.com/jackc/react2fs - Restart server when files change
 Create database and user.
 
 ```
-createdb booklog
+createdb --locale=en_US -T template0 booklog_dev
 createuser booklog
 ```
 
@@ -37,14 +37,19 @@ rake rerun
 
 ## Testing
 
-The `N` environment variable must be set to determine how many parallel browser tests are run.
+Create the database for the Go tests
 
-The following examples offer examples of test setup of all test databases.
+```
+createdb --locale=en_US -T template0 booklog_test
+PGDATABASE=booklog_test tern migrate -m migration -c migration/development.conf
+```
+
+The `N` environment variable must be set to determine how many parallel browser tests are run. Set that variable in `.envrc`.
 
 Create all browser test databases.
 
 ```
-ruby -e '(1..ENV["N"].to_i).each { |n| `createdb booklog_browser_test_#{n}` }'
+ruby -e '(1..ENV["N"].to_i).each { |n| `createdb --locale=en_US -T template0 booklog_browser_test_#{n}` }'
 ```
 
 Migrate all browser test databases.
