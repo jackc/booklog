@@ -33,7 +33,7 @@ func TestImportBooksFromCSV(t *testing.T) {
 	defer tx.Rollback(ctx)
 
 	var userID int64
-	err = tx.QueryRow(ctx, "insert into login_account(username, password_digest) values('test', 'x') returning id").Scan(&userID)
+	err = tx.QueryRow(ctx, "insert into users(username, password_digest) values('test', 'x') returning id").Scan(&userID)
 	require.NoError(t, err)
 
 	in := `Title,Author,Date Finished,Media,
@@ -45,7 +45,7 @@ func TestImportBooksFromCSV(t *testing.T) {
 	require.NoError(t, err)
 
 	var bookCount int64
-	err = tx.QueryRow(ctx, "select count(*) from finished_book where reader_id=$1", userID).Scan(&bookCount)
+	err = tx.QueryRow(ctx, "select count(*) from books where user_id=$1", userID).Scan(&bookCount)
 	require.NoError(t, err)
 
 	require.EqualValues(t, 3, bookCount)

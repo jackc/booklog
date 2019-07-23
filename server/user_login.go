@@ -65,7 +65,7 @@ func UserLogout(w http.ResponseWriter, r *http.Request) {
 	session := ctx.Value(RequestSessionKey).(*Session)
 
 	if session.IsAuthenticated {
-		_, err := db.Exec(ctx, "delete from user_session where id=$1", session.ID)
+		_, err := db.Exec(ctx, "delete from user_sessions where id=$1", session.ID)
 		if err != nil {
 			panic(err)
 		}

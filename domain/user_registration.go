@@ -27,7 +27,7 @@ func RegisterUser(ctx context.Context, db queryExecer, args RegisterUserArgs) er
 		return err
 	}
 
-	_, err = db.Exec(ctx, "insert into login_account(username, password_digest) values($1, $2)", args.Username, passwordDigest)
+	_, err = db.Exec(ctx, "insert into users(username, password_digest) values($1, $2)", args.Username, passwordDigest)
 	if err != nil {
 		return err
 	}

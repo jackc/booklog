@@ -17,7 +17,7 @@ func (action *BookCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	db := ctx.Value(RequestDBKey).(queryExecer)
 	username := chi.URLParam(r, "username")
 	var readerID int64
-	err := db.QueryRow(ctx, "select id from login_account where username=$1", username).Scan(&readerID)
+	err := db.QueryRow(ctx, "select id from users where username=$1", username).Scan(&readerID)
 	if err != nil {
 		panic(err)
 	}

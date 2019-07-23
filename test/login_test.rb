@@ -5,7 +5,7 @@ class LoginTest < IntegrationTest
   parallelize_me!
 
   def test_user_login_and_logout
-    session.db[:login_account].insert username: "test", password_digest: BCrypt::Password.create("secret phrase")
+    session.db[:users].insert username: "test", password_digest: BCrypt::Password.create("secret phrase")
 
     browser.goto "#{session.app_host}/login"
     browser.text_field(label: "Username").set "test"

@@ -22,8 +22,8 @@ class Session
     @app_host = session_config.fetch("app_host")
 
     @db = Sequel.connect session_config.fetch("database_url")
-    db[:finished_book].delete
-    db[:login_account].delete
+    db[:books].delete
+    db[:users].delete
   end
 
   def release

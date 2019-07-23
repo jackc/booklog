@@ -30,7 +30,7 @@ func CreateBook(ctx context.Context, db queryExecer, args CreateBookArgs) error 
 		return v.Err()
 	}
 
-	_, err := db.Exec(ctx, "insert into finished_book(reader_id, title, author, date_finished, media) values($1, $2, $3, $4, $5)",
+	_, err := db.Exec(ctx, "insert into books(user_id, title, author, finish_date, media) values($1, $2, $3, $4, $5)",
 		args.ReaderID,
 		args.Title,
 		args.Author,
@@ -63,7 +63,7 @@ func UpdateBook(ctx context.Context, db queryExecer, args UpdateBookArgs) error 
 		return v.Err()
 	}
 
-	commandTag, err := db.Exec(ctx, "update finished_book set title=$1, author=$2, date_finished=$3, media=$4 where id=$5",
+	commandTag, err := db.Exec(ctx, "update books set title=$1, author=$2, finish_date=$3, media=$4 where id=$5",
 		args.Title,
 		args.Author,
 		args.DateFinished,
@@ -85,7 +85,7 @@ type DeleteBookArgs struct {
 }
 
 func DeleteBook(ctx context.Context, db queryExecer, args DeleteBookArgs) error {
-	_, err := db.Exec(ctx, "delete from finished_book where id=$1", args.ID)
+	_, err := db.Exec(ctx, "delete from books where id=$1", args.ID)
 	return err
 }
 
@@ -124,7 +124,7 @@ func ImportBooksFromCSV(ctx context.Context, db queryExecer, userID int64, r io.
 			return errors.Errorf("row %d: %v", i, err)
 		}
 
-		_, err := db.Exec(ctx, "insert into finished_book(reader_id, title, author, date_finished, media) values($1, $2, $3, $4, $5)",
+		_, err := db.Exec(ctx, "insert into books(user_id, title, author, finish_date, media) values($1, $2, $3, $4, $5)",
 			userID,
 			record[0],
 			record[1],

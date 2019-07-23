@@ -18,11 +18,11 @@ func (action *BookIndex) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	var booksForYears []*BooksForYear
 	var booksForYear *BooksForYear
-	rows, _ := db.Query(context.Background(), `select finished_book.id, title, author, date_finished, media
-from finished_book
-	join login_account on finished_book.reader_id=login_account.id
-where login_account.username=$1
-order by date_finished desc`, username)
+	rows, _ := db.Query(context.Background(), `select books.id, title, author, finish_date, media
+from books
+	join users on books.user_id=users.id
+where users.username=$1
+order by finish_date desc`, username)
 	for rows.Next() {
 		var b BookRow001
 		rows.Scan(&b.ID, &b.Title, &b.Author, &b.DateFinished, &b.Media)

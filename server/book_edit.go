@@ -21,7 +21,7 @@ func (action *BookEdit) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	uba := domain.UpdateBookArgs{}
-	err = db.QueryRow(ctx, "select title, author, date_finished::text, media from finished_book where id=$1", bookID).Scan(&uba.Title, &uba.Author, &uba.DateFinished, &uba.Media)
+	err = db.QueryRow(ctx, "select title, author, finish_date::text, media from books where id=$1", bookID).Scan(&uba.Title, &uba.Author, &uba.DateFinished, &uba.Media)
 	// TODO - handle not found error
 	// if len(result.Rows) == 0 {
 	// 	http.NotFound(w, r)

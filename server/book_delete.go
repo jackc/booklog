@@ -20,7 +20,7 @@ func (action *BookDelete) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var username string
-	err = db.QueryRow(ctx, "select username from login_account join finished_book on login_account.id=finished_book.reader_id where finished_book.id=$1", bookID).Scan(&username)
+	err = db.QueryRow(ctx, "select username from users join books on users.id=books.user_id where books.id=$1", bookID).Scan(&username)
 	if err != nil {
 		panic(err)
 	}

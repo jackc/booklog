@@ -26,7 +26,7 @@ func UserLogin(ctx context.Context, db queryExecer, args UserLoginArgs) ([16]byt
 	var userID int64
 	var passwordDigest []byte
 
-	err := db.QueryRow(ctx, "select id, password_digest from login_account where username=$1", args.Username).Scan(&userID, &passwordDigest)
+	err := db.QueryRow(ctx, "select id, password_digest from users where username=$1", args.Username).Scan(&userID, &passwordDigest)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			v.Add("base", errors.New("Invalid username or password."))
@@ -42,7 +42,7 @@ func UserLogin(ctx context.Context, db queryExecer, args UserLoginArgs) ([16]byt
 	}
 
 	var userSessionID [16]byte
-	db.QueryRow(ctx, "insert into user_session(user_id) values ($1) returning id", userID).Scan(&userSessionID)
+	db.QueryRow(ctx, "insert into user_sessions(user_id) values ($1) returning id", userID).Scan(&userSessionID)
 
 	return userSessionID, nil
 }

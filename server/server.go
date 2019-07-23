@@ -105,7 +105,7 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHas
 
 			db := ctx.Value(RequestDBKey).(queryExecer)
 			err = db.QueryRow(ctx,
-				"select user_session.id, login_account.username from user_session join login_account on user_session.user_id=login_account.id where user_session.id=$1",
+				"select user_sessions.id, users.username from user_sessions join users on user_sessions.user_id=users.id where user_sessions.id=$1",
 				sessionID,
 			).Scan(&session.ID, &session.Username)
 			if err != nil {
