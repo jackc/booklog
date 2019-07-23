@@ -34,8 +34,10 @@ task :rerun do
   exec "react2fs -dir cmd,css,domain,html,server,validate rake run"
 end
 
-desc "Run tests"
-task test: :build
+desc "Run all tests"
+task test: :build do
+  sh "go test ./..."
+end
 Rake::TestTask.new(:test) do |t|
   t.libs << "test"
   t.test_files = FileList['test/**/*_test.rb']

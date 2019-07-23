@@ -140,6 +140,8 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHas
 	r.Method("GET", "/users/{username}/books/{id}/edit", &BookEdit{})
 	r.Method("PATCH", "/users/{username}/books/{id}", &BookUpdate{})
 	r.Method("DELETE", "/users/{username}/books/{id}", &BookDelete{})
+	r.Method("GET", "/users/{username}/books/import_csv/form", http.HandlerFunc(BookImportCSVForm))
+	r.Method("POST", "/users/{username}/books/import_csv", http.HandlerFunc(BookImportCSV))
 
 	fileServer(r, "/static", http.Dir("build/static"))
 

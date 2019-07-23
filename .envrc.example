@@ -1,6 +1,7 @@
 PATH_add node_modules/.bin
 
 export PGDATABASE=booklog_dev
+export BOOKLOG_TEST_DB_CONN_STRING="database=booklog_test"
 export CSRF_KEY=change-me-to-at-least-64-characters
 export COOKIE_HASH_KEY=change-me-to-at-least-64-characters
 export COOKIE_BLOCK_KEY=change-me-to-at-least-64-characters

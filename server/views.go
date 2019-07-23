@@ -17,6 +17,7 @@ var bookEdit *template.Template
 var bookNew *template.Template
 var userRegistrationNew *template.Template
 var loginForm *template.Template
+var bookImportCSVForm *template.Template
 
 func LoadTemplates(path string) error {
 	var err error
@@ -42,6 +43,11 @@ func LoadTemplates(path string) error {
 	}
 
 	loginForm, err = loadTemplate("login_form", []string{filepath.Join(path, "layout.html"), filepath.Join(path, "login.html")}, RouteFuncMap)
+	if err != nil {
+		return err
+	}
+
+	bookImportCSVForm, err = loadTemplate("book_import_csv_form", []string{filepath.Join(path, "layout.html"), filepath.Join(path, "book_import_csv_form.html")}, RouteFuncMap)
 	if err != nil {
 		return err
 	}
@@ -125,5 +131,13 @@ func RenderUserLoginForm(w io.Writer, b baseViewData, la domain.UserLoginArgs, v
 		"errors":         verr,
 		csrf.TemplateTag: b.csrfTemplateTag,
 		"session":        b.session,
+	})
+}
+
+func RenderBookImportCSVForm(w io.Writer, b baseViewData, username string) error {
+	return bookImportCSVForm.Execute(w, map[string]interface{}{
+		csrf.TemplateTag: b.csrfTemplateTag,
+		"session":        b.session,
+		"username":       username,
 	})
 }

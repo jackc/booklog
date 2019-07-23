@@ -13,6 +13,7 @@
         <ul>
           {{ if .username }}
           <li><a href="{{ newBookPath .username }}">New Book</a></li>
+          <li><a href="{{ importBookCSVFormPath .username }}">Import</a></li>
           {{ end }}
           {{ if .session.IsAuthenticated }}
           <li>
