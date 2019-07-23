@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
@@ -8,32 +9,29 @@ import (
 	"github.com/jackc/booklog/domain"
 )
 
-type BookDelete struct {
-}
-
-func (action *BookDelete) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(queryExecer)
+func BookDelete(ctx context.Context, e *Endpoint, w http.ResponseWriter, r *http.Request) {
 	bookID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		panic(err)
+		e.NotFound(w, r)
+		return
 	}
 
 	var username string
-	err = db.QueryRow(ctx, "select username from users join books on users.id=books.user_id where books.id=$1", bookID).Scan(&username)
+	err = e.DB.QueryRow(ctx, "select username from users join books on users.id=books.user_id where books.id=$1", bookID).Scan(&username)
 	if err != nil {
-		panic(err)
+		e.NotFound(w, r)
+		return
 	}
 
 	dba := domain.DeleteBookArgs{
 		ID: bookID,
 	}
 
-	err = domain.DeleteBook(ctx, db, dba)
+	err = domain.DeleteBook(ctx, e.DB, dba)
 	if err != nil {
-		panic(err)
+		e.InternalServerError(w, r, err)
+		return
 	}
 
 	http.Redirect(w, r, BooksPath(username), http.StatusSeeOther)
-
 }

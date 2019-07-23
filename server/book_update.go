@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
@@ -10,21 +11,18 @@ import (
 	errors "golang.org/x/xerrors"
 )
 
-type BookUpdate struct {
-}
-
-func (action *BookUpdate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(queryExecer)
+func BookUpdate(ctx context.Context, e *Endpoint, w http.ResponseWriter, r *http.Request) {
 	bookID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		panic(err)
+		e.NotFound(w, r)
+		return
 	}
 
 	var username string
-	err = db.QueryRow(ctx, "select username from users join books on users.id=books.user_id where books.id=$1", bookID).Scan(&username)
+	err = e.DB.QueryRow(ctx, "select username from users join books on users.id=books.user_id where books.id=$1", bookID).Scan(&username)
 	if err != nil {
-		panic(err)
+		e.NotFound(w, r)
+		return
 	}
 
 	uba := domain.UpdateBookArgs{
@@ -35,19 +33,19 @@ func (action *BookUpdate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Media:        r.FormValue("media"),
 	}
 
-	err = domain.UpdateBook(ctx, db, uba)
+	err = domain.UpdateBook(ctx, e.DB, uba)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
 			err := RenderBookEdit(w, baseViewDataFromRequest(r), bookID, uba, verr, username)
 			if err != nil {
-				panic(err)
+				e.InternalServerError(w, r, err)
 			}
-
 			return
 		}
 
-		panic(err)
+		e.InternalServerError(w, r, err)
+		return
 	}
 
 	http.Redirect(w, r, BooksPath(username), http.StatusSeeOther)

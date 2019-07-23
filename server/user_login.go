@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -9,42 +10,41 @@ import (
 	errors "golang.org/x/xerrors"
 )
 
-func UserLoginForm(w http.ResponseWriter, r *http.Request) {
+func UserLoginForm(ctx context.Context, e *Endpoint, w http.ResponseWriter, r *http.Request) {
 	var la domain.UserLoginArgs
 
 	err := RenderUserLoginForm(w, baseViewDataFromRequest(r), la, nil)
 	if err != nil {
-		panic(err)
+		e.InternalServerError(w, r, err)
+		return
 	}
 }
 
-func UserLogin(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(queryExecer)
-
+func UserLogin(ctx context.Context, e *Endpoint, w http.ResponseWriter, r *http.Request) {
 	la := domain.UserLoginArgs{
 		Username: r.FormValue("username"),
 		Password: r.FormValue("password"),
 	}
 
-	userSessionID, err := domain.UserLogin(ctx, db, la)
+	userSessionID, err := domain.UserLogin(ctx, e.DB, la)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
 			err := RenderUserLoginForm(w, baseViewDataFromRequest(r), la, verr)
 			if err != nil {
-				panic(err)
+				e.InternalServerError(w, r, err)
 			}
-
 			return
 		}
 
-		panic(err)
+		e.InternalServerError(w, r, err)
+		return
 	}
 
 	encoded, err := sc.Encode("booklog-session-id", userSessionID)
 	if err != nil {
-		panic(err)
+		e.InternalServerError(w, r, err)
+		return
 	}
 
 	cookie := &http.Cookie{
@@ -59,15 +59,14 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, BooksPath(la.Username), http.StatusSeeOther)
 }
 
-func UserLogout(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(queryExecer)
+func UserLogout(ctx context.Context, e *Endpoint, w http.ResponseWriter, r *http.Request) {
 	session := ctx.Value(RequestSessionKey).(*Session)
 
 	if session.IsAuthenticated {
-		_, err := db.Exec(ctx, "delete from user_sessions where id=$1", session.ID)
+		_, err := e.DB.Exec(ctx, "delete from user_sessions where id=$1", session.ID)
 		if err != nil {
-			panic(err)
+			e.InternalServerError(w, r, err)
+			return
 		}
 	}
 
