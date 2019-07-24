@@ -8,6 +8,16 @@ import (
 	errors "golang.org/x/xerrors"
 )
 
+func UserRegistrationNew(w http.ResponseWriter, r *http.Request) {
+	var rua domain.RegisterUserArgs
+
+	err := RenderUserRegistrationNew(w, baseViewDataFromRequest(r), rua, nil)
+	if err != nil {
+		InternalServerErrorHandler(w, r, err)
+		return
+	}
+}
+
 func UserRegistrationCreate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
