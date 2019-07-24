@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -76,12 +75,12 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHas
 
 	err := LoadTemplates("html")
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err).Msg("failed to load HTML templates")
 	}
 
 	dbpool, err := pgxpool.Connect(context.Background(), viper.GetString("database_url"))
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err).Msg("failed to connect to database")
 	}
 	r.Use(func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
@@ -123,7 +122,8 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHas
 					next.ServeHTTP(w, r.WithContext(ctx))
 					return
 				} else {
-					panic("unknown error finding session")
+					InternalServerErrorHandler(w, r, err)
+					return
 				}
 			}
 			session.IsAuthenticated = true
@@ -158,10 +158,6 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHas
 }
 
 func fileServer(r chi.Router, path string, root http.FileSystem) {
-	if strings.ContainsAny(path, "{}*") {
-		panic("FileServer does not permit URL parameters.")
-	}
-
 	fs := http.StripPrefix(path, http.FileServer(root))
 
 	if path != "/" && path[len(path)-1] != '/' {
