@@ -19,12 +19,14 @@ import (
 	errors "golang.org/x/xerrors"
 )
 
-// Key to use when setting the DB.
+// Use when setting something though the request context.
 type ctxRequestKey int
 
-// RequestDBKey is the key that holds the DB for this request.
-const RequestDBKey ctxRequestKey = 0
-const RequestSessionKey ctxRequestKey = 1
+const (
+	_ ctxRequestKey = iota
+	RequestDBKey
+	RequestSessionKey
+)
 
 type queryExecer interface {
 	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
