@@ -37,7 +37,7 @@ type queryExecer interface {
 
 type Session struct {
 	ID              [16]byte
-	Username        string
+	User            minUser
 	IsAuthenticated bool
 	sc              *securecookie.SecureCookie
 }
@@ -96,6 +96,7 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHas
 
 	r.Route("/users/{username}", func(r chi.Router) {
 		r.Use(pathUserHandler())
+		r.Use(requireSameSessionUserAndPathUserHandler())
 		r.Method("GET", "/books", http.HandlerFunc(BookIndex))
 		r.Method("GET", "/books/new", http.HandlerFunc(BookNew))
 		r.Method("POST", "/books", http.HandlerFunc(BookCreate))
@@ -159,9 +160,9 @@ func sessionHandler(sc *securecookie.SecureCookie) func(http.Handler) http.Handl
 
 			db := ctx.Value(RequestDBKey).(queryExecer)
 			err = db.QueryRow(ctx,
-				"select user_sessions.id, users.username from user_sessions join users on user_sessions.user_id=users.id where user_sessions.id=$1",
+				"select user_sessions.id, users.id, users.username from user_sessions join users on user_sessions.user_id=users.id where user_sessions.id=$1",
 				sessionID,
-			).Scan(&session.ID, &session.Username)
+			).Scan(&session.ID, &session.User.ID, &session.User.Username)
 			if err != nil {
 				if errors.Is(err, pgx.ErrNoRows) {
 					// invalid session ID
@@ -214,7 +215,7 @@ func clearSessionCookie(w http.ResponseWriter) {
 	http.SetCookie(w, cookie)
 }
 
-type pathUser struct {
+type minUser struct {
 	ID       int64
 	Username string
 }
@@ -225,7 +226,7 @@ func pathUserHandler() func(http.Handler) http.Handler {
 			ctx := r.Context()
 			db := ctx.Value(RequestDBKey).(queryExecer)
 
-			var user pathUser
+			var user minUser
 			err := db.QueryRow(ctx,
 				"select id, username from users where username=$1",
 				chi.URLParam(r, "username"),
@@ -241,6 +242,29 @@ func pathUserHandler() func(http.Handler) http.Handler {
 
 			ctx = context.WithValue(ctx, RequestPathUserKey, &user)
 			next.ServeHTTP(w, r.WithContext(ctx))
+		}
+
+		return http.HandlerFunc(fn)
+	}
+}
+
+func requireSameSessionUserAndPathUserHandler() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+
+			session := ctx.Value(RequestSessionKey).(*Session)
+			pathUser := ctx.Value(RequestPathUserKey).(*minUser)
+
+			if session.IsAuthenticated {
+				if session.User.ID == pathUser.ID {
+					next.ServeHTTP(w, r)
+				} else {
+					ForbiddenHandler(w, r)
+				}
+			} else {
+				http.Redirect(w, r, NewLoginPath(), http.StatusSeeOther)
+			}
 		}
 
 		return http.HandlerFunc(fn)

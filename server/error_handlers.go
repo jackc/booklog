@@ -17,3 +17,8 @@ func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 	fmt.Fprintln(w, "Not found")
 }
+
+func ForbiddenHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusForbidden)
+	fmt.Fprintln(w, "Forbidden")
+}

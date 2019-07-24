@@ -12,3 +12,9 @@ type queryExecer interface {
 	Query(ctx context.Context, sql string, optionsAndArgs ...interface{}) (pgx.Rows, error)
 	QueryRow(ctx context.Context, sql string, optionsAndArgs ...interface{}) pgx.Row
 }
+
+func createUserSession(ctx context.Context, db queryExecer, userID int64) ([16]byte, error) {
+	var userSessionID [16]byte
+	err := db.QueryRow(ctx, "insert into user_sessions(user_id) values ($1) returning id", userID).Scan(&userSessionID)
+	return userSessionID, err
+}

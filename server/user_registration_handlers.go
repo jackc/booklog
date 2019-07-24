@@ -27,7 +27,7 @@ func UserRegistrationCreate(w http.ResponseWriter, r *http.Request) {
 		Password: r.FormValue("password"),
 	}
 
-	err := domain.RegisterUser(ctx, db, rua)
+	userSessionID, err := domain.RegisterUser(ctx, db, rua)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
@@ -38,6 +38,12 @@ func UserRegistrationCreate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		InternalServerErrorHandler(w, r, err)
+		return
+	}
+
+	err = setSessionCookie(w, r, userSessionID)
+	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
 	}

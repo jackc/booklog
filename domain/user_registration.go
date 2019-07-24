@@ -12,25 +12,26 @@ type RegisterUserArgs struct {
 	Password string
 }
 
-func RegisterUser(ctx context.Context, db queryExecer, args RegisterUserArgs) error {
+func RegisterUser(ctx context.Context, db queryExecer, args RegisterUserArgs) ([16]byte, error) {
 	v := validate.New()
 	v.Presence("username", args.Username)
 	v.Presence("password", args.Password)
 	v.MinLength("password", args.Password, 8)
 
 	if v.Err() != nil {
-		return v.Err()
+		return [16]byte{}, v.Err()
 	}
 
 	passwordDigest, err := bcrypt.GenerateFromPassword([]byte(args.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return err
+		return [16]byte{}, err
 	}
 
-	_, err = db.Exec(ctx, "insert into users(username, password_digest) values($1, $2)", args.Username, passwordDigest)
+	var userID int64
+	err = db.QueryRow(ctx, "insert into users(username, password_digest) values($1, $2) returning id", args.Username, passwordDigest).Scan(&userID)
 	if err != nil {
-		return err
+		return [16]byte{}, err
 	}
 
-	return nil
+	return createUserSession(ctx, db, userID)
 }
