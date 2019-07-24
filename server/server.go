@@ -125,23 +125,27 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHas
 		return http.HandlerFunc(fn)
 	})
 
+	baseEndpoint := func(handler func(context.Context, *Endpoint, http.ResponseWriter, *http.Request)) *Endpoint {
+		return &Endpoint{DB: dbpool, Handler: handler}
+	}
+
 	// r.Method("GET", "/", &BookIndex{})
-	r.Method("GET", "/user_registration/new", &Endpoint{DB: dbpool, Handler: UserRegistrationNew})
-	r.Method("POST", "/user_registration", &Endpoint{DB: dbpool, Handler: UserRegistrationCreate})
+	r.Method("GET", "/user_registration/new", baseEndpoint(UserRegistrationNew))
+	r.Method("POST", "/user_registration", baseEndpoint(UserRegistrationCreate))
 
-	r.Method("GET", "/login", &Endpoint{DB: dbpool, Handler: UserLoginForm})
-	r.Method("POST", "/login/handle", &Endpoint{DB: dbpool, Handler: UserLogin})
+	r.Method("GET", "/login", baseEndpoint(UserLoginForm))
+	r.Method("POST", "/login/handle", baseEndpoint(UserLogin))
 
-	r.Method("POST", "/logout", &Endpoint{DB: dbpool, Handler: UserLogout})
+	r.Method("POST", "/logout", baseEndpoint(UserLogout))
 
-	r.Method("GET", "/users/{username}/books", &Endpoint{DB: dbpool, Handler: BookIndex})
-	r.Method("GET", "/users/{username}/books/new", &Endpoint{DB: dbpool, Handler: BookNew})
-	r.Method("POST", "/users/{username}/books", &Endpoint{DB: dbpool, Handler: BookCreate})
-	r.Method("GET", "/users/{username}/books/{id}/edit", &Endpoint{DB: dbpool, Handler: BookEdit})
-	r.Method("PATCH", "/users/{username}/books/{id}", &Endpoint{DB: dbpool, Handler: BookUpdate})
-	r.Method("DELETE", "/users/{username}/books/{id}", &Endpoint{DB: dbpool, Handler: BookDelete})
-	r.Method("GET", "/users/{username}/books/import_csv/form", &Endpoint{DB: dbpool, Handler: BookImportCSVForm})
-	r.Method("POST", "/users/{username}/books/import_csv", &Endpoint{DB: dbpool, Handler: BookImportCSV})
+	r.Method("GET", "/users/{username}/books", baseEndpoint(BookIndex))
+	r.Method("GET", "/users/{username}/books/new", baseEndpoint(BookNew))
+	r.Method("POST", "/users/{username}/books", baseEndpoint(BookCreate))
+	r.Method("GET", "/users/{username}/books/{id}/edit", baseEndpoint(BookEdit))
+	r.Method("PATCH", "/users/{username}/books/{id}", baseEndpoint(BookUpdate))
+	r.Method("DELETE", "/users/{username}/books/{id}", baseEndpoint(BookDelete))
+	r.Method("GET", "/users/{username}/books/import_csv/form", baseEndpoint(BookImportCSVForm))
+	r.Method("POST", "/users/{username}/books/import_csv", baseEndpoint(BookImportCSV))
 
 	fileServer(r, "/static", http.Dir("build/static"))
 
