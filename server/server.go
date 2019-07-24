@@ -134,27 +134,23 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHas
 		return http.HandlerFunc(fn)
 	})
 
-	baseEndpoint := func(handler func(context.Context, *Endpoint, http.ResponseWriter, *http.Request)) *Endpoint {
-		return &Endpoint{DB: dbpool, Handler: handler}
-	}
-
 	// r.Method("GET", "/", &BookIndex{})
-	r.Method("GET", "/user_registration/new", baseEndpoint(UserRegistrationNew))
-	r.Method("POST", "/user_registration", baseEndpoint(UserRegistrationCreate))
+	r.Method("GET", "/user_registration/new", http.HandlerFunc(UserRegistrationNew))
+	r.Method("POST", "/user_registration", http.HandlerFunc(UserRegistrationCreate))
 
-	r.Method("GET", "/login", baseEndpoint(UserLoginForm))
-	r.Method("POST", "/login/handle", baseEndpoint(UserLogin))
+	r.Method("GET", "/login", http.HandlerFunc(UserLoginForm))
+	r.Method("POST", "/login/handle", http.HandlerFunc(UserLogin))
 
-	r.Method("POST", "/logout", baseEndpoint(UserLogout))
+	r.Method("POST", "/logout", http.HandlerFunc(UserLogout))
 
-	r.Method("GET", "/users/{username}/books", baseEndpoint(BookIndex))
-	r.Method("GET", "/users/{username}/books/new", baseEndpoint(BookNew))
-	r.Method("POST", "/users/{username}/books", baseEndpoint(BookCreate))
-	r.Method("GET", "/users/{username}/books/{id}/edit", baseEndpoint(BookEdit))
-	r.Method("PATCH", "/users/{username}/books/{id}", baseEndpoint(BookUpdate))
-	r.Method("DELETE", "/users/{username}/books/{id}", baseEndpoint(BookDelete))
-	r.Method("GET", "/users/{username}/books/import_csv/form", baseEndpoint(BookImportCSVForm))
-	r.Method("POST", "/users/{username}/books/import_csv", baseEndpoint(BookImportCSV))
+	r.Method("GET", "/users/{username}/books", http.HandlerFunc(BookIndex))
+	r.Method("GET", "/users/{username}/books/new", http.HandlerFunc(BookNew))
+	r.Method("POST", "/users/{username}/books", http.HandlerFunc(BookCreate))
+	r.Method("GET", "/users/{username}/books/{id}/edit", http.HandlerFunc(BookEdit))
+	r.Method("PATCH", "/users/{username}/books/{id}", http.HandlerFunc(BookUpdate))
+	r.Method("DELETE", "/users/{username}/books/{id}", http.HandlerFunc(BookDelete))
+	r.Method("GET", "/users/{username}/books/import_csv/form", http.HandlerFunc(BookImportCSVForm))
+	r.Method("POST", "/users/{username}/books/import_csv", http.HandlerFunc(BookImportCSV))
 
 	fileServer(r, "/static", http.Dir("build/static"))
 

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/jackc/booklog/domain"
@@ -9,24 +8,27 @@ import (
 	errors "golang.org/x/xerrors"
 )
 
-func UserRegistrationCreate(ctx context.Context, e *Endpoint, w http.ResponseWriter, r *http.Request) {
+func UserRegistrationCreate(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	db := ctx.Value(RequestDBKey).(queryExecer)
+
 	rua := domain.RegisterUserArgs{
 		Username: r.FormValue("username"),
 		Password: r.FormValue("password"),
 	}
 
-	err := domain.RegisterUser(ctx, e.DB, rua)
+	err := domain.RegisterUser(ctx, db, rua)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
 			err := RenderUserRegistrationNew(w, baseViewDataFromRequest(r), rua, verr)
 			if err != nil {
-				e.InternalServerError(w, r, err)
+				InternalServerErrorHandler(w, r, err)
 			}
 			return
 		}
 
-		e.InternalServerError(w, r, err)
+		InternalServerErrorHandler(w, r, err)
 		return
 	}
 

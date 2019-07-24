@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -11,15 +10,18 @@ import (
 	errors "golang.org/x/xerrors"
 )
 
-func BookCreate(ctx context.Context, e *Endpoint, w http.ResponseWriter, r *http.Request) {
+func BookCreate(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	db := ctx.Value(RequestDBKey).(queryExecer)
+
 	username := chi.URLParam(r, "username")
 	var userID int64
-	err := e.DB.QueryRow(ctx, "select id from users where username=$1", username).Scan(&userID)
+	err := db.QueryRow(ctx, "select id from users where username=$1", username).Scan(&userID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			e.NotFound(w, r)
+			NotFoundHandler(w, r)
 		} else {
-			e.InternalServerError(w, r, err)
+			InternalServerErrorHandler(w, r, err)
 		}
 		return
 	}
@@ -32,18 +34,18 @@ func BookCreate(ctx context.Context, e *Endpoint, w http.ResponseWriter, r *http
 		Media:        r.FormValue("media"),
 	}
 
-	err = domain.CreateBook(ctx, e.DB, cba)
+	err = domain.CreateBook(ctx, db, cba)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
 			err := RenderBookNew(w, baseViewDataFromRequest(r), cba, verr, username)
 			if err != nil {
-				e.InternalServerError(w, r, err)
+				InternalServerErrorHandler(w, r, err)
 			}
 			return
 		}
 
-		e.InternalServerError(w, r, err)
+		InternalServerErrorHandler(w, r, err)
 		return
 	}
 

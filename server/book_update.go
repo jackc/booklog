@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"net/http"
 	"strconv"
 
@@ -11,17 +10,20 @@ import (
 	errors "golang.org/x/xerrors"
 )
 
-func BookUpdate(ctx context.Context, e *Endpoint, w http.ResponseWriter, r *http.Request) {
+func BookUpdate(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	db := ctx.Value(RequestDBKey).(queryExecer)
+
 	bookID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		e.NotFound(w, r)
+		NotFoundHandler(w, r)
 		return
 	}
 
 	var username string
-	err = e.DB.QueryRow(ctx, "select username from users join books on users.id=books.user_id where books.id=$1", bookID).Scan(&username)
+	err = db.QueryRow(ctx, "select username from users join books on users.id=books.user_id where books.id=$1", bookID).Scan(&username)
 	if err != nil {
-		e.NotFound(w, r)
+		NotFoundHandler(w, r)
 		return
 	}
 
@@ -33,18 +35,18 @@ func BookUpdate(ctx context.Context, e *Endpoint, w http.ResponseWriter, r *http
 		Media:        r.FormValue("media"),
 	}
 
-	err = domain.UpdateBook(ctx, e.DB, uba)
+	err = domain.UpdateBook(ctx, db, uba)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
 			err := RenderBookEdit(w, baseViewDataFromRequest(r), bookID, uba, verr, username)
 			if err != nil {
-				e.InternalServerError(w, r, err)
+				InternalServerErrorHandler(w, r, err)
 			}
 			return
 		}
 
-		e.InternalServerError(w, r, err)
+		InternalServerErrorHandler(w, r, err)
 		return
 	}
 
