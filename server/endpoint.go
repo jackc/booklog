@@ -40,7 +40,7 @@ func (e *Endpoint) NotFound(w http.ResponseWriter, r *http.Request) {
 func DefaultInternalServerErrorHandler(ctx context.Context, e *Endpoint, w http.ResponseWriter, r *http.Request, err error) {
 	zerolog.Ctx(ctx).Error().Err(err).Msg("internal server error")
 	w.WriteHeader(http.StatusInternalServerError)
-	fmt.Fprintln(w, err)
+	fmt.Fprintln(w, "Internal server error")
 }
 
 func DefaultNotFoundHandler(ctx context.Context, e *Endpoint, w http.ResponseWriter, r *http.Request) {
