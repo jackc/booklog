@@ -26,6 +26,7 @@ const (
 	_ ctxRequestKey = iota
 	RequestDBKey
 	RequestSessionKey
+	RequestPathUserKey
 )
 
 type queryExecer interface {
@@ -93,14 +94,17 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHas
 
 	r.Method("POST", "/logout", http.HandlerFunc(UserLogout))
 
-	r.Method("GET", "/users/{username}/books", http.HandlerFunc(BookIndex))
-	r.Method("GET", "/users/{username}/books/new", http.HandlerFunc(BookNew))
-	r.Method("POST", "/users/{username}/books", http.HandlerFunc(BookCreate))
-	r.Method("GET", "/users/{username}/books/{id}/edit", http.HandlerFunc(BookEdit))
-	r.Method("PATCH", "/users/{username}/books/{id}", http.HandlerFunc(BookUpdate))
-	r.Method("DELETE", "/users/{username}/books/{id}", http.HandlerFunc(BookDelete))
-	r.Method("GET", "/users/{username}/books/import_csv/form", http.HandlerFunc(BookImportCSVForm))
-	r.Method("POST", "/users/{username}/books/import_csv", http.HandlerFunc(BookImportCSV))
+	r.Route("/users/{username}", func(r chi.Router) {
+		r.Use(pathUserHandler())
+		r.Method("GET", "/books", http.HandlerFunc(BookIndex))
+		r.Method("GET", "/books/new", http.HandlerFunc(BookNew))
+		r.Method("POST", "/books", http.HandlerFunc(BookCreate))
+		r.Method("GET", "/books/{id}/edit", http.HandlerFunc(BookEdit))
+		r.Method("PATCH", "/books/{id}", http.HandlerFunc(BookUpdate))
+		r.Method("DELETE", "/books/{id}", http.HandlerFunc(BookDelete))
+		r.Method("GET", "/books/import_csv/form", http.HandlerFunc(BookImportCSVForm))
+		r.Method("POST", "/books/import_csv", http.HandlerFunc(BookImportCSV))
+	})
 
 	fileServer(r, "/static", http.Dir("build/static"))
 
@@ -208,4 +212,37 @@ func clearSessionCookie(w http.ResponseWriter) {
 		Expires:  time.Unix(0, 0),
 	}
 	http.SetCookie(w, cookie)
+}
+
+type pathUser struct {
+	ID       int64
+	Username string
+}
+
+func pathUserHandler() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			db := ctx.Value(RequestDBKey).(queryExecer)
+
+			var user pathUser
+			err := db.QueryRow(ctx,
+				"select id, username from users where username=$1",
+				chi.URLParam(r, "username"),
+			).Scan(&user.ID, &user.Username)
+			if err != nil {
+				if errors.Is(err, pgx.ErrNoRows) {
+					NotFoundHandler(w, r)
+				} else {
+					InternalServerErrorHandler(w, r, err)
+				}
+				return
+			}
+
+			ctx = context.WithValue(ctx, RequestPathUserKey, &user)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
+
+		return http.HandlerFunc(fn)
+	}
 }
