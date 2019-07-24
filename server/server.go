@@ -16,7 +16,6 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/hlog"
-	"github.com/spf13/viper"
 	errors "golang.org/x/xerrors"
 )
 
@@ -41,7 +40,7 @@ type Session struct {
 	IsAuthenticated bool
 }
 
-func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHashKey []byte, cookieBlockKey []byte) {
+func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHashKey []byte, cookieBlockKey []byte, databaseURL string) {
 	log := zerolog.New(os.Stdout).With().
 		Timestamp().
 		Logger()
@@ -78,7 +77,7 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHas
 		log.Fatal().Err(err).Msg("failed to load HTML templates")
 	}
 
-	dbpool, err := pgxpool.Connect(context.Background(), viper.GetString("database_url"))
+	dbpool, err := pgxpool.Connect(context.Background(), databaseURL)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect to database")
 	}

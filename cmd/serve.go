@@ -37,7 +37,7 @@ var serveCmd = &cobra.Command{
 		cookieHashKey := digestKey(32, "cookie_hash_key")
 		cookieBlockKey := digestKey(32, "cookie_block_key")
 
-		server.Serve(viper.GetString("http_service_address"), csrfKey, viper.GetBool("insecure_dev_mode"), cookieHashKey, cookieBlockKey)
+		server.Serve(viper.GetString("http_service_address"), csrfKey, viper.GetBool("insecure_dev_mode"), cookieHashKey, cookieBlockKey, viper.GetString("database_url"))
 	},
 }
 
