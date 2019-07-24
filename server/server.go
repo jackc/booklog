@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -55,10 +56,18 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHas
 
 	r.Use(handlers.HTTPMethodOverrideHandler)
 
-	r.Use(middleware.Logger)
-
 	r.Use(hlog.NewHandler(log))
+	r.Use(hlog.RequestIDHandler("request_id", "x-request-id"))
+	r.Use(hlog.MethodHandler("method"))
 	r.Use(hlog.URLHandler("url"))
+	r.Use(hlog.RemoteAddrHandler("remote_ip"))
+	r.Use(hlog.AccessHandler(func(r *http.Request, status, size int, duration time.Duration) {
+		hlog.FromRequest(r).Info().
+			Int("status", status).
+			Int("size", size).
+			Dur("duration", duration).
+			Msg("HTTP request")
+	}))
 
 	r.Use(middleware.Recoverer)
 

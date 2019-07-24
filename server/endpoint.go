@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/rs/zerolog"
 )
 
 type Endpoint struct {
@@ -37,6 +38,7 @@ func (e *Endpoint) NotFound(w http.ResponseWriter, r *http.Request) {
 }
 
 func DefaultInternalServerErrorHandler(ctx context.Context, e *Endpoint, w http.ResponseWriter, r *http.Request, err error) {
+	zerolog.Ctx(ctx).Error().Err(err).Msg("internal server error")
 	w.WriteHeader(http.StatusInternalServerError)
 	fmt.Fprintln(w, err)
 }

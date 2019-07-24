@@ -10,18 +10,17 @@ require (
 	github.com/gorilla/securecookie v1.1.1
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jackc/pgconn v0.0.0-20190528115420-71ec1f782113
-	github.com/jackc/pgproto3 v1.1.0 // indirect
-	github.com/jackc/pgx v0.0.0-20190411225816-938ee9f434a1
 	github.com/jackc/pgx/v4 v4.0.0-pre1
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/rs/xid v1.2.1 // indirect
-	github.com/rs/zerolog v1.13.0
+	github.com/rs/zerolog v1.14.3
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.3.2
 	github.com/stretchr/testify v1.3.0
-	github.com/zenazn/goji v0.9.0 // indirect
-	golang.org/x/crypto v0.0.0-20190411191339-88737f569e3a
-	golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3 // indirect
+	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
+	golang.org/x/net v0.0.0-20190724013045-ca1201d0de80 // indirect
+	golang.org/x/sys v0.0.0-20190712062909-fae7ac547cb7 // indirect
+	golang.org/x/text v0.3.2 // indirect
 	golang.org/x/xerrors v0.0.0-20190513163551-3ee3066db522
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 )
