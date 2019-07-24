@@ -2,7 +2,7 @@
 <div class="card">
   <header>New Book</header>
 
-  <form action="{{ booksPath .username }}" method="post">
+  <form action="{{ BooksPath .username }}" method="post">
     {{ .csrfField }}
     <div class="field">
       <label for="title">Title</label>

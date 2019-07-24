@@ -2,7 +2,7 @@
 <div class="card">
   <header>Login</header>
 
-  <form action="{{ loginPath }}" method="post">
+  <form action="{{ LoginPath }}" method="post">
     {{ .csrfField }}
 
     {{ range .errors.base }}<div class="error">{{ . }}</div>{{ end }}

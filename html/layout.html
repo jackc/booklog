@@ -12,17 +12,17 @@
       <nav>
         <ul>
           {{ if .username }}
-          <li><a href="{{ newBookPath .username }}">New Book</a></li>
-          <li><a href="{{ importBookCSVFormPath .username }}">Import</a></li>
+          <li><a href="{{ NewBookPath .username }}">New Book</a></li>
+          <li><a href="{{ ImportBookCSVFormPath .username }}">Import</a></li>
           {{ end }}
           {{ if .session.IsAuthenticated }}
           <li>
-            <form action="{{ logoutPath }}" method="POST">
+            <form action="{{ LogoutPath }}" method="POST">
                {{ .csrfField }}
               <button>Logout</button>
             </form>
           {{ else }}
-          <li><a href="{{ newLoginPath }}">Login</a></li>
+          <li><a href="{{ NewLoginPath }}">Login</a></li>
           {{ end }}
         </ul>
       </nav>

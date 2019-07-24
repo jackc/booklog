@@ -6,17 +6,17 @@ import (
 )
 
 var RouteFuncMap = template.FuncMap{
-	"newBookPath":             NewBookPath,
-	"bookPath":                BookPath,
-	"editBookPath":            EditBookPath,
-	"booksPath":               BooksPath,
+	"NewBookPath":             NewBookPath,
+	"BookPath":                BookPath,
+	"EditBookPath":            EditBookPath,
+	"BooksPath":               BooksPath,
 	"NewUserRegistrationPath": NewUserRegistrationPath,
-	"userRegistrationPath":    UserRegistrationPath,
-	"newLoginPath":            NewLoginPath,
-	"loginPath":               LoginPath,
-	"logoutPath":              LogoutPath,
-	"importBookCSVFormPath":   ImportBookCSVFormPath,
-	"importBookCSVPath":       ImportBookCSVPath,
+	"UserRegistrationPath":    UserRegistrationPath,
+	"NewLoginPath":            NewLoginPath,
+	"LoginPath":               LoginPath,
+	"LogoutPath":              LogoutPath,
+	"ImportBookCSVFormPath":   ImportBookCSVFormPath,
+	"ImportBookCSVPath":       ImportBookCSVPath,
 }
 
 func BooksPath(username string) string {
