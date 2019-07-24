@@ -26,8 +26,6 @@ type ctxRequestKey int
 const RequestDBKey ctxRequestKey = 0
 const RequestSessionKey ctxRequestKey = 1
 
-var sc *securecookie.SecureCookie
-
 type queryExecer interface {
 	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
 	Query(ctx context.Context, sql string, optionsAndArgs ...interface{}) (pgx.Rows, error)
@@ -38,14 +36,13 @@ type Session struct {
 	ID              [16]byte
 	Username        string
 	IsAuthenticated bool
+	sc              *securecookie.SecureCookie
 }
 
 func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHashKey []byte, cookieBlockKey []byte, databaseURL string) {
 	log := zerolog.New(os.Stdout).With().
 		Timestamp().
 		Logger()
-
-	sc = securecookie.New(cookieHashKey, cookieBlockKey)
 
 	r := chi.NewRouter()
 
@@ -81,57 +78,9 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHas
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect to database")
 	}
-	r.Use(func(next http.Handler) http.Handler {
-		fn := func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-			ctx = context.WithValue(ctx, RequestDBKey, dbpool)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		}
+	r.Use(pgxPoolHandler(dbpool))
 
-		return http.HandlerFunc(fn)
-	})
-
-	r.Use(func(next http.Handler) http.Handler {
-		fn := func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-			session := &Session{}
-			ctx = context.WithValue(ctx, RequestSessionKey, session)
-
-			cookie, err := r.Cookie("booklog-session-id")
-			if err != nil {
-				next.ServeHTTP(w, r.WithContext(ctx))
-				return
-			}
-
-			var sessionID [16]byte
-			err = sc.Decode("booklog-session-id", cookie.Value, &sessionID)
-			if err != nil {
-				next.ServeHTTP(w, r.WithContext(ctx))
-				return
-			}
-
-			db := ctx.Value(RequestDBKey).(queryExecer)
-			err = db.QueryRow(ctx,
-				"select user_sessions.id, users.username from user_sessions join users on user_sessions.user_id=users.id where user_sessions.id=$1",
-				sessionID,
-			).Scan(&session.ID, &session.Username)
-			if err != nil {
-				if errors.Is(err, pgx.ErrNoRows) {
-					// invalid session ID
-					next.ServeHTTP(w, r.WithContext(ctx))
-					return
-				} else {
-					InternalServerErrorHandler(w, r, err)
-					return
-				}
-			}
-			session.IsAuthenticated = true
-
-			next.ServeHTTP(w, r.WithContext(ctx))
-		}
-
-		return http.HandlerFunc(fn)
-	})
+	r.Use(sessionHandler(securecookie.New(cookieHashKey, cookieBlockKey)))
 
 	// r.Method("GET", "/", &BookIndex{})
 	r.Method("GET", "/user_registration/new", http.HandlerFunc(UserRegistrationNew))
@@ -168,4 +117,93 @@ func fileServer(r chi.Router, path string, root http.FileSystem) {
 	r.Get(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fs.ServeHTTP(w, r)
 	}))
+}
+
+func pgxPoolHandler(dbpool *pgxpool.Pool) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, RequestDBKey, dbpool)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
+
+		return http.HandlerFunc(fn)
+	}
+}
+
+func sessionHandler(sc *securecookie.SecureCookie) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			session := &Session{sc: sc}
+			ctx = context.WithValue(ctx, RequestSessionKey, session)
+
+			cookie, err := r.Cookie("booklog-session-id")
+			if err != nil {
+				next.ServeHTTP(w, r.WithContext(ctx))
+				return
+			}
+
+			var sessionID [16]byte
+			err = sc.Decode("booklog-session-id", cookie.Value, &sessionID)
+			if err != nil {
+				next.ServeHTTP(w, r.WithContext(ctx))
+				return
+			}
+
+			db := ctx.Value(RequestDBKey).(queryExecer)
+			err = db.QueryRow(ctx,
+				"select user_sessions.id, users.username from user_sessions join users on user_sessions.user_id=users.id where user_sessions.id=$1",
+				sessionID,
+			).Scan(&session.ID, &session.Username)
+			if err != nil {
+				if errors.Is(err, pgx.ErrNoRows) {
+					// invalid session ID
+					next.ServeHTTP(w, r.WithContext(ctx))
+					return
+				} else {
+					InternalServerErrorHandler(w, r, err)
+					return
+				}
+			}
+			session.IsAuthenticated = true
+
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
+
+		return http.HandlerFunc(fn)
+	}
+}
+
+func setSessionCookie(w http.ResponseWriter, r *http.Request, userSessionID [16]byte) error {
+	ctx := r.Context()
+	session := ctx.Value(RequestSessionKey).(*Session)
+
+	encoded, err := session.sc.Encode("booklog-session-id", userSessionID)
+	if err != nil {
+		return err
+	}
+
+	cookie := &http.Cookie{
+		Name:     "booklog-session-id",
+		Value:    encoded,
+		Path:     "/",
+		Secure:   false, // TODO - true when not in insecure dev mode
+		HttpOnly: true,
+	}
+	http.SetCookie(w, cookie)
+
+	return nil
+}
+
+func clearSessionCookie(w http.ResponseWriter) {
+	cookie := &http.Cookie{
+		Name:     "booklog-session-id",
+		Value:    "",
+		Path:     "/",
+		Secure:   false, // TODO - true when not in insecure dev mode
+		HttpOnly: true,
+		Expires:  time.Unix(0, 0),
+	}
+	http.SetCookie(w, cookie)
 }

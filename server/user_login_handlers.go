@@ -2,7 +2,6 @@ package server
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/jackc/booklog/domain"
 	"github.com/jackc/booklog/validate"
@@ -43,20 +42,11 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	encoded, err := sc.Encode("booklog-session-id", userSessionID)
+	err = setSessionCookie(w, r, userSessionID)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
 	}
-
-	cookie := &http.Cookie{
-		Name:     "booklog-session-id",
-		Value:    encoded,
-		Path:     "/",
-		Secure:   false, // TODO - true when not in insecure dev mode
-		HttpOnly: true,
-	}
-	http.SetCookie(w, cookie)
 
 	http.Redirect(w, r, BooksPath(la.Username), http.StatusSeeOther)
 }
@@ -74,15 +64,7 @@ func UserLogout(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	cookie := &http.Cookie{
-		Name:     "booklog-session-id",
-		Value:    "",
-		Path:     "/",
-		Secure:   false, // TODO - true when not in insecure dev mode
-		HttpOnly: true,
-		Expires:  time.Unix(0, 0),
-	}
-	http.SetCookie(w, cookie)
+	clearSessionCookie(w)
 
 	http.Redirect(w, r, NewLoginPath(), http.StatusSeeOther)
 }
