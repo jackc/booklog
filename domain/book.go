@@ -3,10 +3,13 @@ package domain
 import (
 	"context"
 	"encoding/csv"
+	"fmt"
 	"io"
+	"strconv"
 	"time"
 
 	"github.com/jackc/booklog/validate"
+	"github.com/jackc/pgx/v4"
 	errors "golang.org/x/xerrors"
 )
 
@@ -84,8 +87,33 @@ type DeleteBookArgs struct {
 	ID       int64
 }
 
-func DeleteBook(ctx context.Context, db queryExecer, args DeleteBookArgs) error {
-	_, err := db.Exec(ctx, "delete from books where id=$1", args.ID)
+// DeleteBook deletes the book specified by args at the behest of currentUserID. It returns a NotFoundError if the book
+// cannot be found and a ForbiddenError is the user does not have permission to delete the book.
+func DeleteBook(ctx context.Context, db queryExecer, currentUserID int64, args DeleteBookArgs) error {
+	if args.IDString != "" {
+		var err error
+		args.ID, err = strconv.ParseInt(args.IDString, 10, 64)
+		if err != nil {
+			return &NotFoundError{target: fmt.Sprintf("book id=%s", args.IDString)}
+		}
+	}
+
+	// TODO - these two queries should run in a transaction
+	var ownerID int64
+	err := db.QueryRow(ctx, "select user_id from books where id=$1", args.ID).Scan(&ownerID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &NotFoundError{target: fmt.Sprintf("book id=%d", args.ID)}
+		} else {
+			return err
+		}
+	}
+
+	if ownerID != currentUserID {
+		return &ForbiddenError{currentUserID: currentUserID, msg: fmt.Sprintf("delete book id=%d", args.ID)}
+	}
+
+	_, err = db.Exec(ctx, "delete from books where id=$1", args.ID)
 	return err
 }
 

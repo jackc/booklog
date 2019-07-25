@@ -105,28 +105,24 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 func BookDelete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
+	session := ctx.Value(RequestSessionKey).(*Session)
 	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
 
-	bookID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
-	if err != nil {
-		NotFoundHandler(w, r)
-		return
-	}
-
-	var found bool
-	err = db.QueryRow(ctx, "select true from books where books.user_id=$1 and books.id=$2", pathUser.ID, bookID).Scan(&found)
-	if err != nil {
-		NotFoundHandler(w, r)
-		return
-	}
-
 	dba := domain.DeleteBookArgs{
-		ID: bookID,
+		IDString: chi.URLParam(r, "id"),
 	}
 
-	err = domain.DeleteBook(ctx, db, dba)
+	err := domain.DeleteBook(ctx, db, session.User.ID, dba)
 	if err != nil {
-		InternalServerErrorHandler(w, r, err)
+		var nfErr domain.NotFoundError
+		var fErr domain.ForbiddenError
+		if errors.As(err, nfErr) {
+			NotFoundHandler(w, r)
+		} else if errors.As(err, fErr) {
+			ForbiddenHandler(w, r)
+		} else {
+			InternalServerErrorHandler(w, r, err)
+		}
 		return
 	}
 
