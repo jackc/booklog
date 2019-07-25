@@ -17,26 +17,25 @@ type BookEditForm struct {
 	Media        string
 }
 
-func (f BookEditForm) Parse() (ParsedBookEditForm, validate.Errors) {
+func (f BookEditForm) Parse() (domain.BookAttrs, validate.Errors) {
 	var err error
-	p := ParsedBookEditForm{BookEditForm: f}
+	attrs := domain.BookAttrs{
+		Title:  f.Title,
+		Author: f.Author,
+		Media:  f.Media,
+	}
 	v := validate.New()
 
-	p.DateFinished, err = time.Parse("2006-01-02", f.DateFinished)
+	attrs.DateFinished, err = time.Parse("2006-01-02", f.DateFinished)
 	if err != nil {
 		v.Add("dateFinished", errors.New("is not a date"))
 	}
 
 	if v.Err() != nil {
-		return p, v.Err().(validate.Errors)
+		return attrs, v.Err().(validate.Errors)
 	}
 
-	return p, nil
-}
-
-type ParsedBookEditForm struct {
-	BookEditForm
-	DateFinished time.Time
+	return attrs, nil
 }
 
 func BookIndex(w http.ResponseWriter, r *http.Request) {
@@ -110,20 +109,13 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 		DateFinished: r.FormValue("dateFinished"),
 		Media:        r.FormValue("media"),
 	}
-	parsedForm, verr := form.Parse()
+	attrs, verr := form.Parse()
 	if verr != nil {
 		err := RenderBookNew(w, baseViewDataFromRequest(r), form, verr, pathUser.Username)
 		if err != nil {
 			InternalServerErrorHandler(w, r, err)
 		}
 		return
-	}
-
-	attrs := domain.BookAttrs{
-		Title:        parsedForm.Title,
-		Author:       parsedForm.Author,
-		DateFinished: parsedForm.DateFinished,
-		Media:        parsedForm.Media,
 	}
 
 	err := domain.CreateBook(ctx, db, session.User.ID, pathUser.ID, attrs)
@@ -208,20 +200,13 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 		DateFinished: r.FormValue("dateFinished"),
 		Media:        r.FormValue("media"),
 	}
-	parsedForm, verr := form.Parse()
+	attrs, verr := form.Parse()
 	if verr != nil {
 		err := RenderBookEdit(w, baseViewDataFromRequest(r), bookID, form, verr, pathUser.Username)
 		if err != nil {
 			InternalServerErrorHandler(w, r, err)
 		}
 		return
-	}
-
-	attrs := domain.BookAttrs{
-		Title:        parsedForm.Title,
-		Author:       parsedForm.Author,
-		DateFinished: parsedForm.DateFinished,
-		Media:        parsedForm.Media,
 	}
 
 	err := domain.UpdateBook(ctx, db, session.User.ID, bookID, attrs)
