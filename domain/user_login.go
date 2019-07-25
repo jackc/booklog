@@ -41,8 +41,5 @@ func UserLogin(ctx context.Context, db queryExecer, args UserLoginArgs) ([16]byt
 		return [16]byte{}, v.Err()
 	}
 
-	var userSessionID [16]byte
-	db.QueryRow(ctx, "insert into user_sessions(user_id) values ($1) returning id", userID).Scan(&userSessionID)
-
-	return userSessionID, nil
+	return createUserSession(ctx, db, userID)
 }
