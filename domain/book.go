@@ -13,7 +13,6 @@ import (
 )
 
 type CreateBookArgs struct {
-	UserIDString string
 	UserID       int64
 	Title        string
 	Author       string
