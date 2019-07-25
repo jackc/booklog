@@ -15,15 +15,14 @@ import (
 func BookIndex(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
-	username := chi.URLParam(r, "username")
+	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
 
 	var booksForYears []*BooksForYear
 	var booksForYear *BooksForYear
 	rows, _ := db.Query(ctx, `select books.id, title, author, finish_date, media
 from books
-	join users on books.user_id=users.id
-where users.username=$1
-order by finish_date desc`, username)
+where user_id=$1
+order by finish_date desc`, pathUser.ID)
 	for rows.Next() {
 		var b BookRow001
 		rows.Scan(&b.ID, &b.Title, &b.Author, &b.DateFinished, &b.Media)
@@ -40,7 +39,7 @@ order by finish_date desc`, username)
 		return
 	}
 
-	err := RenderBookIndex(w, baseViewDataFromRequest(r), booksForYears, username)
+	err := RenderBookIndex(w, baseViewDataFromRequest(r), booksForYears, pathUser.Username)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
@@ -61,10 +60,11 @@ type BookRow001 struct {
 }
 
 func BookNew(w http.ResponseWriter, r *http.Request) {
-	username := chi.URLParam(r, "username")
+	ctx := r.Context()
+	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
 
 	var createBookArgs domain.CreateBookArgs
-	err := RenderBookNew(w, baseViewDataFromRequest(r), createBookArgs, nil, username)
+	err := RenderBookNew(w, baseViewDataFromRequest(r), createBookArgs, nil, pathUser.Username)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
@@ -74,32 +74,21 @@ func BookNew(w http.ResponseWriter, r *http.Request) {
 func BookCreate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
-
-	username := chi.URLParam(r, "username")
-	var userID int64
-	err := db.QueryRow(ctx, "select id from users where username=$1", username).Scan(&userID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			NotFoundHandler(w, r)
-		} else {
-			InternalServerErrorHandler(w, r, err)
-		}
-		return
-	}
+	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
 
 	cba := domain.CreateBookArgs{
-		ReaderID:     userID,
+		ReaderID:     pathUser.ID,
 		Title:        r.FormValue("title"),
 		Author:       r.FormValue("author"),
 		DateFinished: r.FormValue("dateFinished"),
 		Media:        r.FormValue("media"),
 	}
 
-	err = domain.CreateBook(ctx, db, cba)
+	err := domain.CreateBook(ctx, db, cba)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := RenderBookNew(w, baseViewDataFromRequest(r), cba, verr, username)
+			err := RenderBookNew(w, baseViewDataFromRequest(r), cba, verr, pathUser.Username)
 			if err != nil {
 				InternalServerErrorHandler(w, r, err)
 			}
@@ -110,12 +99,13 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, BooksPath(username), http.StatusSeeOther)
+	http.Redirect(w, r, BooksPath(pathUser.Username), http.StatusSeeOther)
 }
 
 func BookDelete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
+	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
 
 	bookID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
@@ -123,8 +113,8 @@ func BookDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var username string
-	err = db.QueryRow(ctx, "select username from users join books on users.id=books.user_id where books.id=$1", bookID).Scan(&username)
+	var found bool
+	err = db.QueryRow(ctx, "select true from books where books.user_id=$1 and books.id=$2", pathUser.ID, bookID).Scan(&found)
 	if err != nil {
 		NotFoundHandler(w, r)
 		return
@@ -140,14 +130,14 @@ func BookDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, BooksPath(username), http.StatusSeeOther)
+	http.Redirect(w, r, BooksPath(pathUser.Username), http.StatusSeeOther)
 }
 
 func BookEdit(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
+	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
 
-	username := chi.URLParam(r, "username")
 	bookID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
 		NotFoundHandler(w, r)
@@ -155,7 +145,8 @@ func BookEdit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	uba := domain.UpdateBookArgs{}
-	err = db.QueryRow(ctx, "select title, author, finish_date::text, media from books where id=$1", bookID).Scan(&uba.Title, &uba.Author, &uba.DateFinished, &uba.Media)
+	err = db.QueryRow(ctx, "select title, author, finish_date::text, media from books where id=$1 and user_id=$2", bookID, pathUser.ID).
+		Scan(&uba.Title, &uba.Author, &uba.DateFinished, &uba.Media)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			NotFoundHandler(w, r)
@@ -165,7 +156,7 @@ func BookEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = RenderBookEdit(w, baseViewDataFromRequest(r), bookID, uba, nil, username)
+	err = RenderBookEdit(w, baseViewDataFromRequest(r), bookID, uba, nil, pathUser.Username)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
@@ -175,6 +166,7 @@ func BookEdit(w http.ResponseWriter, r *http.Request) {
 func BookUpdate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
+	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
 
 	bookID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
@@ -182,8 +174,8 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var username string
-	err = db.QueryRow(ctx, "select username from users join books on users.id=books.user_id where books.id=$1", bookID).Scan(&username)
+	var found bool
+	err = db.QueryRow(ctx, "select true from books where books.user_id=$1 and books.id=$2", pathUser.ID, bookID).Scan(&found)
 	if err != nil {
 		NotFoundHandler(w, r)
 		return
@@ -201,7 +193,7 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := RenderBookEdit(w, baseViewDataFromRequest(r), bookID, uba, verr, username)
+			err := RenderBookEdit(w, baseViewDataFromRequest(r), bookID, uba, verr, pathUser.Username)
 			if err != nil {
 				InternalServerErrorHandler(w, r, err)
 			}
@@ -212,11 +204,14 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, BooksPath(username), http.StatusSeeOther)
+	http.Redirect(w, r, BooksPath(pathUser.Username), http.StatusSeeOther)
 }
 
 func BookImportCSVForm(w http.ResponseWriter, r *http.Request) {
-	err := RenderBookImportCSVForm(w, baseViewDataFromRequest(r), chi.URLParam(r, "username"))
+	ctx := r.Context()
+	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
+
+	err := RenderBookImportCSVForm(w, baseViewDataFromRequest(r), pathUser.Username)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
@@ -226,14 +221,7 @@ func BookImportCSVForm(w http.ResponseWriter, r *http.Request) {
 func BookImportCSV(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
-
-	username := chi.URLParam(r, "username")
-	var userID int64
-	err := db.QueryRow(ctx, "select id from users where username=$1", username).Scan(&userID)
-	if err != nil {
-		NotFoundHandler(w, r)
-		return
-	}
+	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
 
 	r.ParseMultipartForm(10 << 20)
 
@@ -244,11 +232,11 @@ func BookImportCSV(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	err = domain.ImportBooksFromCSV(ctx, db, userID, file)
+	err = domain.ImportBooksFromCSV(ctx, db, pathUser.ID, file)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
 	}
 
-	http.Redirect(w, r, BooksPath(username), http.StatusSeeOther)
+	http.Redirect(w, r, BooksPath(pathUser.Username), http.StatusSeeOther)
 }
