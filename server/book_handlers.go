@@ -75,7 +75,7 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
 
 	cba := domain.CreateBookArgs{
-		ReaderID:     pathUser.ID,
+		UserID:       pathUser.ID,
 		Title:        r.FormValue("title"),
 		Author:       r.FormValue("author"),
 		DateFinished: r.FormValue("dateFinished"),

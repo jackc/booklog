@@ -13,12 +13,12 @@ import (
 )
 
 type CreateBookArgs struct {
-	ReaderIDString string
-	ReaderID       int64
-	Title          string
-	Author         string
-	DateFinished   string
-	Media          string
+	UserIDString string
+	UserID       int64
+	Title        string
+	Author       string
+	DateFinished string
+	Media        string
 }
 
 func CreateBook(ctx context.Context, db queryExecer, args CreateBookArgs) error {
@@ -33,7 +33,7 @@ func CreateBook(ctx context.Context, db queryExecer, args CreateBookArgs) error 
 	}
 
 	_, err := db.Exec(ctx, "insert into books(user_id, title, author, finish_date, media) values($1, $2, $3, $4, $5)",
-		args.ReaderID,
+		args.UserID,
 		args.Title,
 		args.Author,
 		args.DateFinished,
