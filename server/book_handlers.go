@@ -102,6 +102,7 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
 	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
+	session := ctx.Value(RequestSessionKey).(*Session)
 
 	form := BookEditForm{
 		Title:        r.FormValue("title"),
@@ -118,15 +119,14 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cba := domain.CreateBookArgs{
-		UserID:       pathUser.ID,
+	attrs := domain.BookAttrs{
 		Title:        parsedForm.Title,
 		Author:       parsedForm.Author,
 		DateFinished: parsedForm.DateFinished,
 		Media:        parsedForm.Media,
 	}
 
-	err := domain.CreateBook(ctx, db, cba)
+	err := domain.CreateBook(ctx, db, session.User.ID, pathUser.ID, attrs)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
@@ -217,14 +217,14 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uba := domain.UpdateBookArgs{
+	attrs := domain.BookAttrs{
 		Title:        parsedForm.Title,
 		Author:       parsedForm.Author,
 		DateFinished: parsedForm.DateFinished,
 		Media:        parsedForm.Media,
 	}
 
-	err := domain.UpdateBook(ctx, db, session.User.ID, bookID, uba)
+	err := domain.UpdateBook(ctx, db, session.User.ID, bookID, attrs)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {

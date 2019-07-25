@@ -12,30 +12,33 @@ import (
 	errors "golang.org/x/xerrors"
 )
 
-type CreateBookArgs struct {
-	UserID       int64
+type BookAttrs struct {
 	Title        string
 	Author       string
 	DateFinished time.Time
 	Media        string
 }
 
-func CreateBook(ctx context.Context, db queryExecer, args CreateBookArgs) error {
+func CreateBook(ctx context.Context, db queryExecer, currentUserID int64, ownerID int64, attrs BookAttrs) error {
+	if ownerID != currentUserID {
+		return &ForbiddenError{currentUserID: currentUserID, msg: fmt.Sprintf("create book for user_id=%d", ownerID)}
+	}
+
 	v := validate.New()
-	v.Presence("title", args.Title)
-	v.Presence("author", args.Author)
-	v.Presence("media", args.Media)
+	v.Presence("title", attrs.Title)
+	v.Presence("author", attrs.Author)
+	v.Presence("media", attrs.Media)
 
 	if v.Err() != nil {
 		return v.Err()
 	}
 
 	_, err := db.Exec(ctx, "insert into books(user_id, title, author, finish_date, media) values($1, $2, $3, $4, $5)",
-		args.UserID,
-		args.Title,
-		args.Author,
-		args.DateFinished,
-		args.Media)
+		ownerID,
+		attrs.Title,
+		attrs.Author,
+		attrs.DateFinished,
+		attrs.Media)
 	if err != nil {
 		return err
 	}
@@ -43,14 +46,7 @@ func CreateBook(ctx context.Context, db queryExecer, args CreateBookArgs) error 
 	return nil
 }
 
-type UpdateBookArgs struct {
-	Title        string
-	Author       string
-	DateFinished time.Time
-	Media        string
-}
-
-func UpdateBook(ctx context.Context, db queryExecer, currentUserID int64, bookID int64, args UpdateBookArgs) error {
+func UpdateBook(ctx context.Context, db queryExecer, currentUserID int64, bookID int64, attrs BookAttrs) error {
 	var ownerID int64
 	err := db.QueryRow(ctx, "select user_id from books where id=$1", bookID).Scan(&ownerID)
 	if err != nil {
@@ -66,19 +62,19 @@ func UpdateBook(ctx context.Context, db queryExecer, currentUserID int64, bookID
 	}
 
 	v := validate.New()
-	v.Presence("title", args.Title)
-	v.Presence("author", args.Author)
-	v.Presence("media", args.Media)
+	v.Presence("title", attrs.Title)
+	v.Presence("author", attrs.Author)
+	v.Presence("media", attrs.Media)
 
 	if v.Err() != nil {
 		return v.Err()
 	}
 
 	commandTag, err := db.Exec(ctx, "update books set title=$1, author=$2, finish_date=$3, media=$4 where id=$5",
-		args.Title,
-		args.Author,
-		args.DateFinished,
-		args.Media,
+		attrs.Title,
+		attrs.Author,
+		attrs.DateFinished,
+		attrs.Media,
 		bookID)
 	if err != nil {
 		return err
