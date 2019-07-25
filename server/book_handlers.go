@@ -10,6 +10,35 @@ import (
 	errors "golang.org/x/xerrors"
 )
 
+type BookEditForm struct {
+	Title        string
+	Author       string
+	DateFinished string
+	Media        string
+}
+
+func (f BookEditForm) Parse() (ParsedBookEditForm, validate.Errors) {
+	var err error
+	p := ParsedBookEditForm{BookEditForm: f}
+	v := validate.New()
+
+	p.DateFinished, err = time.Parse("2006-01-02", f.DateFinished)
+	if err != nil {
+		v.Add("dateFinished", errors.New("is not a date"))
+	}
+
+	if v.Err() != nil {
+		return p, v.Err().(validate.Errors)
+	}
+
+	return p, nil
+}
+
+type ParsedBookEditForm struct {
+	BookEditForm
+	DateFinished time.Time
+}
+
 func BookIndex(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
@@ -61,8 +90,8 @@ func BookNew(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
 
-	var createBookArgs domain.CreateBookArgs
-	err := RenderBookNew(w, baseViewDataFromRequest(r), createBookArgs, nil, pathUser.Username)
+	var form BookEditForm
+	err := RenderBookNew(w, baseViewDataFromRequest(r), form, nil, pathUser.Username)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
@@ -74,19 +103,34 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 	db := ctx.Value(RequestDBKey).(queryExecer)
 	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
 
-	cba := domain.CreateBookArgs{
-		UserID:       pathUser.ID,
+	form := BookEditForm{
 		Title:        r.FormValue("title"),
 		Author:       r.FormValue("author"),
 		DateFinished: r.FormValue("dateFinished"),
 		Media:        r.FormValue("media"),
+	}
+	parsedForm, verr := form.Parse()
+	if verr != nil {
+		err := RenderBookNew(w, baseViewDataFromRequest(r), form, verr, pathUser.Username)
+		if err != nil {
+			InternalServerErrorHandler(w, r, err)
+		}
+		return
+	}
+
+	cba := domain.CreateBookArgs{
+		UserID:       pathUser.ID,
+		Title:        parsedForm.Title,
+		Author:       parsedForm.Author,
+		DateFinished: parsedForm.DateFinished,
+		Media:        parsedForm.Media,
 	}
 
 	err := domain.CreateBook(ctx, db, cba)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := RenderBookNew(w, baseViewDataFromRequest(r), cba, verr, pathUser.Username)
+			err := RenderBookNew(w, baseViewDataFromRequest(r), form, verr, pathUser.Username)
 			if err != nil {
 				InternalServerErrorHandler(w, r, err)
 			}
@@ -130,9 +174,10 @@ func BookEdit(w http.ResponseWriter, r *http.Request) {
 	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
 	bookID := int64URLParam(r, "id")
 
-	uba := domain.UpdateBookArgs{}
-	err := db.QueryRow(ctx, "select title, author, finish_date::text, media from books where id=$1 and user_id=$2", bookID, pathUser.ID).
-		Scan(&uba.Title, &uba.Author, &uba.DateFinished, &uba.Media)
+	var form BookEditForm
+	var dateFinished time.Time
+	err := db.QueryRow(ctx, "select title, author, finish_date, media from books where id=$1 and user_id=$2", bookID, pathUser.ID).
+		Scan(&form.Title, &form.Author, &dateFinished, &form.Media)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			NotFoundHandler(w, r)
@@ -141,8 +186,9 @@ func BookEdit(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	form.DateFinished = dateFinished.Format("2006-01-02")
 
-	err = RenderBookEdit(w, baseViewDataFromRequest(r), bookID, uba, nil, pathUser.Username)
+	err = RenderBookEdit(w, baseViewDataFromRequest(r), bookID, form, nil, pathUser.Username)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
@@ -156,18 +202,33 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 	session := ctx.Value(RequestSessionKey).(*Session)
 	bookID := int64URLParam(r, "id")
 
-	uba := domain.UpdateBookArgs{
+	form := BookEditForm{
 		Title:        r.FormValue("title"),
 		Author:       r.FormValue("author"),
 		DateFinished: r.FormValue("dateFinished"),
 		Media:        r.FormValue("media"),
+	}
+	parsedForm, verr := form.Parse()
+	if verr != nil {
+		err := RenderBookEdit(w, baseViewDataFromRequest(r), bookID, form, verr, pathUser.Username)
+		if err != nil {
+			InternalServerErrorHandler(w, r, err)
+		}
+		return
+	}
+
+	uba := domain.UpdateBookArgs{
+		Title:        parsedForm.Title,
+		Author:       parsedForm.Author,
+		DateFinished: parsedForm.DateFinished,
+		Media:        parsedForm.Media,
 	}
 
 	err := domain.UpdateBook(ctx, db, session.User.ID, bookID, uba)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := RenderBookEdit(w, baseViewDataFromRequest(r), bookID, uba, verr, pathUser.Username)
+			err := RenderBookEdit(w, baseViewDataFromRequest(r), bookID, form, verr, pathUser.Username)
 			if err != nil {
 				InternalServerErrorHandler(w, r, err)
 			}

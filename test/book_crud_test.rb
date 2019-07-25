@@ -13,7 +13,7 @@ class BookCrudTest < IntegrationTest
     browser.a(text: "New Book").click
     browser.text_field(label: "Title").set "Paradise Lost"
     browser.text_field(label: "Author").set "John Milton"
-    browser.date_field(label: "Date Finished").set "01/01/2019"
+    browser.date_field(label: "Date Finished").set "2019-01-01"
     browser.text_field(label: "Media").set "audio"
     browser.button(text: "Save").click
     assert browser.a(text: "Paradise Lost").exist?

@@ -95,10 +95,10 @@ func RenderBookIndex(w io.Writer, b baseViewData, books []*BooksForYear, usernam
 	})
 }
 
-func RenderBookEdit(w io.Writer, b baseViewData, bookId int64, uba domain.UpdateBookArgs, verr validate.Errors, username string) error {
+func RenderBookEdit(w io.Writer, b baseViewData, bookId int64, form BookEditForm, verr validate.Errors, username string) error {
 	return bookEdit.Execute(w, map[string]interface{}{
 		"bookID":         bookId,
-		"fields":         uba,
+		"fields":         form,
 		"errors":         verr,
 		csrf.TemplateTag: b.csrfTemplateTag,
 		"session":        b.session,
@@ -106,9 +106,9 @@ func RenderBookEdit(w io.Writer, b baseViewData, bookId int64, uba domain.Update
 	})
 }
 
-func RenderBookNew(w io.Writer, b baseViewData, cba domain.CreateBookArgs, verr validate.Errors, username string) error {
+func RenderBookNew(w io.Writer, b baseViewData, form BookEditForm, verr validate.Errors, username string) error {
 	return bookNew.Execute(w, map[string]interface{}{
-		"fields":         cba,
+		"fields":         form,
 		"errors":         verr,
 		csrf.TemplateTag: b.csrfTemplateTag,
 		"session":        b.session,

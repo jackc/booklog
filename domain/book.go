@@ -16,7 +16,7 @@ type CreateBookArgs struct {
 	UserID       int64
 	Title        string
 	Author       string
-	DateFinished string
+	DateFinished time.Time
 	Media        string
 }
 
@@ -24,7 +24,6 @@ func CreateBook(ctx context.Context, db queryExecer, args CreateBookArgs) error 
 	v := validate.New()
 	v.Presence("title", args.Title)
 	v.Presence("author", args.Author)
-	v.Presence("dateFinished", args.DateFinished)
 	v.Presence("media", args.Media)
 
 	if v.Err() != nil {
@@ -47,7 +46,7 @@ func CreateBook(ctx context.Context, db queryExecer, args CreateBookArgs) error 
 type UpdateBookArgs struct {
 	Title        string
 	Author       string
-	DateFinished string
+	DateFinished time.Time
 	Media        string
 }
 
@@ -69,7 +68,6 @@ func UpdateBook(ctx context.Context, db queryExecer, currentUserID int64, bookID
 	v := validate.New()
 	v.Presence("title", args.Title)
 	v.Presence("author", args.Author)
-	v.Presence("dateFinished", args.DateFinished)
 	v.Presence("media", args.Media)
 
 	if v.Err() != nil {
