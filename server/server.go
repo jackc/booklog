@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -100,9 +101,9 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHas
 		r.Method("GET", "/books", http.HandlerFunc(BookIndex))
 		r.Method("GET", "/books/new", http.HandlerFunc(BookNew))
 		r.Method("POST", "/books", http.HandlerFunc(BookCreate))
-		r.Method("GET", "/books/{id}/edit", http.HandlerFunc(BookEdit))
-		r.Method("PATCH", "/books/{id}", http.HandlerFunc(BookUpdate))
-		r.Method("DELETE", "/books/{id}", http.HandlerFunc(BookDelete))
+		r.Method("GET", "/books/{id}/edit", parseInt64URLParam("id")(http.HandlerFunc(BookEdit)))
+		r.Method("PATCH", "/books/{id}", parseInt64URLParam("id")(http.HandlerFunc(BookUpdate)))
+		r.Method("DELETE", "/books/{id}", parseInt64URLParam("id")(http.HandlerFunc(BookDelete)))
 		r.Method("GET", "/books/import_csv/form", http.HandlerFunc(BookImportCSVForm))
 		r.Method("POST", "/books/import_csv", http.HandlerFunc(BookImportCSV))
 	})
@@ -269,4 +270,28 @@ func requireSameSessionUserAndPathUserHandler() func(http.Handler) http.Handler 
 
 		return http.HandlerFunc(fn)
 	}
+}
+
+type ctxURLParamKey string
+
+func parseInt64URLParam(paramName string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			n, err := strconv.ParseInt(chi.URLParam(r, paramName), 10, 64)
+			if err != nil {
+				NotFoundHandler(w, r)
+				return
+			}
+
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, ctxURLParamKey(paramName), n)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
+
+		return http.HandlerFunc(fn)
+	}
+}
+
+func int64URLParam(r *http.Request, name string) int64 {
+	return r.Context().Value(ctxURLParamKey(name)).(int64)
 }

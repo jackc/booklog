@@ -2,10 +2,8 @@ package server
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
-	"github.com/go-chi/chi"
 	"github.com/jackc/booklog/domain"
 	"github.com/jackc/booklog/validate"
 	"github.com/jackc/pgx/v4"
@@ -107,8 +105,9 @@ func BookDelete(w http.ResponseWriter, r *http.Request) {
 	db := ctx.Value(RequestDBKey).(queryExecer)
 	session := ctx.Value(RequestSessionKey).(*Session)
 	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
+	bookID := int64URLParam(r, "id")
 
-	err := domain.DeleteBookParse(ctx, db, session.User.ID, chi.URLParam(r, "id"))
+	err := domain.DeleteBook(ctx, db, session.User.ID, bookID)
 	if err != nil {
 		var nfErr domain.NotFoundError
 		var fErr domain.ForbiddenError
@@ -129,15 +128,10 @@ func BookEdit(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
 	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
-
-	bookID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
-	if err != nil {
-		NotFoundHandler(w, r)
-		return
-	}
+	bookID := int64URLParam(r, "id")
 
 	uba := domain.UpdateBookArgs{}
-	err = db.QueryRow(ctx, "select title, author, finish_date::text, media from books where id=$1 and user_id=$2", bookID, pathUser.ID).
+	err := db.QueryRow(ctx, "select title, author, finish_date::text, media from books where id=$1 and user_id=$2", bookID, pathUser.ID).
 		Scan(&uba.Title, &uba.Author, &uba.DateFinished, &uba.Media)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -159,29 +153,17 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
 	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
-
-	bookID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
-	if err != nil {
-		NotFoundHandler(w, r)
-		return
-	}
-
-	var found bool
-	err = db.QueryRow(ctx, "select true from books where books.user_id=$1 and books.id=$2", pathUser.ID, bookID).Scan(&found)
-	if err != nil {
-		NotFoundHandler(w, r)
-		return
-	}
+	session := ctx.Value(RequestSessionKey).(*Session)
+	bookID := int64URLParam(r, "id")
 
 	uba := domain.UpdateBookArgs{
-		ID:           bookID,
 		Title:        r.FormValue("title"),
 		Author:       r.FormValue("author"),
 		DateFinished: r.FormValue("dateFinished"),
 		Media:        r.FormValue("media"),
 	}
 
-	err = domain.UpdateBook(ctx, db, uba)
+	err := domain.UpdateBook(ctx, db, session.User.ID, bookID, uba)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
@@ -192,7 +174,15 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		InternalServerErrorHandler(w, r, err)
+		var nfErr domain.NotFoundError
+		var fErr domain.ForbiddenError
+		if errors.As(err, nfErr) {
+			NotFoundHandler(w, r)
+		} else if errors.As(err, fErr) {
+			ForbiddenHandler(w, r)
+		} else {
+			InternalServerErrorHandler(w, r, err)
+		}
 		return
 	}
 

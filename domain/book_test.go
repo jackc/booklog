@@ -86,42 +86,6 @@ func TestDeleteBookSuccess(t *testing.T) {
 	require.EqualValues(t, 0, bookCount)
 }
 
-func TestDeleteBookParseBadFormattedBookIDString(t *testing.T) {
-	t.Parallel()
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
-	conn, err := pgx.Connect(ctx, os.Getenv("BOOKLOG_TEST_DB_CONN_STRING"))
-	require.NoError(t, err)
-	defer closeConn(t, conn)
-
-	tx, err := conn.Begin(ctx, nil)
-	require.NoError(t, err)
-	defer tx.Rollback(ctx)
-
-	var userID int64
-	err = tx.QueryRow(ctx, "insert into users(username, password_digest) values('test', 'x') returning id").Scan(&userID)
-	require.NoError(t, err)
-
-	var bookID int64
-	err = tx.QueryRow(ctx,
-		"insert into books(user_id, title, author, finish_date, media) values($1, $2, $3, $4, $5) returning id",
-		userID, "Paradise Lost", "John Milton", time.Now(), "book",
-	).Scan(&bookID)
-	require.NoError(t, err)
-
-	err = domain.DeleteBookParse(ctx, tx, userID, "123abc")
-	require.Error(t, err)
-	require.IsType(t, &domain.NotFoundError{}, err)
-
-	var bookCount int64
-	err = tx.QueryRow(ctx, "select count(*) from books where user_id=$1", userID).Scan(&bookCount)
-	require.NoError(t, err)
-
-	require.EqualValues(t, 1, bookCount)
-}
-
 func TestDeleteBookMissingBookID(t *testing.T) {
 	t.Parallel()
 

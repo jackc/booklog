@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"strconv"
 	"time"
 
 	"github.com/jackc/booklog/validate"
@@ -47,15 +46,27 @@ func CreateBook(ctx context.Context, db queryExecer, args CreateBookArgs) error 
 }
 
 type UpdateBookArgs struct {
-	IDString     string
-	ID           int64
 	Title        string
 	Author       string
 	DateFinished string
 	Media        string
 }
 
-func UpdateBook(ctx context.Context, db queryExecer, args UpdateBookArgs) error {
+func UpdateBook(ctx context.Context, db queryExecer, currentUserID int64, bookID int64, args UpdateBookArgs) error {
+	var ownerID int64
+	err := db.QueryRow(ctx, "select user_id from books where id=$1", bookID).Scan(&ownerID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &NotFoundError{target: fmt.Sprintf("book id=%d", bookID)}
+		} else {
+			return err
+		}
+	}
+
+	if ownerID != currentUserID {
+		return &ForbiddenError{currentUserID: currentUserID, msg: fmt.Sprintf("delete book id=%d", bookID)}
+	}
+
 	v := validate.New()
 	v.Presence("title", args.Title)
 	v.Presence("author", args.Author)
@@ -71,7 +82,7 @@ func UpdateBook(ctx context.Context, db queryExecer, args UpdateBookArgs) error 
 		args.Author,
 		args.DateFinished,
 		args.Media,
-		args.ID)
+		bookID)
 	if err != nil {
 		return err
 	}
@@ -80,16 +91,6 @@ func UpdateBook(ctx context.Context, db queryExecer, args UpdateBookArgs) error 
 	}
 
 	return nil
-}
-
-// DeleteBookParse parses bookID and calles DeleteBook.
-func DeleteBookParse(ctx context.Context, db queryExecer, currentUserID int64, bookID string) error {
-	n, err := strconv.ParseInt(bookID, 10, 64)
-	if err != nil {
-		return &NotFoundError{target: fmt.Sprintf("book id=%s", bookID)}
-	}
-
-	return DeleteBook(ctx, db, currentUserID, n)
 }
 
 // DeleteBook deletes the book specified by bookID at the behest of currentUserID. It returns a NotFoundError if the book
