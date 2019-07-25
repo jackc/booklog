@@ -108,11 +108,7 @@ func BookDelete(w http.ResponseWriter, r *http.Request) {
 	session := ctx.Value(RequestSessionKey).(*Session)
 	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
 
-	dba := domain.DeleteBookArgs{
-		IDString: chi.URLParam(r, "id"),
-	}
-
-	err := domain.DeleteBook(ctx, db, session.User.ID, dba)
+	err := domain.DeleteBookParse(ctx, db, session.User.ID, chi.URLParam(r, "id"))
 	if err != nil {
 		var nfErr domain.NotFoundError
 		var fErr domain.ForbiddenError

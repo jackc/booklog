@@ -82,38 +82,35 @@ func UpdateBook(ctx context.Context, db queryExecer, args UpdateBookArgs) error 
 	return nil
 }
 
-type DeleteBookArgs struct {
-	IDString string
-	ID       int64
-}
-
-// DeleteBook deletes the book specified by args at the behest of currentUserID. It returns a NotFoundError if the book
-// cannot be found and a ForbiddenError is the user does not have permission to delete the book.
-func DeleteBook(ctx context.Context, db queryExecer, currentUserID int64, args DeleteBookArgs) error {
-	if args.IDString != "" {
-		var err error
-		args.ID, err = strconv.ParseInt(args.IDString, 10, 64)
-		if err != nil {
-			return &NotFoundError{target: fmt.Sprintf("book id=%s", args.IDString)}
-		}
+// DeleteBookParse parses bookID and calles DeleteBook.
+func DeleteBookParse(ctx context.Context, db queryExecer, currentUserID int64, bookID string) error {
+	n, err := strconv.ParseInt(bookID, 10, 64)
+	if err != nil {
+		return &NotFoundError{target: fmt.Sprintf("book id=%s", bookID)}
 	}
 
+	return DeleteBook(ctx, db, currentUserID, n)
+}
+
+// DeleteBook deletes the book specified by bookID at the behest of currentUserID. It returns a NotFoundError if the book
+// cannot be found and a ForbiddenError is the user does not have permission to delete the book.
+func DeleteBook(ctx context.Context, db queryExecer, currentUserID int64, bookID int64) error {
 	// TODO - these two queries should run in a transaction
 	var ownerID int64
-	err := db.QueryRow(ctx, "select user_id from books where id=$1", args.ID).Scan(&ownerID)
+	err := db.QueryRow(ctx, "select user_id from books where id=$1", bookID).Scan(&ownerID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &NotFoundError{target: fmt.Sprintf("book id=%d", args.ID)}
+			return &NotFoundError{target: fmt.Sprintf("book id=%d", bookID)}
 		} else {
 			return err
 		}
 	}
 
 	if ownerID != currentUserID {
-		return &ForbiddenError{currentUserID: currentUserID, msg: fmt.Sprintf("delete book id=%d", args.ID)}
+		return &ForbiddenError{currentUserID: currentUserID, msg: fmt.Sprintf("delete book id=%d", bookID)}
 	}
 
-	_, err = db.Exec(ctx, "delete from books where id=$1", args.ID)
+	_, err = db.Exec(ctx, "delete from books where id=$1", bookID)
 	return err
 }
 

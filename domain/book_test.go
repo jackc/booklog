@@ -76,7 +76,7 @@ func TestDeleteBookSuccess(t *testing.T) {
 	).Scan(&bookID)
 	require.NoError(t, err)
 
-	err = domain.DeleteBook(ctx, tx, userID, domain.DeleteBookArgs{ID: bookID})
+	err = domain.DeleteBook(ctx, tx, userID, bookID)
 	require.NoError(t, err)
 
 	var bookCount int64
@@ -86,7 +86,7 @@ func TestDeleteBookSuccess(t *testing.T) {
 	require.EqualValues(t, 0, bookCount)
 }
 
-func TestDeleteBookBadFormattedBookIDString(t *testing.T) {
+func TestDeleteBookParseBadFormattedBookIDString(t *testing.T) {
 	t.Parallel()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
@@ -111,7 +111,7 @@ func TestDeleteBookBadFormattedBookIDString(t *testing.T) {
 	).Scan(&bookID)
 	require.NoError(t, err)
 
-	err = domain.DeleteBook(ctx, tx, userID, domain.DeleteBookArgs{IDString: "123abc"})
+	err = domain.DeleteBookParse(ctx, tx, userID, "123abc")
 	require.Error(t, err)
 	require.IsType(t, &domain.NotFoundError{}, err)
 
@@ -147,7 +147,7 @@ func TestDeleteBookMissingBookID(t *testing.T) {
 	).Scan(&bookID)
 	require.NoError(t, err)
 
-	err = domain.DeleteBook(ctx, tx, userID, domain.DeleteBookArgs{IDString: "-1"})
+	err = domain.DeleteBook(ctx, tx, userID, -1)
 	require.Error(t, err)
 	require.IsType(t, &domain.NotFoundError{}, err)
 
@@ -187,7 +187,7 @@ func TestDeleteBookForbidden(t *testing.T) {
 	err = tx.QueryRow(ctx, "insert into users(username, password_digest) values('otheruser', 'x') returning id").Scan(&otherUserID)
 	require.NoError(t, err)
 
-	err = domain.DeleteBook(ctx, tx, otherUserID, domain.DeleteBookArgs{ID: bookID})
+	err = domain.DeleteBook(ctx, tx, otherUserID, bookID)
 	require.Error(t, err)
 	require.IsType(t, &domain.ForbiddenError{}, err)
 
