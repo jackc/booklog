@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/booklog/validate"
@@ -15,6 +16,12 @@ type BookAttrs struct {
 	Author       string
 	DateFinished time.Time
 	Media        string
+}
+
+func (attrs *BookAttrs) Normalize() {
+	attrs.Title = strings.TrimSpace(attrs.Title)
+	attrs.Author = strings.TrimSpace(attrs.Author)
+	attrs.Media = strings.TrimSpace(attrs.Media)
 }
 
 func (attrs BookAttrs) Validate() validate.Errors {
@@ -35,6 +42,7 @@ func CreateBook(ctx context.Context, db queryExecer, currentUserID int64, ownerI
 		return &ForbiddenError{currentUserID: currentUserID, msg: fmt.Sprintf("create book for user_id=%d", ownerID)}
 	}
 
+	attrs.Normalize()
 	if verrs := attrs.Validate(); verrs != nil {
 		return verrs
 	}
@@ -67,6 +75,7 @@ func UpdateBook(ctx context.Context, db queryExecer, currentUserID int64, bookID
 		return &ForbiddenError{currentUserID: currentUserID, msg: fmt.Sprintf("delete book id=%d", bookID)}
 	}
 
+	attrs.Normalize()
 	if verrs := attrs.Validate(); verrs != nil {
 		return verrs
 	}
