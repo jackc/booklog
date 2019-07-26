@@ -1,8 +1,10 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/csv"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -314,4 +316,43 @@ func importBooksFromCSV(ctx context.Context, db queryExecer, currentUserID int64
 	}
 
 	return nil
+}
+
+func BookExportCSV(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	db := ctx.Value(RequestDBKey).(queryExecer)
+	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
+
+	buf := &bytes.Buffer{}
+	csvWriter := csv.NewWriter(buf)
+	csvWriter.Write([]string{"title", "author", "finish_date", "media"})
+
+	rows, _ := db.Query(ctx, `select title, author, finish_date, media
+from books
+where user_id=$1
+order by finish_date desc`, pathUser.ID)
+	for rows.Next() {
+		var title, author, media string
+		var finishDate time.Time
+		rows.Scan(&title, &author, &finishDate, &media)
+		csvWriter.Write([]string{title, author, finishDate.Format("2006-01-02"), media})
+	}
+	if rows.Err() != nil {
+		InternalServerErrorHandler(w, r, rows.Err())
+		return
+	}
+
+	csvWriter.Flush()
+	if csvWriter.Error() != nil {
+		InternalServerErrorHandler(w, r, csvWriter.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/csv")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=booklog-%s.csv", pathUser.Username))
+	_, err := buf.WriteTo(w)
+	if err != nil {
+		InternalServerErrorHandler(w, r, err)
+		return
+	}
 }

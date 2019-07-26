@@ -106,6 +106,7 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHas
 		r.Method("DELETE", "/books/{id}", parseInt64URLParam("id")(http.HandlerFunc(BookDelete)))
 		r.Method("GET", "/books/import_csv/form", http.HandlerFunc(BookImportCSVForm))
 		r.Method("POST", "/books/import_csv", http.HandlerFunc(BookImportCSV))
+		r.Method("GET", "/books.csv", http.HandlerFunc(BookExportCSV))
 	})
 
 	fileServer(r, "/static", http.Dir("build/static"))
