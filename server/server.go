@@ -86,7 +86,7 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHas
 
 	r.Use(sessionHandler(securecookie.New(cookieHashKey, cookieBlockKey)))
 
-	// r.Method("GET", "/", &BookIndex{})
+	r.Method("GET", "/", http.HandlerFunc(RootHandler))
 	r.Method("GET", "/user_registration/new", http.HandlerFunc(UserRegistrationNew))
 	r.Method("POST", "/user_registration", http.HandlerFunc(UserRegistrationCreate))
 
