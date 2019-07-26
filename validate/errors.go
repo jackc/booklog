@@ -13,7 +13,7 @@ func (e Errors) Error() string {
 		return "No errors"
 	}
 
-	return "TODO"
+	return fmt.Sprintf("%#v", e)
 }
 
 func (e Errors) Get(attr string) []error {

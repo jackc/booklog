@@ -1,6 +1,9 @@
 package server
 
 import (
+	"context"
+	"encoding/csv"
+	"io"
 	"net/http"
 	"time"
 
@@ -28,7 +31,10 @@ func (f BookEditForm) Parse() (domain.BookAttrs, validate.Errors) {
 
 	attrs.DateFinished, err = time.Parse("2006-01-02", f.DateFinished)
 	if err != nil {
-		v.Add("dateFinished", errors.New("is not a date"))
+		attrs.DateFinished, err = time.Parse("1/2/2006", f.DateFinished)
+		if err != nil {
+			v.Add("dateFinished", errors.New("is not a date"))
+		}
 	}
 
 	if v.Err() != nil {
@@ -249,6 +255,7 @@ func BookImportCSVForm(w http.ResponseWriter, r *http.Request) {
 func BookImportCSV(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
+	session := ctx.Value(RequestSessionKey).(*Session)
 	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
 
 	r.ParseMultipartForm(10 << 20)
@@ -260,11 +267,51 @@ func BookImportCSV(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	err = domain.ImportBooksFromCSV(ctx, db, pathUser.ID, file)
+	err = importBooksFromCSV(ctx, db, session.User.ID, pathUser.ID, file)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
 	}
 
 	http.Redirect(w, r, BooksPath(pathUser.Username), http.StatusSeeOther)
+}
+
+// TODO - need DB transaction control - so queryExecer is insufficient
+func importBooksFromCSV(ctx context.Context, db queryExecer, currentUserID int64, ownerID int64, r io.Reader) error {
+	records, err := csv.NewReader(r).ReadAll()
+	if err != nil {
+		return err
+	}
+
+	if len(records) < 2 {
+		return errors.New("CSV must have at least 2 rows")
+	}
+
+	if len(records[0]) < 4 {
+		return errors.New("CSV must have at least 4 columns")
+	}
+
+	for i, record := range records[1:] {
+		form := BookEditForm{
+			Title:        record[0],
+			Author:       record[1],
+			DateFinished: record[2],
+			Media:        record[3],
+		}
+		if form.Media == "" {
+			form.Media = "book"
+		}
+
+		attrs, verr := form.Parse()
+		if verr != nil {
+			return errors.Errorf("row %d: %w", i+1, verr)
+		}
+
+		err := domain.CreateBook(ctx, db, currentUserID, ownerID, attrs)
+		if err != nil {
+			return errors.Errorf("row %d: %w", i+1, err)
+		}
+	}
+
+	return nil
 }

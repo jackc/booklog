@@ -2,9 +2,7 @@ package domain
 
 import (
 	"context"
-	"encoding/csv"
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/jackc/booklog/validate"
@@ -109,53 +107,4 @@ func DeleteBook(ctx context.Context, db queryExecer, currentUserID int64, bookID
 
 	_, err = db.Exec(ctx, "delete from books where id=$1", bookID)
 	return err
-}
-
-// TODO - need DB transaction control - so queryExecer is insufficient
-func ImportBooksFromCSV(ctx context.Context, db queryExecer, userID int64, r io.Reader) error {
-	records, err := csv.NewReader(r).ReadAll()
-	if err != nil {
-		return err
-	}
-
-	if len(records) < 2 {
-		return errors.New("CSV must have at least 2 rows")
-	}
-
-	if len(records[0]) < 4 {
-		return errors.New("CSV must have at least 4 columns")
-	}
-
-	for i, record := range records[1:] {
-		v := validate.New()
-		v.Presence("title", record[0])
-		v.Presence("author", record[1])
-		v.Presence("dateFinished", record[2])
-		if record[3] == "" {
-			record[3] = "book"
-		}
-		v.Presence("media", record[3])
-
-		if v.Err() != nil {
-			return v.Err()
-		}
-
-		var dateFinished time.Time
-		dateFinished, err = time.Parse("1/2/2006", record[2])
-		if err != nil {
-			return errors.Errorf("row %d: %v", i, err)
-		}
-
-		_, err := db.Exec(ctx, "insert into books(user_id, title, author, finish_date, media) values($1, $2, $3, $4, $5)",
-			userID,
-			record[0],
-			record[1],
-			dateFinished,
-			record[3])
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
