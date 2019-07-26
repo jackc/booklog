@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/jackc/booklog/domain"
+	"github.com/jackc/booklog/data"
 	"github.com/jackc/booklog/validate"
 	"github.com/jackc/pgx/v4"
 	errors "golang.org/x/xerrors"
@@ -22,9 +22,9 @@ type BookEditForm struct {
 	Media        string
 }
 
-func (f BookEditForm) Parse() (domain.BookAttrs, validate.Errors) {
+func (f BookEditForm) Parse() (data.BookAttrs, validate.Errors) {
 	var err error
-	attrs := domain.BookAttrs{
+	attrs := data.BookAttrs{
 		Title:  f.Title,
 		Author: f.Author,
 		Media:  f.Media,
@@ -125,7 +125,7 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bookID, err := domain.CreateBook(ctx, db, pathUser.ID, attrs)
+	bookID, err := data.CreateBook(ctx, db, pathUser.ID, attrs)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
@@ -149,9 +149,9 @@ func BookConfirmDelete(w http.ResponseWriter, r *http.Request) {
 	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
 	bookID := int64URLParam(r, "id")
 
-	book, err := domain.GetBook(ctx, db, bookID)
+	book, err := data.GetBook(ctx, db, bookID)
 	if err != nil {
-		var nfErr domain.NotFoundError
+		var nfErr data.NotFoundError
 		if errors.As(err, nfErr) {
 			NotFoundHandler(w, r)
 		} else {
@@ -173,9 +173,9 @@ func BookDelete(w http.ResponseWriter, r *http.Request) {
 	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
 	bookID := int64URLParam(r, "id")
 
-	err := domain.DeleteBook(ctx, db, bookID)
+	err := data.DeleteBook(ctx, db, bookID)
 	if err != nil {
-		var nfErr domain.NotFoundError
+		var nfErr data.NotFoundError
 		if errors.As(err, nfErr) {
 			NotFoundHandler(w, r)
 		} else {
@@ -193,9 +193,9 @@ func BookShow(w http.ResponseWriter, r *http.Request) {
 	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
 	bookID := int64URLParam(r, "id")
 
-	book, err := domain.GetBook(ctx, db, bookID)
+	book, err := data.GetBook(ctx, db, bookID)
 	if err != nil {
-		var nfErr domain.NotFoundError
+		var nfErr data.NotFoundError
 		if errors.As(err, nfErr) {
 			NotFoundHandler(w, r)
 		} else {
@@ -259,7 +259,7 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := domain.UpdateBook(ctx, db, bookID, attrs)
+	err := data.UpdateBook(ctx, db, bookID, attrs)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
@@ -270,7 +270,7 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var nfErr domain.NotFoundError
+		var nfErr data.NotFoundError
 		if errors.As(err, nfErr) {
 			NotFoundHandler(w, r)
 		} else {
@@ -347,7 +347,7 @@ func importBooksFromCSV(ctx context.Context, db queryExecer, ownerID int64, r io
 			return errors.Errorf("row %d: %w", i+1, verr)
 		}
 
-		_, err := domain.CreateBook(ctx, db, ownerID, attrs)
+		_, err := data.CreateBook(ctx, db, ownerID, attrs)
 		if err != nil {
 			return errors.Errorf("row %d: %w", i+1, err)
 		}

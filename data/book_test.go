@@ -1,4 +1,4 @@
-package domain_test
+package data_test
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jackc/booklog/domain"
+	"github.com/jackc/booklog/data"
 	"github.com/jackc/pgx/v4"
 	"github.com/stretchr/testify/require"
 )
@@ -42,7 +42,7 @@ func TestDeleteBookSuccess(t *testing.T) {
 	).Scan(&bookID)
 	require.NoError(t, err)
 
-	err = domain.DeleteBook(ctx, tx, bookID)
+	err = data.DeleteBook(ctx, tx, bookID)
 	require.NoError(t, err)
 
 	var bookCount int64
@@ -77,9 +77,9 @@ func TestDeleteBookMissingBookID(t *testing.T) {
 	).Scan(&bookID)
 	require.NoError(t, err)
 
-	err = domain.DeleteBook(ctx, tx, -1)
+	err = data.DeleteBook(ctx, tx, -1)
 	require.Error(t, err)
-	require.IsType(t, &domain.NotFoundError{}, err)
+	require.IsType(t, &data.NotFoundError{}, err)
 
 	var bookCount int64
 	err = tx.QueryRow(ctx, "select count(*) from books where user_id=$1", userID).Scan(&bookCount)

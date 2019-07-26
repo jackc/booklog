@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/gorilla/csrf"
-	"github.com/jackc/booklog/domain"
+	"github.com/jackc/booklog/data"
 	"github.com/jackc/booklog/validate"
 )
 
@@ -118,7 +118,7 @@ func RenderBookEdit(w io.Writer, b baseViewData, bookId int64, form BookEditForm
 	})
 }
 
-func RenderBookShow(w io.Writer, b baseViewData, book *domain.Book, username string) error {
+func RenderBookShow(w io.Writer, b baseViewData, book *data.Book, username string) error {
 	return bookShow.Execute(w, map[string]interface{}{
 		"book":           book,
 		csrf.TemplateTag: b.csrfTemplateTag,
@@ -127,7 +127,7 @@ func RenderBookShow(w io.Writer, b baseViewData, book *domain.Book, username str
 	})
 }
 
-func RenderBookConfirmDelete(w io.Writer, b baseViewData, book *domain.Book, username string) error {
+func RenderBookConfirmDelete(w io.Writer, b baseViewData, book *data.Book, username string) error {
 	return bookConfirmDelete.Execute(w, map[string]interface{}{
 		"book":           book,
 		csrf.TemplateTag: b.csrfTemplateTag,
@@ -146,7 +146,7 @@ func RenderBookNew(w io.Writer, b baseViewData, form BookEditForm, verr validate
 	})
 }
 
-func RenderUserRegistrationNew(w io.Writer, b baseViewData, rua domain.RegisterUserArgs, verr validate.Errors) error {
+func RenderUserRegistrationNew(w io.Writer, b baseViewData, rua data.RegisterUserArgs, verr validate.Errors) error {
 	return userRegistrationNew.Execute(w, map[string]interface{}{
 		"fields":         rua,
 		"errors":         verr,
@@ -155,7 +155,7 @@ func RenderUserRegistrationNew(w io.Writer, b baseViewData, rua domain.RegisterU
 	})
 }
 
-func RenderUserLoginForm(w io.Writer, b baseViewData, la domain.UserLoginArgs, verr validate.Errors) error {
+func RenderUserLoginForm(w io.Writer, b baseViewData, la data.UserLoginArgs, verr validate.Errors) error {
 	return loginForm.Execute(w, map[string]interface{}{
 		"fields":         la,
 		"errors":         verr,

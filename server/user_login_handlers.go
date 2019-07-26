@@ -3,13 +3,13 @@ package server
 import (
 	"net/http"
 
-	"github.com/jackc/booklog/domain"
+	"github.com/jackc/booklog/data"
 	"github.com/jackc/booklog/validate"
 	errors "golang.org/x/xerrors"
 )
 
 func UserLoginForm(w http.ResponseWriter, r *http.Request) {
-	var la domain.UserLoginArgs
+	var la data.UserLoginArgs
 
 	err := RenderUserLoginForm(w, baseViewDataFromRequest(r), la, nil)
 	if err != nil {
@@ -22,12 +22,12 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
 
-	la := domain.UserLoginArgs{
+	la := data.UserLoginArgs{
 		Username: r.FormValue("username"),
 		Password: r.FormValue("password"),
 	}
 
-	userSessionID, err := domain.UserLogin(ctx, db, la)
+	userSessionID, err := data.UserLogin(ctx, db, la)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
