@@ -19,18 +19,26 @@ type BookAttrs struct {
 	Media        string
 }
 
-func CreateBook(ctx context.Context, db queryExecer, currentUserID int64, ownerID int64, attrs BookAttrs) error {
-	if ownerID != currentUserID {
-		return &ForbiddenError{currentUserID: currentUserID, msg: fmt.Sprintf("create book for user_id=%d", ownerID)}
-	}
-
+func (attrs BookAttrs) Validate() validate.Errors {
 	v := validate.New()
 	v.Presence("title", attrs.Title)
 	v.Presence("author", attrs.Author)
 	v.Presence("media", attrs.Media)
 
 	if v.Err() != nil {
-		return v.Err()
+		return v.Err().(validate.Errors)
+	}
+
+	return nil
+}
+
+func CreateBook(ctx context.Context, db queryExecer, currentUserID int64, ownerID int64, attrs BookAttrs) error {
+	if ownerID != currentUserID {
+		return &ForbiddenError{currentUserID: currentUserID, msg: fmt.Sprintf("create book for user_id=%d", ownerID)}
+	}
+
+	if verrs := attrs.Validate(); verrs != nil {
+		return verrs
 	}
 
 	_, err := db.Exec(ctx, "insert into books(user_id, title, author, finish_date, media) values($1, $2, $3, $4, $5)",
@@ -61,13 +69,8 @@ func UpdateBook(ctx context.Context, db queryExecer, currentUserID int64, bookID
 		return &ForbiddenError{currentUserID: currentUserID, msg: fmt.Sprintf("delete book id=%d", bookID)}
 	}
 
-	v := validate.New()
-	v.Presence("title", attrs.Title)
-	v.Presence("author", attrs.Author)
-	v.Presence("media", attrs.Media)
-
-	if v.Err() != nil {
-		return v.Err()
+	if verrs := attrs.Validate(); verrs != nil {
+		return verrs
 	}
 
 	commandTag, err := db.Exec(ctx, "update books set title=$1, author=$2, finish_date=$3, media=$4 where id=$5",
