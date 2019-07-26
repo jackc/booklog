@@ -22,28 +22,28 @@ type BookEditForm struct {
 	Media        string
 }
 
-func (f BookEditForm) Parse() (data.BookAttrs, validate.Errors) {
+func (f BookEditForm) Parse() (data.Book, validate.Errors) {
 	var err error
-	attrs := data.BookAttrs{
+	book := data.Book{
 		Title:  f.Title,
 		Author: f.Author,
 		Media:  f.Media,
 	}
 	v := validate.New()
 
-	attrs.DateFinished, err = time.Parse("2006-01-02", f.DateFinished)
+	book.FinishDate, err = time.Parse("2006-01-02", f.DateFinished)
 	if err != nil {
-		attrs.DateFinished, err = time.Parse("1/2/2006", f.DateFinished)
+		book.FinishDate, err = time.Parse("1/2/2006", f.DateFinished)
 		if err != nil {
 			v.Add("dateFinished", errors.New("is not a date"))
 		}
 	}
 
 	if v.Err() != nil {
-		return attrs, v.Err().(validate.Errors)
+		return book, v.Err().(validate.Errors)
 	}
 
-	return attrs, nil
+	return book, nil
 }
 
 func BookIndex(w http.ResponseWriter, r *http.Request) {
@@ -124,8 +124,9 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	attrs.UserID = pathUser.ID
 
-	bookID, err := data.CreateBook(ctx, db, pathUser.ID, attrs)
+	book, err := data.CreateBook(ctx, db, attrs)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
@@ -140,7 +141,7 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, BookPath(pathUser.Username, bookID), http.StatusSeeOther)
+	http.Redirect(w, r, BookPath(pathUser.Username, book.ID), http.StatusSeeOther)
 }
 
 func BookConfirmDelete(w http.ResponseWriter, r *http.Request) {
@@ -258,8 +259,9 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	attrs.ID = bookID
 
-	err := data.UpdateBook(ctx, db, bookID, attrs)
+	err := data.UpdateBook(ctx, db, attrs)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
@@ -346,8 +348,9 @@ func importBooksFromCSV(ctx context.Context, db queryExecer, ownerID int64, r io
 		if verr != nil {
 			return errors.Errorf("row %d: %w", i+1, verr)
 		}
+		attrs.UserID = ownerID
 
-		_, err := data.CreateBook(ctx, db, ownerID, attrs)
+		_, err := data.CreateBook(ctx, db, attrs)
 		if err != nil {
 			return errors.Errorf("row %d: %w", i+1, err)
 		}

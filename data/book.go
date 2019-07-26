@@ -11,24 +11,28 @@ import (
 	errors "golang.org/x/xerrors"
 )
 
-type BookAttrs struct {
-	Title        string
-	Author       string
-	DateFinished time.Time
-	Media        string
+type Book struct {
+	ID         int64
+	UserID     int64
+	Title      string
+	Author     string
+	FinishDate time.Time
+	Media      string
+	InsertTime time.Time
+	UpdateTime time.Time
 }
 
-func (attrs *BookAttrs) Normalize() {
-	attrs.Title = strings.TrimSpace(attrs.Title)
-	attrs.Author = strings.TrimSpace(attrs.Author)
-	attrs.Media = strings.TrimSpace(attrs.Media)
+func (book *Book) Normalize() {
+	book.Title = strings.TrimSpace(book.Title)
+	book.Author = strings.TrimSpace(book.Author)
+	book.Media = strings.TrimSpace(book.Media)
 }
 
-func (attrs BookAttrs) Validate() validate.Errors {
+func (book *Book) Validate() validate.Errors {
 	v := validate.New()
-	v.Presence("title", attrs.Title)
-	v.Presence("author", attrs.Author)
-	v.Presence("media", attrs.Media)
+	v.Presence("title", book.Title)
+	v.Presence("author", book.Author)
+	v.Presence("media", book.Media)
 
 	if v.Err() != nil {
 		return v.Err().(validate.Errors)
@@ -37,44 +41,46 @@ func (attrs BookAttrs) Validate() validate.Errors {
 	return nil
 }
 
-func CreateBook(ctx context.Context, db queryExecer, ownerID int64, attrs BookAttrs) (int64, error) {
-	attrs.Normalize()
-	if verrs := attrs.Validate(); verrs != nil {
-		return 0, verrs
+// CreateBook inserts a book into the database. It ignores the ID, InsertTime, and UpdateTime fields.
+func CreateBook(ctx context.Context, db queryExecer, book Book) (*Book, error) {
+	book.Normalize()
+	if verrs := book.Validate(); verrs != nil {
+		return nil, verrs
 	}
 
-	var bookID int64
-	err := db.QueryRow(ctx, "insert into books(user_id, title, author, finish_date, media) values($1, $2, $3, $4, $5) returning id",
-		ownerID,
-		attrs.Title,
-		attrs.Author,
-		attrs.DateFinished,
-		attrs.Media,
-	).Scan(&bookID)
+	err := db.QueryRow(ctx, "insert into books(user_id, title, author, finish_date, media) values($1, $2, $3, $4, $5) returning id, insert_time, update_time",
+		book.UserID,
+		book.Title,
+		book.Author,
+		book.FinishDate,
+		book.Media,
+	).Scan(&book.ID, &book.InsertTime, &book.UpdateTime)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return bookID, nil
+	return &book, nil
 }
 
-func UpdateBook(ctx context.Context, db queryExecer, bookID int64, attrs BookAttrs) error {
-	attrs.Normalize()
-	if verrs := attrs.Validate(); verrs != nil {
+// Update book updates the Title, Author, FinishDate, and Media fields of book in the database. It uses book.ID as the
+// row ID to update.
+func UpdateBook(ctx context.Context, db queryExecer, book Book) error {
+	book.Normalize()
+	if verrs := book.Validate(); verrs != nil {
 		return verrs
 	}
 
 	commandTag, err := db.Exec(ctx, "update books set title=$1, author=$2, finish_date=$3, media=$4 where id=$5",
-		attrs.Title,
-		attrs.Author,
-		attrs.DateFinished,
-		attrs.Media,
-		bookID)
+		book.Title,
+		book.Author,
+		book.FinishDate,
+		book.Media,
+		book.ID)
 	if err != nil {
 		return err
 	}
 	if string(commandTag) != "UPDATE 1" {
-		return &NotFoundError{target: fmt.Sprintf("book id=%d", bookID)}
+		return &NotFoundError{target: fmt.Sprintf("book id=%d", book.ID)}
 	}
 
 	return nil
@@ -88,17 +94,6 @@ func DeleteBook(ctx context.Context, db queryExecer, bookID int64) error {
 		return &NotFoundError{target: fmt.Sprintf("book id=%d", bookID)}
 	}
 	return err
-}
-
-type Book struct {
-	ID         int64
-	UserID     int64
-	Title      string
-	Author     string
-	FinishDate time.Time
-	Media      string
-	InsertTime time.Time
-	UpdateTime time.Time
 }
 
 func GetBook(ctx context.Context, db queryExecer, bookID int64) (*Book, error) {
