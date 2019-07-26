@@ -1,5 +1,7 @@
 {{define "content"}}
 <div class="card">
+  <h2>Confirm you want to delete this book?</h2>
+
   <dl>
     <dt>Title</dt>
     <dd>{{ .book.Title }}</dd>
@@ -11,7 +13,10 @@
     <dd>{{ .book.Media }}</dd>
   </dl>
 
-  <a class="title" href="{{ EditBookPath .username .book.ID }}">Edit</a>
-  <a class="title" href="{{ BookConfirmDeletePath .username .book.ID }}">Delete</a>
+  <form action="{{ BookPath .username .book.ID }}" method="post">
+    <input type="hidden" name="_method" value="DELETE">
+    {{ .csrfField }}
+    <button type="submit">Delete</button>
+  </form>
 </div>
 {{end}}

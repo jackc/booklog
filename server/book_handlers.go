@@ -144,6 +144,34 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, BookPath(pathUser.Username, bookID), http.StatusSeeOther)
 }
 
+func BookConfirmDelete(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	db := ctx.Value(RequestDBKey).(queryExecer)
+	session := ctx.Value(RequestSessionKey).(*Session)
+	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
+	bookID := int64URLParam(r, "id")
+
+	book, err := domain.GetBook(ctx, db, session.User.ID, bookID)
+	if err != nil {
+		var nfErr domain.NotFoundError
+		var fErr domain.ForbiddenError
+		if errors.As(err, nfErr) {
+			NotFoundHandler(w, r)
+		} else if errors.As(err, fErr) {
+			ForbiddenHandler(w, r)
+		} else {
+			InternalServerErrorHandler(w, r, err)
+		}
+		return
+	}
+
+	err = RenderBookConfirmDelete(w, baseViewDataFromRequest(r), book, pathUser.Username)
+	if err != nil {
+		InternalServerErrorHandler(w, r, err)
+		return
+	}
+}
+
 func BookDelete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)

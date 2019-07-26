@@ -8,6 +8,7 @@ import (
 var RouteFuncMap = template.FuncMap{
 	"NewBookPath":             NewBookPath,
 	"BookPath":                BookPath,
+	"BookConfirmDeletePath":   BookConfirmDeletePath,
 	"EditBookPath":            EditBookPath,
 	"BooksPath":               BooksPath,
 	"NewUserRegistrationPath": NewUserRegistrationPath,
@@ -26,6 +27,10 @@ func BooksPath(username string) string {
 
 func BookPath(username string, id int64) string {
 	return fmt.Sprintf("/users/%s/books/%d", username, id)
+}
+
+func BookConfirmDeletePath(username string, id int64) string {
+	return fmt.Sprintf("/users/%s/books/%d/confirm_delete", username, id)
 }
 
 func EditBookPath(username string, id int64) string {

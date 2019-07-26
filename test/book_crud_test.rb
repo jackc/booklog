@@ -23,7 +23,7 @@ class BookCrudTest < IntegrationTest
     browser.button(text: "Save").click
     assert browser.dd(text: "Paradise Regained").exist?
 
-    browser.a(text: "Edit").click
+    browser.a(text: "Delete").click
     browser.button(text: "Delete").click
     assert browser.a(text: "New Book").exist?
     refute browser.a(text: "Paradise Regained").exist?
