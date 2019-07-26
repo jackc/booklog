@@ -109,7 +109,6 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
 	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
-	session := ctx.Value(RequestSessionKey).(*Session)
 
 	form := BookEditForm{
 		Title:        r.FormValue("title"),
@@ -126,7 +125,7 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bookID, err := domain.CreateBook(ctx, db, session.User.ID, pathUser.ID, attrs)
+	bookID, err := domain.CreateBook(ctx, db, pathUser.ID, attrs)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
@@ -147,18 +146,14 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 func BookConfirmDelete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
-	session := ctx.Value(RequestSessionKey).(*Session)
 	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
 	bookID := int64URLParam(r, "id")
 
-	book, err := domain.GetBook(ctx, db, session.User.ID, bookID)
+	book, err := domain.GetBook(ctx, db, bookID)
 	if err != nil {
 		var nfErr domain.NotFoundError
-		var fErr domain.ForbiddenError
 		if errors.As(err, nfErr) {
 			NotFoundHandler(w, r)
-		} else if errors.As(err, fErr) {
-			ForbiddenHandler(w, r)
 		} else {
 			InternalServerErrorHandler(w, r, err)
 		}
@@ -175,18 +170,14 @@ func BookConfirmDelete(w http.ResponseWriter, r *http.Request) {
 func BookDelete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
-	session := ctx.Value(RequestSessionKey).(*Session)
 	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
 	bookID := int64URLParam(r, "id")
 
-	err := domain.DeleteBook(ctx, db, session.User.ID, bookID)
+	err := domain.DeleteBook(ctx, db, bookID)
 	if err != nil {
 		var nfErr domain.NotFoundError
-		var fErr domain.ForbiddenError
 		if errors.As(err, nfErr) {
 			NotFoundHandler(w, r)
-		} else if errors.As(err, fErr) {
-			ForbiddenHandler(w, r)
 		} else {
 			InternalServerErrorHandler(w, r, err)
 		}
@@ -200,17 +191,13 @@ func BookShow(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
 	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
-	session := ctx.Value(RequestSessionKey).(*Session)
 	bookID := int64URLParam(r, "id")
 
-	book, err := domain.GetBook(ctx, db, session.User.ID, bookID)
+	book, err := domain.GetBook(ctx, db, bookID)
 	if err != nil {
 		var nfErr domain.NotFoundError
-		var fErr domain.ForbiddenError
 		if errors.As(err, nfErr) {
 			NotFoundHandler(w, r)
-		} else if errors.As(err, fErr) {
-			ForbiddenHandler(w, r)
 		} else {
 			InternalServerErrorHandler(w, r, err)
 		}
@@ -255,7 +242,6 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
 	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
-	session := ctx.Value(RequestSessionKey).(*Session)
 	bookID := int64URLParam(r, "id")
 
 	form := BookEditForm{
@@ -273,7 +259,7 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := domain.UpdateBook(ctx, db, session.User.ID, bookID, attrs)
+	err := domain.UpdateBook(ctx, db, bookID, attrs)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
@@ -285,11 +271,8 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var nfErr domain.NotFoundError
-		var fErr domain.ForbiddenError
 		if errors.As(err, nfErr) {
 			NotFoundHandler(w, r)
-		} else if errors.As(err, fErr) {
-			ForbiddenHandler(w, r)
 		} else {
 			InternalServerErrorHandler(w, r, err)
 		}
@@ -313,7 +296,6 @@ func BookImportCSVForm(w http.ResponseWriter, r *http.Request) {
 func BookImportCSV(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
-	session := ctx.Value(RequestSessionKey).(*Session)
 	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
 
 	r.ParseMultipartForm(10 << 20)
@@ -325,7 +307,7 @@ func BookImportCSV(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	err = importBooksFromCSV(ctx, db, session.User.ID, pathUser.ID, file)
+	err = importBooksFromCSV(ctx, db, pathUser.ID, file)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
@@ -335,7 +317,7 @@ func BookImportCSV(w http.ResponseWriter, r *http.Request) {
 }
 
 // TODO - need DB transaction control - so queryExecer is insufficient
-func importBooksFromCSV(ctx context.Context, db queryExecer, currentUserID int64, ownerID int64, r io.Reader) error {
+func importBooksFromCSV(ctx context.Context, db queryExecer, ownerID int64, r io.Reader) error {
 	records, err := csv.NewReader(r).ReadAll()
 	if err != nil {
 		return err
@@ -365,7 +347,7 @@ func importBooksFromCSV(ctx context.Context, db queryExecer, currentUserID int64
 			return errors.Errorf("row %d: %w", i+1, verr)
 		}
 
-		_, err := domain.CreateBook(ctx, db, currentUserID, ownerID, attrs)
+		_, err := domain.CreateBook(ctx, db, ownerID, attrs)
 		if err != nil {
 			return errors.Errorf("row %d: %w", i+1, err)
 		}

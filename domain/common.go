@@ -27,12 +27,3 @@ type NotFoundError struct {
 func (e *NotFoundError) Error() string {
 	return fmt.Sprintf("not found: %s", e.target)
 }
-
-type ForbiddenError struct {
-	currentUserID int64
-	msg           string
-}
-
-func (e *ForbiddenError) Error() string {
-	return fmt.Sprintf("forbidden: user ID %d not allowed to: %s", e.currentUserID, e.msg)
-}

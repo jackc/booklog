@@ -40,7 +40,7 @@ func TestImportBooksFromCSV(t *testing.T) {
 	The Dilbert Future ,Scott Adams ,7/10/2005,,
 	Napoleon The Man Behind the Myth,Adam Zamoyski,6/17/2019,audiobook,`
 
-	err = importBooksFromCSV(ctx, tx, userID, userID, strings.NewReader(in))
+	err = importBooksFromCSV(ctx, tx, userID, strings.NewReader(in))
 	require.NoError(t, err)
 
 	var bookCount int64
