@@ -1,0 +1,17 @@
+{{define "content"}}
+<div class="card">
+  <dl>
+    <dt>Title</dt>
+    <dd>{{ .book.Title }}</dd>
+    <dt>Author</dt>
+    <dd>{{ .book.Author }}</dd>
+    <dt>Finish Date</dt>
+    <dd>{{ .book.FinishDate }}</dd>
+    <dt>Media</dt>
+    <dd>{{ .book.Media }}</dd>
+  </dl>
+
+  <a class="title" href="{{ EditBookPath .username .book.ID }}">Edit</a>
+
+</div>
+{{end}}

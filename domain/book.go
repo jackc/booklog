@@ -37,27 +37,29 @@ func (attrs BookAttrs) Validate() validate.Errors {
 	return nil
 }
 
-func CreateBook(ctx context.Context, db queryExecer, currentUserID int64, ownerID int64, attrs BookAttrs) error {
+func CreateBook(ctx context.Context, db queryExecer, currentUserID int64, ownerID int64, attrs BookAttrs) (int64, error) {
 	if ownerID != currentUserID {
-		return &ForbiddenError{currentUserID: currentUserID, msg: fmt.Sprintf("create book for user_id=%d", ownerID)}
+		return 0, &ForbiddenError{currentUserID: currentUserID, msg: fmt.Sprintf("create book for user_id=%d", ownerID)}
 	}
 
 	attrs.Normalize()
 	if verrs := attrs.Validate(); verrs != nil {
-		return verrs
+		return 0, verrs
 	}
 
-	_, err := db.Exec(ctx, "insert into books(user_id, title, author, finish_date, media) values($1, $2, $3, $4, $5)",
+	var bookID int64
+	err := db.QueryRow(ctx, "insert into books(user_id, title, author, finish_date, media) values($1, $2, $3, $4, $5) returning id",
 		ownerID,
 		attrs.Title,
 		attrs.Author,
 		attrs.DateFinished,
-		attrs.Media)
+		attrs.Media,
+	).Scan(&bookID)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return nil
+	return bookID, nil
 }
 
 func UpdateBook(ctx context.Context, db queryExecer, currentUserID int64, bookID int64, attrs BookAttrs) error {
@@ -116,4 +118,33 @@ func DeleteBook(ctx context.Context, db queryExecer, currentUserID int64, bookID
 
 	_, err = db.Exec(ctx, "delete from books where id=$1", bookID)
 	return err
+}
+
+type Book struct {
+	ID         int64
+	UserID     int64
+	Title      string
+	Author     string
+	FinishDate time.Time
+	Media      string
+	InsertTime time.Time
+	UpdateTime time.Time
+}
+
+func GetBook(ctx context.Context, db queryExecer, currentUserID int64, bookID int64) (*Book, error) {
+	var book Book
+	err := db.QueryRow(ctx, "select id, user_id, title, author, finish_date, media, insert_time, update_time from books where id=$1", bookID).
+		Scan(&book.ID, &book.UserID, &book.Title, &book.Author, &book.FinishDate, &book.Media, &book.InsertTime, &book.UpdateTime)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, &NotFoundError{target: fmt.Sprintf("book id=%d", bookID)}
+		}
+		return nil, err
+	}
+
+	if book.UserID != currentUserID {
+		return nil, &ForbiddenError{currentUserID: currentUserID, msg: fmt.Sprintf("select book id=%d", bookID)}
+	}
+
+	return &book, nil
 }

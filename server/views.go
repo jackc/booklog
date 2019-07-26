@@ -14,6 +14,7 @@ import (
 
 var bookIndex *template.Template
 var bookEdit *template.Template
+var bookShow *template.Template
 var bookNew *template.Template
 var userRegistrationNew *template.Template
 var loginForm *template.Template
@@ -28,6 +29,11 @@ func LoadTemplates(path string) error {
 	}
 
 	bookEdit, err = loadTemplate("book_edit", []string{filepath.Join(path, "layout.html"), filepath.Join(path, "book_edit.html")}, RouteFuncMap)
+	if err != nil {
+		return err
+	}
+
+	bookShow, err = loadTemplate("book_show", []string{filepath.Join(path, "layout.html"), filepath.Join(path, "book_show.html")}, RouteFuncMap)
 	if err != nil {
 		return err
 	}
@@ -100,6 +106,15 @@ func RenderBookEdit(w io.Writer, b baseViewData, bookId int64, form BookEditForm
 		"bookID":         bookId,
 		"fields":         form,
 		"errors":         verr,
+		csrf.TemplateTag: b.csrfTemplateTag,
+		"session":        b.session,
+		"username":       username,
+	})
+}
+
+func RenderBookShow(w io.Writer, b baseViewData, book *domain.Book, username string) error {
+	return bookShow.Execute(w, map[string]interface{}{
+		"book":           book,
 		csrf.TemplateTag: b.csrfTemplateTag,
 		"session":        b.session,
 		"username":       username,

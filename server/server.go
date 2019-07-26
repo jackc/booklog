@@ -102,6 +102,7 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHas
 		r.Method("GET", "/books/new", http.HandlerFunc(BookNew))
 		r.Method("POST", "/books", http.HandlerFunc(BookCreate))
 		r.Method("GET", "/books/{id}/edit", parseInt64URLParam("id")(http.HandlerFunc(BookEdit)))
+		r.Method("GET", "/books/{id}", parseInt64URLParam("id")(http.HandlerFunc(BookShow)))
 		r.Method("PATCH", "/books/{id}", parseInt64URLParam("id")(http.HandlerFunc(BookUpdate)))
 		r.Method("DELETE", "/books/{id}", parseInt64URLParam("id")(http.HandlerFunc(BookDelete)))
 		r.Method("GET", "/books/import_csv/form", http.HandlerFunc(BookImportCSVForm))

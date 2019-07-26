@@ -126,7 +126,7 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := domain.CreateBook(ctx, db, session.User.ID, pathUser.ID, attrs)
+	bookID, err := domain.CreateBook(ctx, db, session.User.ID, pathUser.ID, attrs)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
@@ -141,7 +141,7 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, BooksPath(pathUser.Username), http.StatusSeeOther)
+	http.Redirect(w, r, BookPath(pathUser.Username, bookID), http.StatusSeeOther)
 }
 
 func BookDelete(w http.ResponseWriter, r *http.Request) {
@@ -166,6 +166,34 @@ func BookDelete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, BooksPath(pathUser.Username), http.StatusSeeOther)
+}
+
+func BookShow(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	db := ctx.Value(RequestDBKey).(queryExecer)
+	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
+	session := ctx.Value(RequestSessionKey).(*Session)
+	bookID := int64URLParam(r, "id")
+
+	book, err := domain.GetBook(ctx, db, session.User.ID, bookID)
+	if err != nil {
+		var nfErr domain.NotFoundError
+		var fErr domain.ForbiddenError
+		if errors.As(err, nfErr) {
+			NotFoundHandler(w, r)
+		} else if errors.As(err, fErr) {
+			ForbiddenHandler(w, r)
+		} else {
+			InternalServerErrorHandler(w, r, err)
+		}
+		return
+	}
+
+	err = RenderBookShow(w, baseViewDataFromRequest(r), book, pathUser.Username)
+	if err != nil {
+		InternalServerErrorHandler(w, r, err)
+		return
+	}
 }
 
 func BookEdit(w http.ResponseWriter, r *http.Request) {
@@ -240,7 +268,7 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, BooksPath(pathUser.Username), http.StatusSeeOther)
+	http.Redirect(w, r, BookPath(pathUser.Username, bookID), http.StatusSeeOther)
 }
 
 func BookImportCSVForm(w http.ResponseWriter, r *http.Request) {
@@ -309,7 +337,7 @@ func importBooksFromCSV(ctx context.Context, db queryExecer, currentUserID int64
 			return errors.Errorf("row %d: %w", i+1, verr)
 		}
 
-		err := domain.CreateBook(ctx, db, currentUserID, ownerID, attrs)
+		_, err := domain.CreateBook(ctx, db, currentUserID, ownerID, attrs)
 		if err != nil {
 			return errors.Errorf("row %d: %w", i+1, err)
 		}

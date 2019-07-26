@@ -16,14 +16,14 @@ class BookCrudTest < IntegrationTest
     browser.date_field(label: "Date Finished").set "2019-01-01"
     browser.text_field(label: "Media").set "audio"
     browser.button(text: "Save").click
-    assert browser.a(text: "Paradise Lost").exist?
+    assert browser.dd(text: "Paradise Lost").exist?
 
-    browser.a(text: "Paradise Lost").click
+    browser.a(text: "Edit").click
     browser.text_field(label: "Title").set "Paradise Regained"
     browser.button(text: "Save").click
-    assert browser.a(text: "Paradise Regained").exist?
+    assert browser.dd(text: "Paradise Regained").exist?
 
-    browser.a(text: "Paradise Regained").click
+    browser.a(text: "Edit").click
     browser.button(text: "Delete").click
     assert browser.a(text: "New Book").exist?
     refute browser.a(text: "Paradise Regained").exist?
