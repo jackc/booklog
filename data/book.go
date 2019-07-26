@@ -33,6 +33,9 @@ func (book *Book) Validate() validate.Errors {
 	v.Presence("title", book.Title)
 	v.Presence("author", book.Author)
 	v.Presence("media", book.Media)
+	if book.FinishDate.After(time.Now()) {
+		v.Add("finishDate", errors.New("cannot be in future"))
+	}
 
 	if v.Err() != nil {
 		return v.Err().(validate.Errors)

@@ -17,9 +17,9 @@
     </div>
 
     <div class="field">
-      <label for="dateFinished">Date Finished</label>
-      <input type="date" name="dateFinished" id="dateFinished" value="{{ .fields.DateFinished }}" >
-      {{ range .errors.Get "dateFinished" }}<div class="error">{{ . }}</div>{{ end }}
+      <label for="finishDate">Finish Date</label>
+      <input type="date" name="finishDate" id="finishDate" value="{{ .fields.FinishDate }}" >
+      {{ range .errors.Get "finishDate" }}<div class="error">{{ . }}</div>{{ end }}
     </div>
 
     <div class="field">

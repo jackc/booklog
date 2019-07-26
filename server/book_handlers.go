@@ -16,10 +16,10 @@ import (
 )
 
 type BookEditForm struct {
-	Title        string
-	Author       string
-	DateFinished string
-	Media        string
+	Title      string
+	Author     string
+	FinishDate string
+	Media      string
 }
 
 func (f BookEditForm) Parse() (data.Book, validate.Errors) {
@@ -31,11 +31,11 @@ func (f BookEditForm) Parse() (data.Book, validate.Errors) {
 	}
 	v := validate.New()
 
-	book.FinishDate, err = time.Parse("2006-01-02", f.DateFinished)
+	book.FinishDate, err = time.Parse("2006-01-02", f.FinishDate)
 	if err != nil {
-		book.FinishDate, err = time.Parse("1/2/2006", f.DateFinished)
+		book.FinishDate, err = time.Parse("1/2/2006", f.FinishDate)
 		if err != nil {
-			v.Add("dateFinished", errors.New("is not a date"))
+			v.Add("finishDate", errors.New("is not a date"))
 		}
 	}
 
@@ -111,10 +111,10 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
 
 	form := BookEditForm{
-		Title:        r.FormValue("title"),
-		Author:       r.FormValue("author"),
-		DateFinished: r.FormValue("dateFinished"),
-		Media:        r.FormValue("media"),
+		Title:      r.FormValue("title"),
+		Author:     r.FormValue("author"),
+		FinishDate: r.FormValue("finishDate"),
+		Media:      r.FormValue("media"),
 	}
 	attrs, verr := form.Parse()
 	if verr != nil {
@@ -219,9 +219,9 @@ func BookEdit(w http.ResponseWriter, r *http.Request) {
 	bookID := int64URLParam(r, "id")
 
 	var form BookEditForm
-	var dateFinished time.Time
+	var FinishDate time.Time
 	err := db.QueryRow(ctx, "select title, author, finish_date, media from books where id=$1 and user_id=$2", bookID, pathUser.ID).
-		Scan(&form.Title, &form.Author, &dateFinished, &form.Media)
+		Scan(&form.Title, &form.Author, &FinishDate, &form.Media)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			NotFoundHandler(w, r)
@@ -230,7 +230,7 @@ func BookEdit(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	form.DateFinished = dateFinished.Format("2006-01-02")
+	form.FinishDate = FinishDate.Format("2006-01-02")
 
 	err = RenderBookEdit(w, baseViewDataFromRequest(r), bookID, form, nil, pathUser.Username)
 	if err != nil {
@@ -246,10 +246,10 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 	bookID := int64URLParam(r, "id")
 
 	form := BookEditForm{
-		Title:        r.FormValue("title"),
-		Author:       r.FormValue("author"),
-		DateFinished: r.FormValue("dateFinished"),
-		Media:        r.FormValue("media"),
+		Title:      r.FormValue("title"),
+		Author:     r.FormValue("author"),
+		FinishDate: r.FormValue("finishDate"),
+		Media:      r.FormValue("media"),
 	}
 	attrs, verr := form.Parse()
 	if verr != nil {
@@ -335,10 +335,10 @@ func importBooksFromCSV(ctx context.Context, db queryExecer, ownerID int64, r io
 
 	for i, record := range records[1:] {
 		form := BookEditForm{
-			Title:        record[0],
-			Author:       record[1],
-			DateFinished: record[2],
-			Media:        record[3],
+			Title:      record[0],
+			Author:     record[1],
+			FinishDate: record[2],
+			Media:      record[3],
 		}
 		if form.Media == "" {
 			form.Media = "book"
