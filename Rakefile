@@ -21,6 +21,10 @@ file "build/booklog" => [*FileList["**/*.go"]] do |t|
   sh "go build -o build/booklog"
 end
 
+file "build/booklog-linux" => [*FileList["**/*.go"]] do |t|
+  sh "GOOS=linux GOARCH=amd64 go build -o build/booklog-linux"
+end
+
 desc "Build"
 task build: ["build/booklog", "build/static/css/main.css"]
 
