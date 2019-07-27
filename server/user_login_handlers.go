@@ -48,7 +48,7 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, BooksPath(la.Username), http.StatusSeeOther)
+	http.Redirect(w, r, UserHomePath(la.Username), http.StatusSeeOther)
 }
 
 func UserLogout(w http.ResponseWriter, r *http.Request) {

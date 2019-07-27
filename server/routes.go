@@ -6,6 +6,7 @@ import (
 )
 
 var RouteFuncMap = template.FuncMap{
+	"UserHomePath":            UserHomePath,
 	"NewBookPath":             NewBookPath,
 	"BookPath":                BookPath,
 	"BookConfirmDeletePath":   BookConfirmDeletePath,
@@ -19,6 +20,10 @@ var RouteFuncMap = template.FuncMap{
 	"ImportBookCSVFormPath":   ImportBookCSVFormPath,
 	"ImportBookCSVPath":       ImportBookCSVPath,
 	"ExportBookCSVPath":       ExportBookCSVPath,
+}
+
+func UserHomePath(username string) string {
+	return fmt.Sprintf("/users/%s", username)
 }
 
 func BooksPath(username string) string {

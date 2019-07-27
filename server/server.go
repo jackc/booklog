@@ -98,6 +98,7 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHas
 	r.Route("/users/{username}", func(r chi.Router) {
 		r.Use(pathUserHandler())
 		r.Use(requireSameSessionUserAndPathUserHandler())
+		r.Method("GET", "/", http.HandlerFunc(UserHome))
 		r.Method("GET", "/books", http.HandlerFunc(BookIndex))
 		r.Method("GET", "/books/new", http.HandlerFunc(BookNew))
 		r.Method("POST", "/books", http.HandlerFunc(BookCreate))
