@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/jackc/booklog/data"
+	"github.com/jackc/booklog/route"
 	"github.com/jackc/booklog/validate"
 	errors "golang.org/x/xerrors"
 )
@@ -48,7 +49,7 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, UserHomePath(la.Username), http.StatusSeeOther)
+	http.Redirect(w, r, route.UserHomePath(la.Username), http.StatusSeeOther)
 }
 
 func UserLogout(w http.ResponseWriter, r *http.Request) {
@@ -66,5 +67,5 @@ func UserLogout(w http.ResponseWriter, r *http.Request) {
 
 	clearSessionCookie(w)
 
-	http.Redirect(w, r, NewLoginPath(), http.StatusSeeOther)
+	http.Redirect(w, r, route.NewLoginPath(), http.StatusSeeOther)
 }

@@ -35,7 +35,7 @@ end
 
 desc "Watch for source changes and rebuild and rerun"
 task :rerun do
-  exec "react2fs -dir cmd,css,data,html,server,validate rake run"
+  exec "react2fs -dir cmd,css,data,html,server,route,validate rake run"
 end
 
 desc "Run all tests"

@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/securecookie"
 	"github.com/jackc/booklog/data"
+	"github.com/jackc/booklog/route"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -261,7 +262,7 @@ func requireSameSessionUserAndPathUserHandler() func(http.Handler) http.Handler 
 					ForbiddenHandler(w, r)
 				}
 			} else {
-				http.Redirect(w, r, NewLoginPath(), http.StatusSeeOther)
+				http.Redirect(w, r, route.NewLoginPath(), http.StatusSeeOther)
 			}
 		}
 

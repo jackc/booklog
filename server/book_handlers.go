@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jackc/booklog/data"
+	"github.com/jackc/booklog/route"
 	"github.com/jackc/booklog/validate"
 	"github.com/jackc/pgx/v4"
 	errors "golang.org/x/xerrors"
@@ -141,7 +142,7 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, BookPath(pathUser.Username, book.ID), http.StatusSeeOther)
+	http.Redirect(w, r, route.BookPath(pathUser.Username, book.ID), http.StatusSeeOther)
 }
 
 func BookConfirmDelete(w http.ResponseWriter, r *http.Request) {
@@ -185,7 +186,7 @@ func BookDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, BooksPath(pathUser.Username), http.StatusSeeOther)
+	http.Redirect(w, r, route.BooksPath(pathUser.Username), http.StatusSeeOther)
 }
 
 func BookShow(w http.ResponseWriter, r *http.Request) {
@@ -281,7 +282,7 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, BookPath(pathUser.Username, bookID), http.StatusSeeOther)
+	http.Redirect(w, r, route.BookPath(pathUser.Username, bookID), http.StatusSeeOther)
 }
 
 func BookImportCSVForm(w http.ResponseWriter, r *http.Request) {
@@ -315,7 +316,7 @@ func BookImportCSV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, BooksPath(pathUser.Username), http.StatusSeeOther)
+	http.Redirect(w, r, route.BooksPath(pathUser.Username), http.StatusSeeOther)
 }
 
 // TODO - need DB transaction control - so queryExecer is insufficient
