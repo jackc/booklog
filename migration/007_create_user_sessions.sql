@@ -13,3 +13,4 @@ grant select, insert, delete, update on table user_sessions to {{.app_user}};
 ---- create above / drop below ----
 
 drop table user_sessions;
+drop extension pgcrypto;
