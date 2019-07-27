@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/securecookie"
+	"github.com/jackc/booklog/data"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -38,7 +39,7 @@ type queryExecer interface {
 
 type Session struct {
 	ID              [16]byte
-	User            minUser
+	User            data.UserMin
 	IsAuthenticated bool
 	sc              *securecookie.SecureCookie
 }
@@ -220,24 +221,16 @@ func clearSessionCookie(w http.ResponseWriter) {
 	http.SetCookie(w, cookie)
 }
 
-type minUser struct {
-	ID       int64
-	Username string
-}
-
 func pathUserHandler() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 			db := ctx.Value(RequestDBKey).(queryExecer)
 
-			var user minUser
-			err := db.QueryRow(ctx,
-				"select id, username from users where username=$1",
-				chi.URLParam(r, "username"),
-			).Scan(&user.ID, &user.Username)
+			user, err := data.GetUserMinByUsername(ctx, db, chi.URLParam(r, "username"))
 			if err != nil {
-				if errors.Is(err, pgx.ErrNoRows) {
+				var nfErr data.NotFoundError
+				if errors.As(err, nfErr) {
 					NotFoundHandler(w, r)
 				} else {
 					InternalServerErrorHandler(w, r, err)
@@ -245,7 +238,7 @@ func pathUserHandler() func(http.Handler) http.Handler {
 				return
 			}
 
-			ctx = context.WithValue(ctx, RequestPathUserKey, &user)
+			ctx = context.WithValue(ctx, RequestPathUserKey, user)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		}
 
@@ -259,7 +252,7 @@ func requireSameSessionUserAndPathUserHandler() func(http.Handler) http.Handler 
 			ctx := r.Context()
 
 			session := ctx.Value(RequestSessionKey).(*Session)
-			pathUser := ctx.Value(RequestPathUserKey).(*minUser)
+			pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 			if session.IsAuthenticated {
 				if session.User.ID == pathUser.ID {

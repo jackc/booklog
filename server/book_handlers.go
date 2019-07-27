@@ -49,7 +49,7 @@ func (f BookEditForm) Parse() (data.Book, validate.Errors) {
 func BookIndex(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
-	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
+	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	var booksForYears []*BooksForYear
 	var booksForYear *BooksForYear
@@ -95,7 +95,7 @@ type BookRow001 struct {
 
 func BookNew(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
+	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	var form BookEditForm
 	err := RenderBookNew(w, baseViewDataFromRequest(r), form, nil, pathUser.Username)
@@ -108,7 +108,7 @@ func BookNew(w http.ResponseWriter, r *http.Request) {
 func BookCreate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
-	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
+	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	form := BookEditForm{
 		Title:      r.FormValue("title"),
@@ -147,7 +147,7 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 func BookConfirmDelete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
-	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
+	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 	bookID := int64URLParam(r, "id")
 
 	book, err := data.GetBook(ctx, db, bookID)
@@ -171,7 +171,7 @@ func BookConfirmDelete(w http.ResponseWriter, r *http.Request) {
 func BookDelete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
-	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
+	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 	bookID := int64URLParam(r, "id")
 
 	err := data.DeleteBook(ctx, db, bookID)
@@ -191,7 +191,7 @@ func BookDelete(w http.ResponseWriter, r *http.Request) {
 func BookShow(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
-	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
+	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 	bookID := int64URLParam(r, "id")
 
 	book, err := data.GetBook(ctx, db, bookID)
@@ -215,7 +215,7 @@ func BookShow(w http.ResponseWriter, r *http.Request) {
 func BookEdit(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
-	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
+	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 	bookID := int64URLParam(r, "id")
 
 	var form BookEditForm
@@ -242,7 +242,7 @@ func BookEdit(w http.ResponseWriter, r *http.Request) {
 func BookUpdate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
-	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
+	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 	bookID := int64URLParam(r, "id")
 
 	form := BookEditForm{
@@ -286,7 +286,7 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 
 func BookImportCSVForm(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
+	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	err := RenderBookImportCSVForm(w, baseViewDataFromRequest(r), pathUser.Username)
 	if err != nil {
@@ -298,7 +298,7 @@ func BookImportCSVForm(w http.ResponseWriter, r *http.Request) {
 func BookImportCSV(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
-	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
+	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	r.ParseMultipartForm(10 << 20)
 
@@ -362,7 +362,7 @@ func importBooksFromCSV(ctx context.Context, db queryExecer, ownerID int64, r io
 func BookExportCSV(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
-	pathUser := ctx.Value(RequestPathUserKey).(*minUser)
+	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	buf := &bytes.Buffer{}
 	csvWriter := csv.NewWriter(buf)
