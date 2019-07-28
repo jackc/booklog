@@ -1,0 +1,46 @@
+package view
+
+import (
+	"github.com/jackc/booklog/route"
+)
+
+func Login(w io.Writer, bva *BaseViewArgs, form data.UserLoginArgs, verr validate.Errors) error
+---
+<% LayoutHeader(w, bva) %>
+<div class="card">
+  <header>Login</header>
+
+  <form action="<%= route.LoginPath() %>" method="post">
+    <%=raw bva.CSRFField %>
+
+    <% if errs, ok := verr["base"]; ok { %>
+      <% for _, e := range errs { %>
+        <div class="error"><%= e.Error() %></div>
+      <% } %>
+    <% } %>
+
+    <div class="field">
+      <label for="username">Username</label>
+      <input type="text" name="username" id="username" value="<%= form.Username %>" autofocus required>
+      <% if errs, ok := verr["username"]; ok { %>
+        <% for _, e := range errs { %>
+          <div class="error"><%= e.Error() %></div>
+        <% } %>
+      <% } %>
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" name="password" id="password" value="<%= form.Password %>" required minlength="8">
+      <% if errs, ok := verr["password"]; ok { %>
+        <% for _, e := range errs { %>
+          <div class="error"><%= e.Error() %></div>
+        <% } %>
+      <% } %>
+    </div>
+
+    <button type="submit">Login</button>
+    <a href="<%= route.NewUserRegistrationPath() %>">Sign up</a>
+  </form>
+</div>
+<% LayoutFooter(w, bva) %>

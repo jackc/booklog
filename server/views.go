@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/csrf"
 	"github.com/jackc/booklog/data"
 	"github.com/jackc/booklog/validate"
+	"github.com/jackc/booklog/view"
 )
 
 var userHome *template.Template
@@ -19,7 +20,6 @@ var bookShow *template.Template
 var bookConfirmDelete *template.Template
 var bookNew *template.Template
 var userRegistrationNew *template.Template
-var loginForm *template.Template
 var bookImportCSVForm *template.Template
 
 func LoadTemplates(path string) error {
@@ -60,11 +60,6 @@ func LoadTemplates(path string) error {
 		return err
 	}
 
-	loginForm, err = loadTemplate("login_form", []string{filepath.Join(path, "layout.html"), filepath.Join(path, "login.html")}, RouteFuncMap)
-	if err != nil {
-		return err
-	}
-
 	bookImportCSVForm, err = loadTemplate("book_import_csv_form", []string{filepath.Join(path, "layout.html"), filepath.Join(path, "book_import_csv_form.html")}, RouteFuncMap)
 	if err != nil {
 		return err
@@ -101,6 +96,19 @@ func baseViewDataFromRequest(r *http.Request) baseViewData {
 	return baseViewData{
 		csrfTemplateTag: csrf.TemplateField(r),
 		session:         r.Context().Value(RequestSessionKey).(*Session),
+	}
+}
+
+func baseViewArgsFromRequest(r *http.Request) *view.BaseViewArgs {
+	var currentUser *data.UserMin
+	if um, ok := r.Context().Value(RequestPathUserKey).(*data.UserMin); ok {
+		currentUser = um
+	}
+
+	return &view.BaseViewArgs{
+		CSRFField:   string(csrf.TemplateField(r)),
+		CurrentUser: &r.Context().Value(RequestSessionKey).(*Session).User,
+		PathUser:    currentUser,
 	}
 }
 
@@ -165,15 +173,6 @@ func RenderBookNew(w io.Writer, b baseViewData, form BookEditForm, verr validate
 func RenderUserRegistrationNew(w io.Writer, b baseViewData, rua data.RegisterUserArgs, verr validate.Errors) error {
 	return userRegistrationNew.Execute(w, map[string]interface{}{
 		"fields":         rua,
-		"errors":         verr,
-		csrf.TemplateTag: b.csrfTemplateTag,
-		"session":        b.session,
-	})
-}
-
-func RenderUserLoginForm(w io.Writer, b baseViewData, la data.UserLoginArgs, verr validate.Errors) error {
-	return loginForm.Execute(w, map[string]interface{}{
-		"fields":         la,
 		"errors":         verr,
 		csrf.TemplateTag: b.csrfTemplateTag,
 		"session":        b.session,

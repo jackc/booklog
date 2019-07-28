@@ -6,13 +6,15 @@ import (
 	"github.com/jackc/booklog/data"
 	"github.com/jackc/booklog/route"
 	"github.com/jackc/booklog/validate"
+	"github.com/jackc/booklog/view"
 	errors "golang.org/x/xerrors"
 )
 
 func UserLoginForm(w http.ResponseWriter, r *http.Request) {
 	var la data.UserLoginArgs
 
-	err := RenderUserLoginForm(w, baseViewDataFromRequest(r), la, nil)
+	err := view.Login(w, baseViewArgsFromRequest(r), la, nil)
+	// err := RenderUserLoginForm(w, baseViewDataFromRequest(r), la, nil)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
@@ -32,7 +34,7 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := RenderUserLoginForm(w, baseViewDataFromRequest(r), la, verr)
+			err := view.Login(w, baseViewArgsFromRequest(r), la, verr)
 			if err != nil {
 				InternalServerErrorHandler(w, r, err)
 			}

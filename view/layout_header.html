@@ -1,0 +1,40 @@
+package view
+
+import (
+	"github.com/jackc/booklog/route"
+)
+
+func LayoutHeader(w io.Writer, bva *BaseViewArgs) error
+---
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Booklog</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+  </head>
+  <body>
+    <header>
+      <h1><a href="/">Booklog</a></h1>
+      <nav>
+        <ul>
+          <% if bva.PathUser != nil { %>
+            <li><a href="<%= route.NewBookPath(bva.PathUser.Username) %>">New Book</a></li>
+            <li><a href="<%= route.ImportBookCSVFormPath(bva.PathUser.Username) %>">Import</a></li>
+            <li><a href="<%= route.ExportBookCSVPath(bva.PathUser.Username) %>">Export</a></li>
+          <% } %>
+          <% if bva.CurrentUser != nil { %>
+            <li>
+              <form action="<%= route.LogoutPath() %>" method="POST">
+                <%=raw bva.CSRFField %>
+                <button>Logout</button>
+              </form>
+            </li>
+          <% } else { %>
+            <li><a href="<%= route.NewLoginPath() %>">Login</a></li>
+          <% } %>
+        </ul>
+      </nav>
+    </header>
+    <div class="content">

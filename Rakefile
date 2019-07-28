@@ -9,7 +9,7 @@ require "rake/clean"
 require "fileutils"
 require "rake/testtask"
 
-CLOBBER.include("build")
+CLOBBER.include("build", "view/*.html.go")
 
 directory "build/static/css"
 
@@ -25,8 +25,15 @@ file "build/booklog-linux" => [*FileList["**/*.go"]] do |t|
   sh "GOOS=linux GOARCH=amd64 go build -o build/booklog-linux"
 end
 
+html_views = Rake::FileList.new("view/*.html")
+task view: html_views.ext(".html.go")
+
+rule(/view\/.*\.html\.go$/ => [ proc { |f| f.sub(/\.go$/, "") } ]) do |t|
+  sh "gel < #{t.prerequisites.first} | goimports > #{t.name}"
+end
+
 desc "Build"
-task build: ["build/booklog", "build/static/css/main.css"]
+task build: [:view, "build/booklog", "build/static/css/main.css"]
 
 desc "Run booklog"
 task run: :build do
@@ -35,7 +42,7 @@ end
 
 desc "Watch for source changes and rebuild and rerun"
 task :rerun do
-  exec "react2fs -dir cmd,css,data,html,server,route,validate rake run"
+  exec "react2fs -dir cmd,css,data,html,server,route,validate,view rake run"
 end
 
 desc "Run all tests"
