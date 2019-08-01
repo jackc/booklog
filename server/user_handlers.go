@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/jackc/booklog/data"
+	"github.com/jackc/booklog/view"
 )
 
 func UserHome(w http.ResponseWriter, r *http.Request) {
@@ -12,30 +13,31 @@ func UserHome(w http.ResponseWriter, r *http.Request) {
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	booksPerYear, err := data.BooksPerYear(ctx, db, pathUser.ID)
-
-	var booksForYears []*BooksForYear
-	var booksForYear *BooksForYear
-	rows, _ := db.Query(ctx, `select books.id, title, author, finish_date, media
-from books
-where user_id=$1
-order by finish_date desc`, pathUser.ID)
-	for rows.Next() {
-		var b BookRow001
-		rows.Scan(&b.ID, &b.Title, &b.Author, &b.DateFinished, &b.Media)
-		year := b.DateFinished.Year()
-		if booksForYear == nil || year != booksForYear.Year {
-			booksForYear = &BooksForYear{Year: year}
-			booksForYears = append(booksForYears, booksForYear)
-		}
-
-		booksForYear.Books = append(booksForYear.Books, b)
-	}
-	if rows.Err() != nil {
-		InternalServerErrorHandler(w, r, rows.Err())
+	if err != nil {
+		InternalServerErrorHandler(w, r, err)
 		return
 	}
 
-	err = RenderUserHome(w, baseViewDataFromRequest(r), booksForYears, booksPerYear, pathUser.Username)
+	books, err := data.GetAllBooks(ctx, db, pathUser.ID)
+	if err != nil {
+		InternalServerErrorHandler(w, r, err)
+		return
+	}
+
+	yearBooksLists := make([]*view.YearBookList, 0, len(booksPerYear))
+	var ybl *view.YearBookList
+
+	for _, book := range books {
+		year := book.FinishDate.Year()
+		if ybl == nil || year != ybl.Year {
+			ybl = &view.YearBookList{Year: year}
+			yearBooksLists = append(yearBooksLists, ybl)
+		}
+
+		ybl.Books = append(ybl.Books, book)
+	}
+
+	err = view.UserHome(w, baseViewArgsFromRequest(r), yearBooksLists, booksPerYear)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return

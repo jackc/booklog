@@ -101,8 +101,10 @@ func DeleteBook(ctx context.Context, db queryExecer, bookID int64) error {
 
 func GetBook(ctx context.Context, db queryExecer, bookID int64) (*Book, error) {
 	var book Book
-	err := db.QueryRow(ctx, "select id, user_id, title, author, finish_date, media, insert_time, update_time from books where id=$1", bookID).
-		Scan(&book.ID, &book.UserID, &book.Title, &book.Author, &book.FinishDate, &book.Media, &book.InsertTime, &book.UpdateTime)
+	err := ScanIntoBook(
+		db.QueryRow(ctx, "select id, user_id, title, author, finish_date, media, insert_time, update_time from books where id=$1", bookID),
+		&book,
+	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, &NotFoundError{target: fmt.Sprintf("book id=%d", bookID)}
@@ -111,4 +113,35 @@ func GetBook(ctx context.Context, db queryExecer, bookID int64) (*Book, error) {
 	}
 
 	return &book, nil
+}
+
+func ScanIntoBook(s scanner, book *Book) error {
+	return s.Scan(&book.ID, &book.UserID, &book.Title, &book.Author, &book.FinishDate, &book.Media, &book.InsertTime, &book.UpdateTime)
+}
+
+func ScanRowsIntoBooks(rows pgx.Rows) ([]*Book, error) {
+	var books []*Book
+	for rows.Next() {
+		var book Book
+		ScanIntoBook(rows, &book)
+		books = append(books, &book)
+	}
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return books, nil
+}
+
+func GetAllBooks(ctx context.Context, db queryExecer, userID int64) ([]*Book, error) {
+	rows, err := db.Query(ctx, `select id, user_id, title, author, finish_date, media, insert_time, update_time
+from books
+where user_id=$1
+order by finish_date desc`,
+		userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return ScanRowsIntoBooks(rows)
 }

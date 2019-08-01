@@ -13,7 +13,6 @@ import (
 	"github.com/jackc/booklog/view"
 )
 
-var userHome *template.Template
 var bookIndex *template.Template
 var bookEdit *template.Template
 var bookShow *template.Template
@@ -23,11 +22,6 @@ var bookImportCSVForm *template.Template
 
 func LoadTemplates(path string) error {
 	var err error
-
-	userHome, err = loadTemplate("user_home", []string{filepath.Join(path, "layout.html"), filepath.Join(path, "user_home.html")}, RouteFuncMap)
-	if err != nil {
-		return err
-	}
 
 	bookIndex, err = loadTemplate("book_index", []string{filepath.Join(path, "layout.html"), filepath.Join(path, "book_index.html")}, RouteFuncMap)
 	if err != nil {
@@ -104,16 +98,6 @@ func baseViewArgsFromRequest(r *http.Request) *view.BaseViewArgs {
 		CurrentUser: &r.Context().Value(RequestSessionKey).(*Session).User,
 		PathUser:    currentUser,
 	}
-}
-
-func RenderUserHome(w io.Writer, b baseViewData, books []*BooksForYear, booksPerYear []data.BooksPerYearItem, username string) error {
-	return userHome.Execute(w, map[string]interface{}{
-		"BooksPerYear":   booksPerYear,
-		"BooksForYears":  books,
-		csrf.TemplateTag: b.csrfTemplateTag,
-		"session":        b.session,
-		"username":       username,
-	})
 }
 
 func RenderBookIndex(w io.Writer, b baseViewData, books []*BooksForYear, username string) error {
