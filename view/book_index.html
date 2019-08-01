@@ -1,5 +1,13 @@
-{{define "content"}}
+package view
 
+import (
+  "github.com/jackc/booklog/data"
+	"github.com/jackc/booklog/route"
+)
+
+func BookIndex(w io.Writer, bva *BaseViewArgs, yearBookLists []*YearBookList) error
+---
+<% LayoutHeader(w, bva) %>
 <style>
   ol.years {
     list-style: none;
@@ -46,7 +54,7 @@
   }
 }
 
-@media not (max-width: 32rem) {
+@media not all and (max-width: 32rem) {
   ol.books > li {
     display: grid;
     grid-template-columns: auto 1fr;
@@ -65,39 +73,46 @@
 }
 </style>
 
-{{ $username := .username }}
-
 <div class="card">
-  {{ range .BooksForYears }}
+  <% for _, ybl := range yearBookLists { %>
     <ol class="years">
       <li>
-        <h2>{{ .Year }}</h2>
+        <h2><%=i ybl.Year %></h2>
         <ol class="books">
-          {{ range .Books }}
+          <% for _, book := range ybl.Books { %>
             <li>
               <div class="when-and-how">
                 <time class="finished"
-                  datetime="{{ .DateFinished.Format "2006-01-02" }}"
-                  title="{{ .DateFinished.Format "January 2, 2006" }}"
+                  datetime="<%= book.FinishDate.Format("2006-01-02") %>"
+                  title="<%= book.FinishDate.Format("January 2, 2006") %>"
                 >
-                  {{ .DateFinished.Format "January 2" }}
+                  <%= book.FinishDate.Format("January 2") %>
                 </time>
                 <span class="media">
-                  {{ if eq .Media "audiobook"  }}🎧{{ else if eq .Media "book" }}📖{{ else if eq .Media "video" }}📺{{ end }}
+                  <%
+                  var icon string
+                  switch book.Media {
+                  case "audiobook":
+                    icon = "🎧"
+                  case "book":
+                    icon = "📖"
+                  case "video":
+                    icon = "📺"
+                  } %>
+                  <%= icon %>
                 </span>
               </div>
               <div class="what">
-                <a class="title" href="{{ BookPath $username .ID }}">
-                  {{ .Title }}
+                <a class="title" href="<%=raw route.BookPath(bva.PathUser.Username, book.ID) %>">
+                  <%= book.Title %>
                 </a>
-                <div class="author">{{ .Author }}</div>
+                <div class="author"><%= book.Author %></div>
               </div>
             </li>
-          {{end}}
+          <% } %>
         </ol>
       </li>
     </ol>
-  {{end}}
+  <% } %>
 </div>
-
-{{end}}
+<% LayoutFooter(w, bva) %>

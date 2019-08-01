@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/booklog/data"
 	"github.com/jackc/booklog/route"
 	"github.com/jackc/booklog/validate"
+	"github.com/jackc/booklog/view"
 	"github.com/jackc/pgx/v4"
 	errors "golang.org/x/xerrors"
 )
@@ -52,29 +53,26 @@ func BookIndex(w http.ResponseWriter, r *http.Request) {
 	db := ctx.Value(RequestDBKey).(queryExecer)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
-	var booksForYears []*BooksForYear
-	var booksForYear *BooksForYear
-	rows, _ := db.Query(ctx, `select books.id, title, author, finish_date, media
-from books
-where user_id=$1
-order by finish_date desc`, pathUser.ID)
-	for rows.Next() {
-		var b BookRow001
-		rows.Scan(&b.ID, &b.Title, &b.Author, &b.DateFinished, &b.Media)
-		year := b.DateFinished.Year()
-		if booksForYear == nil || year != booksForYear.Year {
-			booksForYear = &BooksForYear{Year: year}
-			booksForYears = append(booksForYears, booksForYear)
-		}
-
-		booksForYear.Books = append(booksForYear.Books, b)
-	}
-	if rows.Err() != nil {
-		InternalServerErrorHandler(w, r, rows.Err())
+	books, err := data.GetAllBooks(ctx, db, pathUser.ID)
+	if err != nil {
+		InternalServerErrorHandler(w, r, err)
 		return
 	}
 
-	err := RenderBookIndex(w, baseViewDataFromRequest(r), booksForYears, pathUser.Username)
+	yearBooksLists := make([]*view.YearBookList, 0)
+	var ybl *view.YearBookList
+
+	for _, book := range books {
+		year := book.FinishDate.Year()
+		if ybl == nil || year != ybl.Year {
+			ybl = &view.YearBookList{Year: year}
+			yearBooksLists = append(yearBooksLists, ybl)
+		}
+
+		ybl.Books = append(ybl.Books, book)
+	}
+
+	err = view.BookIndex(w, baseViewArgsFromRequest(r), yearBooksLists)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return

@@ -7,3 +7,8 @@ type BaseViewArgs struct {
 	CurrentUser *data.UserMin
 	PathUser    *data.UserMin
 }
+
+type YearBookList struct {
+	Year  int
+	Books []*data.Book
+}

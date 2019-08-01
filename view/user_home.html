@@ -5,12 +5,6 @@ import (
 	"github.com/jackc/booklog/route"
 )
 
-
-type YearBookList struct {
-	Year  int
-	Books []*data.Book
-}
-
 func UserHome(w io.Writer, bva *BaseViewArgs, yearBookLists []*YearBookList, booksPerYear []data.BooksPerYearItem) error
 ---
 <% LayoutHeader(w, bva) %>

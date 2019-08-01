@@ -5,11 +5,10 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/jackc/booklog/data"
 	"github.com/jackc/booklog/route"
 )
 
-func UserHome(w io.Writer, bva *BaseViewArgs, yearBookLists []*YearBookList, booksPerYear []data.BooksPerYearItem) error {
+func BookIndex(w io.Writer, bva *BaseViewArgs, yearBookLists []*YearBookList) error {
 	LayoutHeader(w, bva)
 	io.WriteString(w, `
 <style>
@@ -76,26 +75,6 @@ func UserHome(w io.Writer, bva *BaseViewArgs, yearBookLists []*YearBookList, boo
   }
 }
 </style>
-
-<div class="card">
-  <h2>Books Per Year</h2>
-
-  <dl>
-    `)
-	for _, bpy := range booksPerYear {
-		io.WriteString(w, `
-      <dd>`)
-		io.WriteString(w, strconv.FormatInt(int64(bpy.Year), 10))
-		io.WriteString(w, `</dd>
-      <dd>`)
-		io.WriteString(w, strconv.FormatInt(int64(bpy.Count), 10))
-		io.WriteString(w, `</dd>
-    `)
-	}
-	io.WriteString(w, `
-  </dl>
-
-</div>
 
 <div class="card">
   `)
