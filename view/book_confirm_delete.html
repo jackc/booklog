@@ -1,0 +1,29 @@
+package view
+
+import (
+  "github.com/jackc/booklog/data"
+	"github.com/jackc/booklog/route"
+)
+
+func BookConfirmDelete(w io.Writer, bva *BaseViewArgs, book *data.Book) error
+---
+<% LayoutHeader(w, bva) %>
+<div class="card">
+  <h2>Confirm you want to delete this book?</h2>
+  <dl>
+    <dt>Title</dt>
+    <dd><%= book.Title %></dd>
+    <dt>Author</dt>
+    <dd><%= book.Author %></dd>
+    <dt>Finish Date</dt>
+    <dd><%= book.FinishDate.Format("January 2, 2006") %></dd>
+    <dt>Media</dt>
+    <dd><%= book.Media %></dd>
+  </dl>
+
+  <form action="<%= route.BookPath(bva.PathUser.Username, book.ID) %>" method="post">
+    <input type="hidden" name="_method" value="DELETE">
+    <%=raw bva.CSRFField %>
+    <button type="submit">Delete</button>
+  </form>
+<% LayoutFooter(w, bva) %>

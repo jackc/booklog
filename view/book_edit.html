@@ -1,0 +1,18 @@
+package view
+
+import (
+  "github.com/jackc/booklog/data"
+	"github.com/jackc/booklog/route"
+)
+
+func BookEdit(w io.Writer, bva *BaseViewArgs, bookID int64, form BookEditForm, verr validate.Errors) error
+---
+<% LayoutHeader(w, bva) %>
+<div class="card">
+    <header>New Book</header>
+
+    <form action="<%= route.BooksPath(bva.PathUser.Username) %>" method="post">
+      <% BookFormFields(w, bva, form, verr) %>
+    </form>
+  </div>
+<% LayoutFooter(w, bva) %>

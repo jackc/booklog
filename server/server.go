@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/securecookie"
 	"github.com/jackc/booklog/data"
 	"github.com/jackc/booklog/route"
+	"github.com/jackc/booklog/view"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -74,11 +75,6 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHas
 
 	CSRF := csrf.Protect(csrfKey, csrf.Secure(!insecureDevMode))
 	r.Use(CSRF)
-
-	err := LoadTemplates("html")
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to load HTML templates")
-	}
 
 	dbpool, err := pgxpool.Connect(context.Background(), databaseURL)
 	if err != nil {
@@ -292,4 +288,17 @@ func parseInt64URLParam(paramName string) func(http.Handler) http.Handler {
 
 func int64URLParam(r *http.Request, name string) int64 {
 	return r.Context().Value(ctxURLParamKey(name)).(int64)
+}
+
+func baseViewArgsFromRequest(r *http.Request) *view.BaseViewArgs {
+	var currentUser *data.UserMin
+	if um, ok := r.Context().Value(RequestPathUserKey).(*data.UserMin); ok {
+		currentUser = um
+	}
+
+	return &view.BaseViewArgs{
+		CSRFField:   string(csrf.TemplateField(r)),
+		CurrentUser: &r.Context().Value(RequestSessionKey).(*Session).User,
+		PathUser:    currentUser,
+	}
 }

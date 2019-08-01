@@ -1,0 +1,52 @@
+package view
+
+import (
+  "github.com/jackc/booklog/data"
+	"github.com/jackc/booklog/route"
+)
+
+func BookFormFields(w io.Writer, bva *BaseViewArgs, form BookEditForm, verr validate.Errors) error
+---
+<%=raw bva.CSRFField %>
+
+<div class="field">
+  <label for="title">Title</label>
+  <input type="text" name="title" id="title" value="<%= form.Title %>" >
+  <% if errs, ok := verr["title"]; ok { %>
+    <% for _, e := range errs { %>
+      <div class="error"><%= e.Error() %></div>
+    <% } %>
+  <% } %>
+</div>
+
+<div class="field">
+  <label for="author">Author</label>
+  <input type="text" name="author" id="author" value="<%= form.Author %>" >
+  <% if errs, ok := verr["author"]; ok { %>
+    <% for _, e := range errs { %>
+      <div class="error"><%= e.Error() %></div>
+    <% } %>
+  <% } %>
+</div>
+
+<div class="field">
+  <label for="finishDate">Finish Date</label>
+  <input type="date" name="finishDate" id="finishDate" value="<%= form.FinishDate %>" >
+  <% if errs, ok := verr["finishDate"]; ok { %>
+    <% for _, e := range errs { %>
+      <div class="error"><%= e.Error() %></div>
+    <% } %>
+  <% } %>
+</div>
+
+<div class="field">
+  <label for="media">Media</label>
+  <input type="text" name="media" id="media" value="<%= form.Media %>" >
+  <% if errs, ok := verr["media"]; ok { %>
+    <% for _, e := range errs { %>
+      <div class="error"><%= e.Error() %></div>
+    <% } %>
+  <% } %>
+</div>
+
+<button type="submit">Save</button>

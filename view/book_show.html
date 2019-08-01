@@ -1,0 +1,26 @@
+package view
+
+import (
+  "github.com/jackc/booklog/data"
+	"github.com/jackc/booklog/route"
+)
+
+func BookShow(w io.Writer, bva *BaseViewArgs, book *data.Book) error
+---
+<% LayoutHeader(w, bva) %>
+<div class="card">
+    <dl>
+      <dt>Title</dt>
+      <dd><%= book.Title %></dd>
+      <dt>Author</dt>
+      <dd><%= book.Author %></dd>
+      <dt>Finish Date</dt>
+      <dd><%= book.FinishDate.Format("January 2, 2006") %></dd>
+      <dt>Media</dt>
+      <dd><%= book.Media %></dd>
+    </dl>
+
+    <a class="title" href="<%= route.EditBookPath(bva.PathUser.Username, book.ID) %>">Edit</a>
+    <a class="title" href="<%= route.BookConfirmDeletePath(bva.PathUser.Username, book.ID) %>">Delete</a>
+  </div>
+<% LayoutFooter(w, bva) %>

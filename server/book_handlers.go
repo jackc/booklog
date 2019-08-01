@@ -17,37 +17,6 @@ import (
 	errors "golang.org/x/xerrors"
 )
 
-type BookEditForm struct {
-	Title      string
-	Author     string
-	FinishDate string
-	Media      string
-}
-
-func (f BookEditForm) Parse() (data.Book, validate.Errors) {
-	var err error
-	book := data.Book{
-		Title:  f.Title,
-		Author: f.Author,
-		Media:  f.Media,
-	}
-	v := validate.New()
-
-	book.FinishDate, err = time.Parse("2006-01-02", f.FinishDate)
-	if err != nil {
-		book.FinishDate, err = time.Parse("1/2/2006", f.FinishDate)
-		if err != nil {
-			v.Add("finishDate", errors.New("is not a date"))
-		}
-	}
-
-	if v.Err() != nil {
-		return book, v.Err().(validate.Errors)
-	}
-
-	return book, nil
-}
-
 func BookIndex(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
@@ -79,25 +48,9 @@ func BookIndex(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type BooksForYear struct {
-	Year  int
-	Books []BookRow001
-}
-
-type BookRow001 struct {
-	ID           int64
-	Title        string
-	Author       string
-	DateFinished time.Time
-	Media        string
-}
-
 func BookNew(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
-
-	var form BookEditForm
-	err := RenderBookNew(w, baseViewDataFromRequest(r), form, nil, pathUser.Username)
+	var form view.BookEditForm
+	err := view.BookNew(w, baseViewArgsFromRequest(r), form, nil)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
@@ -109,7 +62,7 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 	db := ctx.Value(RequestDBKey).(queryExecer)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
-	form := BookEditForm{
+	form := view.BookEditForm{
 		Title:      r.FormValue("title"),
 		Author:     r.FormValue("author"),
 		FinishDate: r.FormValue("finishDate"),
@@ -117,7 +70,7 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	attrs, verr := form.Parse()
 	if verr != nil {
-		err := RenderBookNew(w, baseViewDataFromRequest(r), form, verr, pathUser.Username)
+		err := view.BookNew(w, baseViewArgsFromRequest(r), form, verr)
 		if err != nil {
 			InternalServerErrorHandler(w, r, err)
 		}
@@ -129,7 +82,7 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := RenderBookNew(w, baseViewDataFromRequest(r), form, verr, pathUser.Username)
+			err := view.BookNew(w, baseViewArgsFromRequest(r), form, verr)
 			if err != nil {
 				InternalServerErrorHandler(w, r, err)
 			}
@@ -146,7 +99,6 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 func BookConfirmDelete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
-	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 	bookID := int64URLParam(r, "id")
 
 	book, err := data.GetBook(ctx, db, bookID)
@@ -160,7 +112,7 @@ func BookConfirmDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = RenderBookConfirmDelete(w, baseViewDataFromRequest(r), book, pathUser.Username)
+	err = view.BookConfirmDelete(w, baseViewArgsFromRequest(r), book)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
@@ -190,7 +142,6 @@ func BookDelete(w http.ResponseWriter, r *http.Request) {
 func BookShow(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(queryExecer)
-	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 	bookID := int64URLParam(r, "id")
 
 	book, err := data.GetBook(ctx, db, bookID)
@@ -204,7 +155,7 @@ func BookShow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = RenderBookShow(w, baseViewDataFromRequest(r), book, pathUser.Username)
+	err = view.BookShow(w, baseViewArgsFromRequest(r), book)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
@@ -217,7 +168,7 @@ func BookEdit(w http.ResponseWriter, r *http.Request) {
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 	bookID := int64URLParam(r, "id")
 
-	var form BookEditForm
+	var form view.BookEditForm
 	var FinishDate time.Time
 	err := db.QueryRow(ctx, "select title, author, finish_date, media from books where id=$1 and user_id=$2", bookID, pathUser.ID).
 		Scan(&form.Title, &form.Author, &FinishDate, &form.Media)
@@ -231,7 +182,7 @@ func BookEdit(w http.ResponseWriter, r *http.Request) {
 	}
 	form.FinishDate = FinishDate.Format("2006-01-02")
 
-	err = RenderBookEdit(w, baseViewDataFromRequest(r), bookID, form, nil, pathUser.Username)
+	err = view.BookEdit(w, baseViewArgsFromRequest(r), bookID, form, nil)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
@@ -244,7 +195,7 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 	bookID := int64URLParam(r, "id")
 
-	form := BookEditForm{
+	form := view.BookEditForm{
 		Title:      r.FormValue("title"),
 		Author:     r.FormValue("author"),
 		FinishDate: r.FormValue("finishDate"),
@@ -252,7 +203,7 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	attrs, verr := form.Parse()
 	if verr != nil {
-		err := RenderBookEdit(w, baseViewDataFromRequest(r), bookID, form, verr, pathUser.Username)
+		err := view.BookEdit(w, baseViewArgsFromRequest(r), bookID, form, verr)
 		if err != nil {
 			InternalServerErrorHandler(w, r, err)
 		}
@@ -264,7 +215,7 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := RenderBookEdit(w, baseViewDataFromRequest(r), bookID, form, verr, pathUser.Username)
+			err := view.BookEdit(w, baseViewArgsFromRequest(r), bookID, form, verr)
 			if err != nil {
 				InternalServerErrorHandler(w, r, err)
 			}
@@ -284,10 +235,7 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func BookImportCSVForm(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
-
-	err := RenderBookImportCSVForm(w, baseViewDataFromRequest(r), pathUser.Username)
+	err := view.BookImportCSVForm(w, baseViewArgsFromRequest(r))
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
@@ -333,7 +281,7 @@ func importBooksFromCSV(ctx context.Context, db queryExecer, ownerID int64, r io
 	}
 
 	for i, record := range records[1:] {
-		form := BookEditForm{
+		form := view.BookEditForm{
 			Title:      record[0],
 			Author:     record[1],
 			FinishDate: record[2],
