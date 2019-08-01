@@ -19,7 +19,6 @@ var bookEdit *template.Template
 var bookShow *template.Template
 var bookConfirmDelete *template.Template
 var bookNew *template.Template
-var userRegistrationNew *template.Template
 var bookImportCSVForm *template.Template
 
 func LoadTemplates(path string) error {
@@ -51,11 +50,6 @@ func LoadTemplates(path string) error {
 	}
 
 	bookNew, err = loadTemplate("book_new", []string{filepath.Join(path, "layout.html"), filepath.Join(path, "book_new.html")}, RouteFuncMap)
-	if err != nil {
-		return err
-	}
-
-	userRegistrationNew, err = loadTemplate("user_registration_new", []string{filepath.Join(path, "layout.html"), filepath.Join(path, "user_registration_new.html")}, RouteFuncMap)
 	if err != nil {
 		return err
 	}
@@ -167,15 +161,6 @@ func RenderBookNew(w io.Writer, b baseViewData, form BookEditForm, verr validate
 		csrf.TemplateTag: b.csrfTemplateTag,
 		"session":        b.session,
 		"username":       username,
-	})
-}
-
-func RenderUserRegistrationNew(w io.Writer, b baseViewData, rua data.RegisterUserArgs, verr validate.Errors) error {
-	return userRegistrationNew.Execute(w, map[string]interface{}{
-		"fields":         rua,
-		"errors":         verr,
-		csrf.TemplateTag: b.csrfTemplateTag,
-		"session":        b.session,
 	})
 }
 

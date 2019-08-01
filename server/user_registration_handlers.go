@@ -6,13 +6,14 @@ import (
 	"github.com/jackc/booklog/data"
 	"github.com/jackc/booklog/route"
 	"github.com/jackc/booklog/validate"
+	"github.com/jackc/booklog/view"
 	errors "golang.org/x/xerrors"
 )
 
 func UserRegistrationNew(w http.ResponseWriter, r *http.Request) {
 	var rua data.RegisterUserArgs
 
-	err := RenderUserRegistrationNew(w, baseViewDataFromRequest(r), rua, nil)
+	err := view.UserRegistration(w, baseViewArgsFromRequest(r), rua, nil)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
@@ -32,7 +33,7 @@ func UserRegistrationCreate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := RenderUserRegistrationNew(w, baseViewDataFromRequest(r), rua, verr)
+			err := view.UserRegistration(w, baseViewArgsFromRequest(r), rua, verr)
 			if err != nil {
 				InternalServerErrorHandler(w, r, err)
 			}
