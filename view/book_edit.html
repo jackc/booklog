@@ -11,7 +11,8 @@ func BookEdit(w io.Writer, bva *BaseViewArgs, bookID int64, form BookEditForm, v
 <div class="card">
     <header>New Book</header>
 
-    <form action="<%= route.BooksPath(bva.PathUser.Username) %>" method="post">
+    <form action="<%= route.BookPath(bva.PathUser.Username, bookID) %>" method="post">
+      <input type="hidden" name="_method" value="PATCH">
       <% BookFormFields(w, bva, form, verr) %>
     </form>
   </div>

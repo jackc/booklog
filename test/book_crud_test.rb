@@ -18,10 +18,19 @@ class BookCrudTest < IntegrationTest
     browser.button(text: "Save").click
     assert browser.dd(text: "Paradise Lost").exist?
 
+    assert_equal 1, session.db[:books].count
+    book = session.db[:books].where(title: "Paradise Lost").first
+    assert book
+
     browser.a(text: "Edit").click
     browser.text_field(label: "Title").set "Paradise Regained"
     browser.button(text: "Save").click
     assert browser.dd(text: "Paradise Regained").exist?
+
+    assert_equal 1, session.db[:books].count
+    book = session.db[:books].where(id: book[:id]).first
+    assert book
+    assert_equal "Paradise Regained", book[:title]
 
     browser.a(text: "Delete").click
     browser.button(text: "Delete").click
