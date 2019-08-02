@@ -18,6 +18,12 @@ func UserHome(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	booksPerMonthForLastYear, err := data.BooksPerMonthForLastYear(ctx, db, pathUser.ID)
+	if err != nil {
+		InternalServerErrorHandler(w, r, err)
+		return
+	}
+
 	books, err := data.GetAllBooks(ctx, db, pathUser.ID)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
@@ -37,7 +43,7 @@ func UserHome(w http.ResponseWriter, r *http.Request) {
 		ybl.Books = append(ybl.Books, book)
 	}
 
-	err = view.UserHome(w, baseViewArgsFromRequest(r), yearBooksLists, booksPerYear)
+	err = view.UserHome(w, baseViewArgsFromRequest(r), yearBooksLists, booksPerYear, booksPerMonthForLastYear)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return

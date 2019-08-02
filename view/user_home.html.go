@@ -9,7 +9,13 @@ import (
 	"github.com/jackc/booklog/route"
 )
 
-func UserHome(w io.Writer, bva *BaseViewArgs, yearBookLists []*YearBookList, booksPerYear []data.BooksPerYearItem) error {
+func UserHome(
+	w io.Writer,
+	bva *BaseViewArgs,
+	yearBookLists []*YearBookList,
+	booksPerYear []data.BooksPerTimeItem,
+	booksPerMonthForLastYear []data.BooksPerTimeItem,
+) error {
 	LayoutHeader(w, bva)
 	io.WriteString(w, `
 <style>
@@ -48,7 +54,37 @@ func UserHome(w io.Writer, bva *BaseViewArgs, yearBookLists []*YearBookList, boo
     font-weight: bold;
   }
 
+  .stats {
+    display: grid;
+  }
+
+  .books-per-time h2 {
+    margin: 0 0 1rem 0;
+  }
+
+  .books-per-time table {
+    border-collapse: collapse;
+  }
+
+  .books-per-time th {
+    font-weight: bold;
+    color: var(--light-text-color);
+    padding: 2px 0;
+    text-align: left;
+    min-width: 6rem;
+  }
+
+  .books-per-time td {
+    color: var(--light-text-color);
+    text-align: right;
+    padding: 2px 0;
+  }
+
 @media (max-width: 32rem) {
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
   ol.years > li > h2 {
     margin: 0;
   }
@@ -59,6 +95,10 @@ func UserHome(w io.Writer, bva *BaseViewArgs, yearBookLists []*YearBookList, boo
 }
 
 @media not all and (max-width: 32rem) {
+  .stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
   ol.books > li {
     display: grid;
     grid-template-columns: auto 1fr;
@@ -77,24 +117,48 @@ func UserHome(w io.Writer, bva *BaseViewArgs, yearBookLists []*YearBookList, boo
 }
 </style>
 
-<div class="card">
-  <h2>Books Per Year</h2>
+<div class="stats">
+  <div class="card books-per-time">
+    <h2>Per Year</h2>
 
-  <dl>
-    `)
-	for _, bpy := range booksPerYear {
+    <table>
+      `)
+	for _, bpt := range booksPerYear {
 		io.WriteString(w, `
-      <dd>`)
-		io.WriteString(w, strconv.FormatInt(int64(bpy.Year), 10))
-		io.WriteString(w, `</dd>
-      <dd>`)
-		io.WriteString(w, strconv.FormatInt(int64(bpy.Count), 10))
-		io.WriteString(w, `</dd>
-    `)
+        <tr>
+          <th>`)
+		io.WriteString(w, html.EscapeString(bpt.Time.Format("2006")))
+		io.WriteString(w, `</th>
+          <td>`)
+		io.WriteString(w, strconv.FormatInt(int64(bpt.Count), 10))
+		io.WriteString(w, `</td>
+        </tr>
+      `)
 	}
 	io.WriteString(w, `
-  </dl>
+    </table>
+  </div>
 
+  <div class="card books-per-time">
+    <h2>Last Year Per Month</h2>
+
+    <table>
+      `)
+	for _, bpt := range booksPerMonthForLastYear {
+		io.WriteString(w, `
+        <tr>
+          <th>`)
+		io.WriteString(w, html.EscapeString(bpt.Time.Format("January")))
+		io.WriteString(w, `</th>
+          <td>`)
+		io.WriteString(w, strconv.FormatInt(int64(bpt.Count), 10))
+		io.WriteString(w, `</td>
+        </tr>
+      `)
+	}
+	io.WriteString(w, `
+    </table>
+  </div>
 </div>
 
 <div class="card">
