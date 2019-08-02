@@ -39,7 +39,7 @@ func BookConfirmDelete(w io.Writer, bva *BaseViewArgs, book *data.Book) error {
     `)
 	io.WriteString(w, bva.CSRFField)
 	io.WriteString(w, `
-    <button type="submit">Delete</button>
+    <button type="submit" class="btn">Delete</button>
   </form>
 `)
 	LayoutFooter(w, bva)

@@ -24,6 +24,6 @@ func BookConfirmDelete(w io.Writer, bva *BaseViewArgs, book *data.Book) error
   <form action="<%= route.BookPath(bva.PathUser.Username, book.ID) %>" method="post">
     <input type="hidden" name="_method" value="DELETE">
     <%=raw bva.CSRFField %>
-    <button type="submit">Delete</button>
+    <button type="submit" class="btn">Delete</button>
   </form>
 <% LayoutFooter(w, bva) %>
