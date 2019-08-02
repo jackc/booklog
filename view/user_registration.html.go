@@ -66,7 +66,7 @@ func UserRegistration(w io.Writer, bva *BaseViewArgs, form data.RegisterUserArgs
 	io.WriteString(w, `
     </div>
 
-    <button type="submit">Sign up</button>
+    <button type="submit" class="btn">Sign up</button>
     <a href="`)
 	io.WriteString(w, html.EscapeString(route.NewLoginPath()))
 	io.WriteString(w, `">Login</a>

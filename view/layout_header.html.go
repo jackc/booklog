@@ -42,11 +42,11 @@ func LayoutHeader(w io.Writer, bva *BaseViewArgs) error {
             <li>
               <form action="`)
 		io.WriteString(w, html.EscapeString(route.LogoutPath()))
-		io.WriteString(w, `" method="POST">
+		io.WriteString(w, `" method="POST" class="link">
                 `)
 		io.WriteString(w, bva.CSRFField)
 		io.WriteString(w, `
-                <button>Logout</button>
+                <button class="link">Logout</button>
               </form>
             </li>
           `)

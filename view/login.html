@@ -39,7 +39,7 @@ func Login(w io.Writer, bva *BaseViewArgs, form data.UserLoginArgs, verr validat
       <% } %>
     </div>
 
-    <button type="submit">Login</button>
+    <button type="submit" class="btn">Login</button>
     <a href="<%= route.NewUserRegistrationPath() %>">Sign up</a>
   </form>
 </div>

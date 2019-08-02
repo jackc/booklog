@@ -82,7 +82,7 @@ func Login(w io.Writer, bva *BaseViewArgs, form data.UserLoginArgs, verr validat
 	io.WriteString(w, `
     </div>
 
-    <button type="submit">Login</button>
+    <button type="submit" class="btn">Login</button>
     <a href="`)
 	io.WriteString(w, html.EscapeString(route.NewUserRegistrationPath()))
 	io.WriteString(w, `">Sign up</a>

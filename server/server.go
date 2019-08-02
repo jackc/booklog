@@ -291,14 +291,20 @@ func int64URLParam(r *http.Request, name string) int64 {
 }
 
 func baseViewArgsFromRequest(r *http.Request) *view.BaseViewArgs {
-	var currentUser *data.UserMin
+	var pathUser *data.UserMin
 	if um, ok := r.Context().Value(RequestPathUserKey).(*data.UserMin); ok {
-		currentUser = um
+		pathUser = um
+	}
+
+	session := r.Context().Value(RequestSessionKey).(*Session)
+	var currentUser *data.UserMin
+	if session.IsAuthenticated {
+		currentUser = &session.User
 	}
 
 	return &view.BaseViewArgs{
 		CSRFField:   string(csrf.TemplateField(r)),
-		CurrentUser: &r.Context().Value(RequestSessionKey).(*Session).User,
-		PathUser:    currentUser,
+		CurrentUser: currentUser,
+		PathUser:    pathUser,
 	}
 }

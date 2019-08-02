@@ -46,6 +46,12 @@ body > header > h1 {
 
 body > header > nav > ul {
   margin: 0;
+  text-align: right;
+}
+
+body > header > nav > ul > li {
+  display: inline;
+  padding-left: 1rem;
 }
 
 .card {
@@ -99,7 +105,7 @@ form .field input {
   width: 100%;
 }
 
-form button {
+button.btn {
   margin-top: 1rem;
   display: block;
   font-size: 2rem;
@@ -109,10 +115,26 @@ form button {
   background-color: var(--link-color);
 }
 
-form button:hover {
+button.btn:hover {
   background-color: var(--hover-link-color);
 }
 
 form .error {
   color: var(--form-error-color);
+}
+
+form.link {
+  display: inline;
+}
+
+form.link > button {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--link-color);
+  cursor: pointer;
+}
+
+form.link > button:hover {
+  color: var(--hover-link-color);
 }

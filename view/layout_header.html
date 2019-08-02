@@ -26,9 +26,9 @@ func LayoutHeader(w io.Writer, bva *BaseViewArgs) error
           <% } %>
           <% if bva.CurrentUser != nil { %>
             <li>
-              <form action="<%= route.LogoutPath() %>" method="POST">
+              <form action="<%= route.LogoutPath() %>" method="POST" class="link">
                 <%=raw bva.CSRFField %>
-                <button>Logout</button>
+                <button class="link">Logout</button>
               </form>
             </li>
           <% } else { %>

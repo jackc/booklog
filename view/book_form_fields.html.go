@@ -99,7 +99,7 @@ func BookFormFields(w io.Writer, bva *BaseViewArgs, form BookEditForm, verr vali
 	io.WriteString(w, `
 </div>
 
-<button type="submit">Save</button>
+<button type="submit" class="btn">Save</button>
 `)
 
 	return nil
