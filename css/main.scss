@@ -105,6 +105,14 @@ form .field input {
   width: 100%;
 }
 
+form .field select {
+  display: block;
+  font-size: 2rem;
+  color: var(--light-text-color);
+  width: 100%;
+  border-radius: 0;
+}
+
 button.btn {
   margin-top: 1rem;
   display: block;
