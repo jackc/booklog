@@ -27,7 +27,7 @@ func TestDeleteBookSuccess(t *testing.T) {
 	require.NoError(t, err)
 	defer closeConn(t, conn)
 
-	tx, err := conn.Begin(ctx, nil)
+	tx, err := conn.Begin(ctx)
 	require.NoError(t, err)
 	defer tx.Rollback(ctx)
 
@@ -62,7 +62,7 @@ func TestDeleteBookMissingBookID(t *testing.T) {
 	require.NoError(t, err)
 	defer closeConn(t, conn)
 
-	tx, err := conn.Begin(ctx, nil)
+	tx, err := conn.Begin(ctx)
 	require.NoError(t, err)
 	defer tx.Rollback(ctx)
 

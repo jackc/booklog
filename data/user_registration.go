@@ -12,7 +12,7 @@ type RegisterUserArgs struct {
 	Password string
 }
 
-func RegisterUser(ctx context.Context, db queryExecer, args RegisterUserArgs) ([16]byte, error) {
+func RegisterUser(ctx context.Context, db dbconn, args RegisterUserArgs) ([16]byte, error) {
 	v := validate.New()
 	v.Presence("username", args.Username)
 	v.Presence("password", args.Password)

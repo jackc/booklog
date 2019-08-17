@@ -54,7 +54,7 @@ func (book *Book) Validate() validate.Errors {
 }
 
 // CreateBook inserts a book into the database. It ignores the ID, InsertTime, and UpdateTime fields.
-func CreateBook(ctx context.Context, db queryExecer, book Book) (*Book, error) {
+func CreateBook(ctx context.Context, db dbconn, book Book) (*Book, error) {
 	book.Normalize()
 	if verrs := book.Validate(); verrs != nil {
 		return nil, verrs
@@ -82,7 +82,7 @@ func CreateBook(ctx context.Context, db queryExecer, book Book) (*Book, error) {
 
 // Update book updates the Title, Author, FinishDate, and Format fields of book in the database. It uses book.ID as the
 // row ID to update.
-func UpdateBook(ctx context.Context, db queryExecer, book Book) error {
+func UpdateBook(ctx context.Context, db dbconn, book Book) error {
 	book.Normalize()
 	if verrs := book.Validate(); verrs != nil {
 		return verrs
@@ -112,7 +112,7 @@ func UpdateBook(ctx context.Context, db queryExecer, book Book) error {
 
 // DeleteBook deletes the book specified by bookID. It returns a NotFoundError if the book
 // cannot be found.
-func DeleteBook(ctx context.Context, db queryExecer, bookID int64) error {
+func DeleteBook(ctx context.Context, db dbconn, bookID int64) error {
 	commandTag, err := db.Exec(ctx, "delete from books where id=$1", bookID)
 	if string(commandTag) != "DELETE 1" {
 		return &NotFoundError{target: fmt.Sprintf("book id=%d", bookID)}
@@ -120,7 +120,7 @@ func DeleteBook(ctx context.Context, db queryExecer, bookID int64) error {
 	return err
 }
 
-func GetBook(ctx context.Context, db queryExecer, bookID int64) (*Book, error) {
+func GetBook(ctx context.Context, db dbconn, bookID int64) (*Book, error) {
 	var book Book
 	err := ScanIntoBook(
 		db.QueryRow(ctx, "select id, user_id, title, author, finish_date, format, location, insert_time, update_time from books where id=$1", bookID),
@@ -166,7 +166,7 @@ func ScanRowsIntoBooks(rows pgx.Rows) ([]*Book, error) {
 	return books, nil
 }
 
-func GetAllBooks(ctx context.Context, db queryExecer, userID int64) ([]*Book, error) {
+func GetAllBooks(ctx context.Context, db dbconn, userID int64) ([]*Book, error) {
 	rows, err := db.Query(ctx, `select id, user_id, title, author, finish_date, format, location, insert_time, update_time
 from books
 where user_id=$1

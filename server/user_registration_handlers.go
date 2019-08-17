@@ -22,7 +22,7 @@ func UserRegistrationNew(w http.ResponseWriter, r *http.Request) {
 
 func UserRegistrationCreate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(queryExecer)
+	db := ctx.Value(RequestDBKey).(dbconn)
 
 	rua := data.RegisterUserArgs{
 		Username: r.FormValue("username"),

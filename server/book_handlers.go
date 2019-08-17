@@ -14,13 +14,12 @@ import (
 	"github.com/jackc/booklog/validate"
 	"github.com/jackc/booklog/view"
 	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
 	errors "golang.org/x/xerrors"
 )
 
 func BookIndex(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(queryExecer)
+	db := ctx.Value(RequestDBKey).(dbconn)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	books, err := data.GetAllBooks(ctx, db, pathUser.ID)
@@ -60,7 +59,7 @@ func BookNew(w http.ResponseWriter, r *http.Request) {
 
 func BookCreate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(queryExecer)
+	db := ctx.Value(RequestDBKey).(dbconn)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	form := view.BookEditForm{
@@ -100,7 +99,7 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 
 func BookConfirmDelete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(queryExecer)
+	db := ctx.Value(RequestDBKey).(dbconn)
 	bookID := int64URLParam(r, "id")
 
 	book, err := data.GetBook(ctx, db, bookID)
@@ -123,7 +122,7 @@ func BookConfirmDelete(w http.ResponseWriter, r *http.Request) {
 
 func BookDelete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(queryExecer)
+	db := ctx.Value(RequestDBKey).(dbconn)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 	bookID := int64URLParam(r, "id")
 
@@ -143,7 +142,7 @@ func BookDelete(w http.ResponseWriter, r *http.Request) {
 
 func BookShow(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(queryExecer)
+	db := ctx.Value(RequestDBKey).(dbconn)
 	bookID := int64URLParam(r, "id")
 
 	book, err := data.GetBook(ctx, db, bookID)
@@ -166,7 +165,7 @@ func BookShow(w http.ResponseWriter, r *http.Request) {
 
 func BookEdit(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(queryExecer)
+	db := ctx.Value(RequestDBKey).(dbconn)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 	bookID := int64URLParam(r, "id")
 
@@ -193,7 +192,7 @@ func BookEdit(w http.ResponseWriter, r *http.Request) {
 
 func BookUpdate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(queryExecer)
+	db := ctx.Value(RequestDBKey).(dbconn)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 	bookID := int64URLParam(r, "id")
 
@@ -249,20 +248,7 @@ func BookImportCSVForm(w http.ResponseWriter, r *http.Request) {
 
 func BookImportCSV(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	conn, err := ctx.Value(RequestDBKey).(*pgxpool.Pool).Acquire(ctx)
-	if err != nil {
-		InternalServerErrorHandler(w, r, err)
-		return
-	}
-	defer conn.Release()
-	_, err = conn.Exec(ctx, "begin")
-	if err != nil {
-		InternalServerErrorHandler(w, r, err)
-		return
-	}
-
-	defer conn.Exec(ctx, "rollback")
-
+	conn := ctx.Value(RequestDBKey).(dbconn)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	r.ParseMultipartForm(10 << 20)
@@ -284,16 +270,10 @@ func BookImportCSV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = conn.Exec(ctx, "commit")
-	if err != nil {
-		InternalServerErrorHandler(w, r, err)
-		return
-	}
-
 	http.Redirect(w, r, route.BooksPath(pathUser.Username), http.StatusSeeOther)
 }
 
-func importBooksFromCSV(ctx context.Context, db queryExecer, ownerID int64, r io.Reader) error {
+func importBooksFromCSV(ctx context.Context, db dbconn, ownerID int64, r io.Reader) error {
 	records, err := csv.NewReader(r).ReadAll()
 	if err != nil {
 		return err
@@ -306,6 +286,12 @@ func importBooksFromCSV(ctx context.Context, db queryExecer, ownerID int64, r io
 	if len(records[0]) < 5 {
 		return errors.New("CSV must have at least 5 columns")
 	}
+
+	tx, err := db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
 
 	for i, record := range records[1:] {
 		form := view.BookEditForm{
@@ -325,18 +311,18 @@ func importBooksFromCSV(ctx context.Context, db queryExecer, ownerID int64, r io
 		}
 		attrs.UserID = ownerID
 
-		_, err := data.CreateBook(ctx, db, attrs)
+		_, err := data.CreateBook(ctx, tx, attrs)
 		if err != nil {
 			return errors.Errorf("row %d: %w", i+2, err)
 		}
 	}
 
-	return nil
+	return tx.Commit(ctx)
 }
 
 func BookExportCSV(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(queryExecer)
+	db := ctx.Value(RequestDBKey).(dbconn)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	buf := &bytes.Buffer{}

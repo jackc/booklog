@@ -9,7 +9,7 @@ import (
 
 func UserHome(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(queryExecer)
+	db := ctx.Value(RequestDBKey).(dbconn)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	booksPerYear, err := data.BooksPerYear(ctx, db, pathUser.ID)

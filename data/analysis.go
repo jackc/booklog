@@ -26,7 +26,7 @@ func scanRowsIntoBooksPerTimeItem(rows pgx.Rows) ([]BooksPerTimeItem, error) {
 	return booksPerTime, nil
 }
 
-func BooksPerYear(ctx context.Context, db queryExecer, userID int64) ([]BooksPerTimeItem, error) {
+func BooksPerYear(ctx context.Context, db dbconn, userID int64) ([]BooksPerTimeItem, error) {
 	rows, err := db.Query(ctx, "select date_trunc('year', finish_date), count(*) from books where user_id=$1 group by 1 order by 1 desc", userID)
 	if err != nil {
 		return nil, err
@@ -35,7 +35,7 @@ func BooksPerYear(ctx context.Context, db queryExecer, userID int64) ([]BooksPer
 	return scanRowsIntoBooksPerTimeItem(rows)
 }
 
-func BooksPerMonthForLastYear(ctx context.Context, db queryExecer, userID int64) ([]BooksPerTimeItem, error) {
+func BooksPerMonthForLastYear(ctx context.Context, db dbconn, userID int64) ([]BooksPerTimeItem, error) {
 	rows, err := db.Query(ctx, `select months, count(books.id)
 from generate_series(date_trunc('month', now() - '1 year'::interval), date_trunc('month', now()), '1 month') as months
 	left join books on date_trunc('month', finish_date) = months and user_id=$1

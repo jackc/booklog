@@ -33,15 +33,11 @@ const (
 	RequestPathUserKey
 )
 
-type queryExecer interface {
+type dbconn interface {
+	Begin(ctx context.Context) (pgx.Tx, error)
 	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
 	Query(ctx context.Context, sql string, optionsAndArgs ...interface{}) (pgx.Rows, error)
 	QueryRow(ctx context.Context, sql string, optionsAndArgs ...interface{}) pgx.Row
-}
-
-type beginQueryExecer interface {
-	queryExecer
-	Begin(ctx context.Context, txOptions *pgx.TxOptions) (*pgx.Tx, error)
 }
 
 type Session struct {
@@ -166,7 +162,7 @@ func sessionHandler(sc *securecookie.SecureCookie) func(http.Handler) http.Handl
 				return
 			}
 
-			db := ctx.Value(RequestDBKey).(queryExecer)
+			db := ctx.Value(RequestDBKey).(dbconn)
 			err = db.QueryRow(ctx,
 				"select user_sessions.id, users.id, users.username from user_sessions join users on user_sessions.user_id=users.id where user_sessions.id=$1",
 				sessionID,
@@ -227,7 +223,7 @@ func pathUserHandler() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-			db := ctx.Value(RequestDBKey).(queryExecer)
+			db := ctx.Value(RequestDBKey).(dbconn)
 
 			user, err := data.GetUserMinByUsername(ctx, db, chi.URLParam(r, "username"))
 			if err != nil {

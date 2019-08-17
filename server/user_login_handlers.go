@@ -23,7 +23,7 @@ func UserLoginForm(w http.ResponseWriter, r *http.Request) {
 
 func UserLogin(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(queryExecer)
+	db := ctx.Value(RequestDBKey).(dbconn)
 
 	la := data.UserLoginArgs{
 		Username: r.FormValue("username"),
@@ -56,7 +56,7 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 
 func UserLogout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(queryExecer)
+	db := ctx.Value(RequestDBKey).(dbconn)
 	session := ctx.Value(RequestSessionKey).(*Session)
 
 	if session.IsAuthenticated {

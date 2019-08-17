@@ -14,7 +14,7 @@ type UserLoginArgs struct {
 	Password string
 }
 
-func UserLogin(ctx context.Context, db queryExecer, args UserLoginArgs) ([16]byte, error) {
+func UserLogin(ctx context.Context, db dbconn, args UserLoginArgs) ([16]byte, error) {
 	v := validate.New()
 	v.Presence("username", args.Username)
 	v.Presence("password", args.Password)

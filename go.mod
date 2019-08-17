@@ -11,8 +11,8 @@ require (
 	github.com/gorilla/securecookie v1.1.1
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jackc/pgconn v0.0.0-20190808204917-0a2ed72cf711
-	github.com/jackc/pgtype v0.0.0-20190608164547-4e0ed911f557 // indirect
-	github.com/jackc/pgx/v4 v4.0.0-pre1
+	github.com/jackc/pgtype v0.0.0-20190817183334-9010c554edc5 // indirect
+	github.com/jackc/pgx/v4 v4.0.0-pre1.0.20190817222214-99e546152212
 	github.com/jackc/puddle v0.0.0-20190608224051-11cab39313c9 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kr/pty v1.1.8 // indirect

@@ -13,7 +13,7 @@ type UserMin struct {
 	Username string
 }
 
-func GetUserMinByUsername(ctx context.Context, db queryExecer, username string) (*UserMin, error) {
+func GetUserMinByUsername(ctx context.Context, db dbconn, username string) (*UserMin, error) {
 	var user UserMin
 	err := db.QueryRow(ctx, "select id, username from users where username=$1", username).Scan(&user.ID, &user.Username)
 	if err != nil {
