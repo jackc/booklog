@@ -23,7 +23,7 @@ type BookEditForm struct {
 	Title      string
 	Author     string
 	FinishDate string
-	Format      string
+	Format     string
 }
 
 func (f BookEditForm) Parse() (data.Book, validate.Errors) {
@@ -31,16 +31,20 @@ func (f BookEditForm) Parse() (data.Book, validate.Errors) {
 	book := data.Book{
 		Title:  f.Title,
 		Author: f.Author,
-		Format:  f.Format,
+		Format: f.Format,
 	}
 	v := validate.New()
 
-	book.FinishDate, err = time.Parse("2006-01-02", f.FinishDate)
-	if err != nil {
-		book.FinishDate, err = time.Parse("1/2/2006", f.FinishDate)
-		if err != nil {
-			v.Add("finishDate", errors.New("is not a date"))
+	dateFormats := []string{"2006-01-02", "1/2/2006", "1/2/06"}
+
+	for _, df := range dateFormats {
+		book.FinishDate, err = time.Parse(df, f.FinishDate)
+		if err == nil {
+			break
 		}
+	}
+	if err != nil {
+		v.Add("finishDate", errors.New("is not a date"))
 	}
 
 	if v.Err() != nil {
