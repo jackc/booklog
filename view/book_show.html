@@ -18,6 +18,12 @@ func BookShow(w io.Writer, bva *BaseViewArgs, book *data.Book) error
       <dd><%= book.FinishDate.Format("January 2, 2006") %></dd>
       <dt>Format</dt>
       <dd><%= book.Format %></dd>
+      <dt>Location</dt>
+      <% if book.Location == "" { %>
+        <dd class="empty">None</dd>
+      <% } else { %>
+        <dd><%= book.Location %></dd>
+      <% } %>
     </dl>
 
     <a class="title" href="<%= route.EditBookPath(bva.PathUser.Username, book.ID) %>">Edit</a>

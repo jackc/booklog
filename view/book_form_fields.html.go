@@ -113,6 +113,28 @@ func BookFormFields(w io.Writer, bva *BaseViewArgs, form BookEditForm, verr vali
 	io.WriteString(w, `
 </div>
 
+<div class="field">
+  <label for="location">Location</label>
+  <input type="text" name="location" id="location" value="`)
+	io.WriteString(w, html.EscapeString(form.Location))
+	io.WriteString(w, `" >
+  `)
+	if errs, ok := verr["location"]; ok {
+		io.WriteString(w, `
+    `)
+		for _, e := range errs {
+			io.WriteString(w, `
+      <div class="error">`)
+			io.WriteString(w, html.EscapeString(e.Error()))
+			io.WriteString(w, `</div>
+    `)
+		}
+		io.WriteString(w, `
+  `)
+	}
+	io.WriteString(w, `
+</div>
+
 <button type="submit" class="btn">Save</button>
 `)
 

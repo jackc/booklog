@@ -24,14 +24,16 @@ type BookEditForm struct {
 	Author     string
 	FinishDate string
 	Format     string
+	Location   string
 }
 
 func (f BookEditForm) Parse() (data.Book, validate.Errors) {
 	var err error
 	book := data.Book{
-		Title:  f.Title,
-		Author: f.Author,
-		Format: f.Format,
+		Title:    f.Title,
+		Author:   f.Author,
+		Format:   f.Format,
+		Location: f.Location,
 	}
 	v := validate.New()
 

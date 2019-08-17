@@ -54,6 +54,10 @@ body > header > nav > ul > li {
   padding-left: 1rem;
 }
 
+dd.empty {
+  color: var(--light-text-color);
+}
+
 .card {
   margin: 1rem;
   padding: 1rem;

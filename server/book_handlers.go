@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/booklog/validate"
 	"github.com/jackc/booklog/view"
 	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	errors "golang.org/x/xerrors"
 )
 
@@ -67,6 +68,7 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 		Author:     r.FormValue("author"),
 		FinishDate: r.FormValue("finishDate"),
 		Format:     r.FormValue("format"),
+		Location:   r.FormValue("location"),
 	}
 	attrs, verr := form.Parse()
 	if verr != nil {
@@ -170,8 +172,8 @@ func BookEdit(w http.ResponseWriter, r *http.Request) {
 
 	var form view.BookEditForm
 	var FinishDate time.Time
-	err := db.QueryRow(ctx, "select title, author, finish_date, format from books where id=$1 and user_id=$2", bookID, pathUser.ID).
-		Scan(&form.Title, &form.Author, &FinishDate, &form.Format)
+	err := db.QueryRow(ctx, "select title, author, finish_date, format, coalesce(location, '') from books where id=$1 and user_id=$2", bookID, pathUser.ID).
+		Scan(&form.Title, &form.Author, &FinishDate, &form.Format, &form.Location)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			NotFoundHandler(w, r)
@@ -200,6 +202,7 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 		Author:     r.FormValue("author"),
 		FinishDate: r.FormValue("finishDate"),
 		Format:     r.FormValue("format"),
+		Location:   r.FormValue("location"),
 	}
 	attrs, verr := form.Parse()
 	if verr != nil {
@@ -242,9 +245,24 @@ func BookImportCSVForm(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// TODO - do transactions right
+
 func BookImportCSV(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(beginQueryExecer)
+	conn, err := ctx.Value(RequestDBKey).(*pgxpool.Pool).Acquire(ctx)
+	if err != nil {
+		InternalServerErrorHandler(w, r, err)
+		return
+	}
+	defer conn.Release()
+	_, err = conn.Exec(ctx, "begin")
+	if err != nil {
+		InternalServerErrorHandler(w, r, err)
+		return
+	}
+
+	defer conn.Exec(ctx, "rollback")
+
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	r.ParseMultipartForm(10 << 20)
@@ -256,7 +274,7 @@ func BookImportCSV(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	err = importBooksFromCSV(ctx, db, pathUser.ID, file)
+	err = importBooksFromCSV(ctx, conn, pathUser.ID, file)
 	if err != nil {
 		err := view.BookImportCSVForm(w, baseViewArgsFromRequest(r), err)
 		if err != nil {
@@ -266,10 +284,16 @@ func BookImportCSV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_, err = conn.Exec(ctx, "commit")
+	if err != nil {
+		InternalServerErrorHandler(w, r, err)
+		return
+	}
+
 	http.Redirect(w, r, route.BooksPath(pathUser.Username), http.StatusSeeOther)
 }
 
-func importBooksFromCSV(ctx context.Context, db beginQueryExecer, ownerID int64, r io.Reader) error {
+func importBooksFromCSV(ctx context.Context, db queryExecer, ownerID int64, r io.Reader) error {
 	records, err := csv.NewReader(r).ReadAll()
 	if err != nil {
 		return err
@@ -279,15 +303,9 @@ func importBooksFromCSV(ctx context.Context, db beginQueryExecer, ownerID int64,
 		return errors.New("CSV must have at least 2 rows")
 	}
 
-	if len(records[0]) < 4 {
-		return errors.New("CSV must have at least 4 columns")
+	if len(records[0]) < 5 {
+		return errors.New("CSV must have at least 5 columns")
 	}
-
-	tx, err := db.Begin(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(ctx)
 
 	for i, record := range records[1:] {
 		form := view.BookEditForm{
@@ -295,9 +313,10 @@ func importBooksFromCSV(ctx context.Context, db beginQueryExecer, ownerID int64,
 			Author:     record[1],
 			FinishDate: record[2],
 			Format:     record[3],
+			Location:   record[4],
 		}
 		if form.Format == "" {
-			form.Format = "book"
+			form.Format = "text"
 		}
 
 		attrs, verr := form.Parse()
@@ -312,7 +331,7 @@ func importBooksFromCSV(ctx context.Context, db beginQueryExecer, ownerID int64,
 		}
 	}
 
-	return tx.Commit(ctx)
+	return nil
 }
 
 func BookExportCSV(w http.ResponseWriter, r *http.Request) {

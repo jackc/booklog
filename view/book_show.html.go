@@ -29,6 +29,20 @@ func BookShow(w io.Writer, bva *BaseViewArgs, book *data.Book) error {
       <dd>`)
 	io.WriteString(w, html.EscapeString(book.Format))
 	io.WriteString(w, `</dd>
+      <dt>Location</dt>
+      `)
+	if book.Location == "" {
+		io.WriteString(w, `
+        <dd class="empty">None</dd>
+      `)
+	} else {
+		io.WriteString(w, `
+        <dd>`)
+		io.WriteString(w, html.EscapeString(book.Location))
+		io.WriteString(w, `</dd>
+      `)
+	}
+	io.WriteString(w, `
     </dl>
 
     <a class="title" href="`)

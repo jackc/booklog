@@ -53,4 +53,14 @@ func BookFormFields(w io.Writer, bva *BaseViewArgs, form BookEditForm, verr vali
   <% } %>
 </div>
 
+<div class="field">
+  <label for="location">Location</label>
+  <input type="text" name="location" id="location" value="<%= form.Location %>" >
+  <% if errs, ok := verr["location"]; ok { %>
+    <% for _, e := range errs { %>
+      <div class="error"><%= e.Error() %></div>
+    <% } %>
+  <% } %>
+</div>
+
 <button type="submit" class="btn">Save</button>

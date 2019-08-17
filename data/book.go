@@ -18,6 +18,7 @@ type Book struct {
 	Author     string
 	FinishDate time.Time
 	Format     string
+	Location   string
 	InsertTime time.Time
 	UpdateTime time.Time
 }
@@ -26,6 +27,7 @@ func (book *Book) Normalize() {
 	book.Title = strings.TrimSpace(book.Title)
 	book.Author = strings.TrimSpace(book.Author)
 	book.Format = strings.TrimSpace(book.Format)
+	book.Location = strings.TrimSpace(book.Location)
 }
 
 func (book *Book) Validate() validate.Errors {
@@ -58,12 +60,18 @@ func CreateBook(ctx context.Context, db queryExecer, book Book) (*Book, error) {
 		return nil, verrs
 	}
 
-	err := db.QueryRow(ctx, "insert into books(user_id, title, author, finish_date, format) values($1, $2, $3, $4, $5) returning id, insert_time, update_time",
+	var location *string
+	if len(book.Location) > 0 {
+		location = &book.Location
+	}
+
+	err := db.QueryRow(ctx, "insert into books(user_id, title, author, finish_date, format, location) values($1, $2, $3, $4, $5, $6) returning id, insert_time, update_time",
 		book.UserID,
 		book.Title,
 		book.Author,
 		book.FinishDate,
 		book.Format,
+		location,
 	).Scan(&book.ID, &book.InsertTime, &book.UpdateTime)
 	if err != nil {
 		return nil, err
@@ -80,11 +88,17 @@ func UpdateBook(ctx context.Context, db queryExecer, book Book) error {
 		return verrs
 	}
 
-	commandTag, err := db.Exec(ctx, "update books set title=$1, author=$2, finish_date=$3, format=$4 where id=$5",
+	var location *string
+	if len(book.Location) > 0 {
+		location = &book.Location
+	}
+
+	commandTag, err := db.Exec(ctx, "update books set title=$1, author=$2, finish_date=$3, format=$4, location=$5 where id=$6",
 		book.Title,
 		book.Author,
 		book.FinishDate,
 		book.Format,
+		location,
 		book.ID)
 	if err != nil {
 		return err
@@ -109,7 +123,7 @@ func DeleteBook(ctx context.Context, db queryExecer, bookID int64) error {
 func GetBook(ctx context.Context, db queryExecer, bookID int64) (*Book, error) {
 	var book Book
 	err := ScanIntoBook(
-		db.QueryRow(ctx, "select id, user_id, title, author, finish_date, format, insert_time, update_time from books where id=$1", bookID),
+		db.QueryRow(ctx, "select id, user_id, title, author, finish_date, format, location, insert_time, update_time from books where id=$1", bookID),
 		&book,
 	)
 	if err != nil {
@@ -123,7 +137,19 @@ func GetBook(ctx context.Context, db queryExecer, bookID int64) (*Book, error) {
 }
 
 func ScanIntoBook(s scanner, book *Book) error {
-	return s.Scan(&book.ID, &book.UserID, &book.Title, &book.Author, &book.FinishDate, &book.Format, &book.InsertTime, &book.UpdateTime)
+	var location *string
+	err := s.Scan(&book.ID, &book.UserID, &book.Title, &book.Author, &book.FinishDate, &book.Format, &location, &book.InsertTime, &book.UpdateTime)
+	if err != nil {
+		return err
+	}
+
+	if location == nil {
+		book.Location = ""
+	} else {
+		book.Location = *location
+	}
+
+	return nil
 }
 
 func ScanRowsIntoBooks(rows pgx.Rows) ([]*Book, error) {
@@ -141,7 +167,7 @@ func ScanRowsIntoBooks(rows pgx.Rows) ([]*Book, error) {
 }
 
 func GetAllBooks(ctx context.Context, db queryExecer, userID int64) ([]*Book, error) {
-	rows, err := db.Query(ctx, `select id, user_id, title, author, finish_date, format, insert_time, update_time
+	rows, err := db.Query(ctx, `select id, user_id, title, author, finish_date, format, location, insert_time, update_time
 from books
 where user_id=$1
 order by finish_date desc`,
