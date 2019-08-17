@@ -14,7 +14,7 @@ func BookImportCSVForm(w io.Writer, bva *BaseViewArgs) error
   <p>CSV must include header row.</p>
   <p>CSV must include 4 columns in order: title, author, date finished, and media.</p>
 
-  <form enctype="multipart/form-data" action="{{ route.ImportBookCSVPath(bva.PathUser.Username) %>" method="post">
+  <form enctype="multipart/form-data" action="<%= route.ImportBookCSVPath(bva.PathUser.Username) %>" method="post">
     <%=raw bva.CSRFField %>
 
     <div class="field">

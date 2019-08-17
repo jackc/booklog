@@ -1,6 +1,11 @@
 package view
 
-import "io"
+import (
+	"html"
+	"io"
+
+	"github.com/jackc/booklog/route"
+)
 
 func BookImportCSVForm(w io.Writer, bva *BaseViewArgs) error {
 	LayoutHeader(w, bva)
@@ -11,7 +16,9 @@ func BookImportCSVForm(w io.Writer, bva *BaseViewArgs) error {
   <p>CSV must include header row.</p>
   <p>CSV must include 4 columns in order: title, author, date finished, and media.</p>
 
-  <form enctype="multipart/form-data" action="{{ route.ImportBookCSVPath(bva.PathUser.Username) %>" method="post">
+  <form enctype="multipart/form-data" action="`)
+	io.WriteString(w, html.EscapeString(route.ImportBookCSVPath(bva.PathUser.Username)))
+	io.WriteString(w, `" method="post">
     `)
 	io.WriteString(w, bva.CSRFField)
 	io.WriteString(w, `
