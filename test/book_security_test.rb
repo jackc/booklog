@@ -6,7 +6,7 @@ class BookSecurityTest < IntegrationTest
 
   def test_books_index_redirects_anonymous_users_to_login
     user_id = session.db[:users].insert username: "test", password_digest: BCrypt::Password.create("secret phrase")
-    session.db[:books].insert user_id: user_id, title: "Foo", author: "Bar", finish_date: Date.new(2019,1,1), media: "book"
+    session.db[:books].insert user_id: user_id, title: "Foo", author: "Bar", finish_date: Date.new(2019,1,1), format: "text"
 
     browser.goto "#{session.app_host}/users/test/books"
     assert_equal "#{session.app_host}/login", browser.url
@@ -14,7 +14,7 @@ class BookSecurityTest < IntegrationTest
 
   def test_books_index_is_forbidden_to_other_users
     user_id = session.db[:users].insert username: "test", password_digest: BCrypt::Password.create("secret phrase")
-    session.db[:books].insert user_id: user_id, title: "Foo", author: "Bar", finish_date: Date.new(2019,1,1), media: "book"
+    session.db[:books].insert user_id: user_id, title: "Foo", author: "Bar", finish_date: Date.new(2019,1,1), format: "text"
 
     other_user_id = session.db[:users].insert username: "other", password_digest: BCrypt::Password.create("secret phrase")
 

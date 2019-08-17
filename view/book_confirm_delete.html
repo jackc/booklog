@@ -17,8 +17,8 @@ func BookConfirmDelete(w io.Writer, bva *BaseViewArgs, book *data.Book) error
     <dd><%= book.Author %></dd>
     <dt>Finish Date</dt>
     <dd><%= book.FinishDate.Format("January 2, 2006") %></dd>
-    <dt>Media</dt>
-    <dd><%= book.Media %></dd>
+    <dt>Format</dt>
+    <dd><%= book.Format %></dd>
   </dl>
 
   <form action="<%= route.BookPath(bva.PathUser.Username, book.ID) %>" method="post">

@@ -66,7 +66,7 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 		Title:      r.FormValue("title"),
 		Author:     r.FormValue("author"),
 		FinishDate: r.FormValue("finishDate"),
-		Media:      r.FormValue("media"),
+		Format:     r.FormValue("format"),
 	}
 	attrs, verr := form.Parse()
 	if verr != nil {
@@ -170,8 +170,8 @@ func BookEdit(w http.ResponseWriter, r *http.Request) {
 
 	var form view.BookEditForm
 	var FinishDate time.Time
-	err := db.QueryRow(ctx, "select title, author, finish_date, media from books where id=$1 and user_id=$2", bookID, pathUser.ID).
-		Scan(&form.Title, &form.Author, &FinishDate, &form.Media)
+	err := db.QueryRow(ctx, "select title, author, finish_date, format from books where id=$1 and user_id=$2", bookID, pathUser.ID).
+		Scan(&form.Title, &form.Author, &FinishDate, &form.Format)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			NotFoundHandler(w, r)
@@ -199,7 +199,7 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 		Title:      r.FormValue("title"),
 		Author:     r.FormValue("author"),
 		FinishDate: r.FormValue("finishDate"),
-		Media:      r.FormValue("media"),
+		Format:     r.FormValue("format"),
 	}
 	attrs, verr := form.Parse()
 	if verr != nil {
@@ -289,10 +289,10 @@ func importBooksFromCSV(ctx context.Context, db queryExecer, ownerID int64, r io
 			Title:      record[0],
 			Author:     record[1],
 			FinishDate: record[2],
-			Media:      record[3],
+			Format:      record[3],
 		}
-		if form.Media == "" {
-			form.Media = "book"
+		if form.Format == "" {
+			form.Format = "book"
 		}
 
 		attrs, verr := form.Parse()
@@ -317,17 +317,17 @@ func BookExportCSV(w http.ResponseWriter, r *http.Request) {
 
 	buf := &bytes.Buffer{}
 	csvWriter := csv.NewWriter(buf)
-	csvWriter.Write([]string{"title", "author", "finish_date", "media"})
+	csvWriter.Write([]string{"title", "author", "finish_date", "format"})
 
-	rows, _ := db.Query(ctx, `select title, author, finish_date, media
+	rows, _ := db.Query(ctx, `select title, author, finish_date, format
 from books
 where user_id=$1
 order by finish_date desc`, pathUser.ID)
 	for rows.Next() {
-		var title, author, media string
+		var title, author, format string
 		var finishDate time.Time
-		rows.Scan(&title, &author, &finishDate, &media)
-		csvWriter.Write([]string{title, author, finishDate.Format("2006-01-02"), media})
+		rows.Scan(&title, &author, &finishDate, &format)
+		csvWriter.Write([]string{title, author, finishDate.Format("2006-01-02"), format})
 	}
 	if rows.Err() != nil {
 		InternalServerErrorHandler(w, r, rows.Err())

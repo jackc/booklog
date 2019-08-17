@@ -17,7 +17,7 @@ type Book struct {
 	Title      string
 	Author     string
 	FinishDate time.Time
-	Media      string
+	Format     string
 	InsertTime time.Time
 	UpdateTime time.Time
 }
@@ -25,14 +25,14 @@ type Book struct {
 func (book *Book) Normalize() {
 	book.Title = strings.TrimSpace(book.Title)
 	book.Author = strings.TrimSpace(book.Author)
-	book.Media = strings.TrimSpace(book.Media)
+	book.Format = strings.TrimSpace(book.Format)
 }
 
 func (book *Book) Validate() validate.Errors {
 	v := validate.New()
 	v.Presence("title", book.Title)
 	v.Presence("author", book.Author)
-	v.Presence("media", book.Media)
+	v.Presence("format", book.Format)
 	if book.FinishDate.After(time.Now()) {
 		v.Add("finishDate", errors.New("cannot be in future"))
 	}
@@ -51,12 +51,12 @@ func CreateBook(ctx context.Context, db queryExecer, book Book) (*Book, error) {
 		return nil, verrs
 	}
 
-	err := db.QueryRow(ctx, "insert into books(user_id, title, author, finish_date, media) values($1, $2, $3, $4, $5) returning id, insert_time, update_time",
+	err := db.QueryRow(ctx, "insert into books(user_id, title, author, finish_date, format) values($1, $2, $3, $4, $5) returning id, insert_time, update_time",
 		book.UserID,
 		book.Title,
 		book.Author,
 		book.FinishDate,
-		book.Media,
+		book.Format,
 	).Scan(&book.ID, &book.InsertTime, &book.UpdateTime)
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func CreateBook(ctx context.Context, db queryExecer, book Book) (*Book, error) {
 	return &book, nil
 }
 
-// Update book updates the Title, Author, FinishDate, and Media fields of book in the database. It uses book.ID as the
+// Update book updates the Title, Author, FinishDate, and Format fields of book in the database. It uses book.ID as the
 // row ID to update.
 func UpdateBook(ctx context.Context, db queryExecer, book Book) error {
 	book.Normalize()
@@ -73,11 +73,11 @@ func UpdateBook(ctx context.Context, db queryExecer, book Book) error {
 		return verrs
 	}
 
-	commandTag, err := db.Exec(ctx, "update books set title=$1, author=$2, finish_date=$3, media=$4 where id=$5",
+	commandTag, err := db.Exec(ctx, "update books set title=$1, author=$2, finish_date=$3, format=$4 where id=$5",
 		book.Title,
 		book.Author,
 		book.FinishDate,
-		book.Media,
+		book.Format,
 		book.ID)
 	if err != nil {
 		return err
@@ -102,7 +102,7 @@ func DeleteBook(ctx context.Context, db queryExecer, bookID int64) error {
 func GetBook(ctx context.Context, db queryExecer, bookID int64) (*Book, error) {
 	var book Book
 	err := ScanIntoBook(
-		db.QueryRow(ctx, "select id, user_id, title, author, finish_date, media, insert_time, update_time from books where id=$1", bookID),
+		db.QueryRow(ctx, "select id, user_id, title, author, finish_date, format, insert_time, update_time from books where id=$1", bookID),
 		&book,
 	)
 	if err != nil {
@@ -116,7 +116,7 @@ func GetBook(ctx context.Context, db queryExecer, bookID int64) (*Book, error) {
 }
 
 func ScanIntoBook(s scanner, book *Book) error {
-	return s.Scan(&book.ID, &book.UserID, &book.Title, &book.Author, &book.FinishDate, &book.Media, &book.InsertTime, &book.UpdateTime)
+	return s.Scan(&book.ID, &book.UserID, &book.Title, &book.Author, &book.FinishDate, &book.Format, &book.InsertTime, &book.UpdateTime)
 }
 
 func ScanRowsIntoBooks(rows pgx.Rows) ([]*Book, error) {
@@ -134,7 +134,7 @@ func ScanRowsIntoBooks(rows pgx.Rows) ([]*Book, error) {
 }
 
 func GetAllBooks(ctx context.Context, db queryExecer, userID int64) ([]*Book, error) {
-	rows, err := db.Query(ctx, `select id, user_id, title, author, finish_date, media, insert_time, update_time
+	rows, err := db.Query(ctx, `select id, user_id, title, author, finish_date, format, insert_time, update_time
 from books
 where user_id=$1
 order by finish_date desc`,

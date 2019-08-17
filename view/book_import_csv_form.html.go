@@ -14,7 +14,7 @@ func BookImportCSVForm(w io.Writer, bva *BaseViewArgs, importErr error) error {
   <header>Import Book CSV</header>
 
   <p>CSV must include header row.</p>
-  <p>CSV must include 4 columns in order: title, author, date finished, and media.</p>
+  <p>CSV must include 4 columns in order: title, author, date finished, and format.</p>
 
   <form enctype="multipart/form-data" action="`)
 	io.WriteString(w, html.EscapeString(route.ImportBookCSVPath(bva.PathUser.Username)))
@@ -34,7 +34,7 @@ func BookImportCSVForm(w io.Writer, bva *BaseViewArgs, importErr error) error {
 	io.WriteString(w, `
 
     <div class="field">
-      <label for="file">Media</label>
+      <label for="file">Format</label>
       <input type="file" name="file" id="file" />
     </div>
 

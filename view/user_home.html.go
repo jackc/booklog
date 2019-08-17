@@ -45,7 +45,7 @@ func UserHome(
     display: grid;
    }
 
-  ol.books time.finished, ol.books .media, ol.books .author {
+  ol.books time.finished, ol.books .format, ol.books .author {
     color: var(--light-text-color);
   }
 
@@ -108,7 +108,7 @@ func UserHome(
     margin: 0 0 0 9rem;
   }
 
-  ol.books time.finished, ol.books .media {
+  ol.books time.finished, ol.books .format {
     display: block;
     min-width: 8rem;
     text-align: right;
@@ -188,14 +188,14 @@ func UserHome(
 			io.WriteString(w, html.EscapeString(book.FinishDate.Format("January 2")))
 			io.WriteString(w, `
                 </time>
-                <span class="media">
+                <span class="format">
                   `)
 
 			var icon string
-			switch book.Media {
-			case "audiobook":
+			switch book.Format {
+			case "audio":
 				icon = "🎧"
-			case "book":
+			case "text":
 				icon = "📖"
 			case "video":
 				icon = "📺"

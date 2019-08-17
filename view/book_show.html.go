@@ -25,9 +25,9 @@ func BookShow(w io.Writer, bva *BaseViewArgs, book *data.Book) error {
       <dd>`)
 	io.WriteString(w, html.EscapeString(book.FinishDate.Format("January 2, 2006")))
 	io.WriteString(w, `</dd>
-      <dt>Media</dt>
+      <dt>Format</dt>
       <dd>`)
-	io.WriteString(w, html.EscapeString(book.Media))
+	io.WriteString(w, html.EscapeString(book.Format))
 	io.WriteString(w, `</dd>
     </dl>
 

@@ -37,7 +37,7 @@ func TestDeleteBookSuccess(t *testing.T) {
 
 	var bookID int64
 	err = tx.QueryRow(ctx,
-		"insert into books(user_id, title, author, finish_date, media) values($1, $2, $3, $4, $5) returning id",
+		"insert into books(user_id, title, author, finish_date, format) values($1, $2, $3, $4, $5) returning id",
 		userID, "Paradise Lost", "John Milton", time.Now(), "book",
 	).Scan(&bookID)
 	require.NoError(t, err)
@@ -72,7 +72,7 @@ func TestDeleteBookMissingBookID(t *testing.T) {
 
 	var bookID int64
 	err = tx.QueryRow(ctx,
-		"insert into books(user_id, title, author, finish_date, media) values($1, $2, $3, $4, $5) returning id",
+		"insert into books(user_id, title, author, finish_date, format) values($1, $2, $3, $4, $5) returning id",
 		userID, "Paradise Lost", "John Milton", time.Now(), "book",
 	).Scan(&bookID)
 	require.NoError(t, err)

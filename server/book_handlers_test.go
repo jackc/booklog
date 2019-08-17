@@ -35,7 +35,7 @@ func TestImportBooksFromCSV(t *testing.T) {
 	err = tx.QueryRow(ctx, "insert into users(username, password_digest) values('test', 'x') returning id").Scan(&userID)
 	require.NoError(t, err)
 
-	in := `Title,Author,Date Finished,Media,
+	in := `Title,Author,Date Finished,Format,
 	Paradise Lost ,John Milton ,7/2/2005,,
 	The Dilbert Future ,Scott Adams ,7/10/2005,,
 	Napoleon The Man Behind the Myth,Adam Zamoyski,6/17/2019,audiobook,`

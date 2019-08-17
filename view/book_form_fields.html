@@ -40,13 +40,13 @@ func BookFormFields(w io.Writer, bva *BaseViewArgs, form BookEditForm, verr vali
 </div>
 
 <div class="field">
-  <label for="media">Media</label>
-  <select name="media" id="media">
-    <option <% if form.Media == "book" { %>selected<%} %>>book</option>
-    <option <% if form.Media == "audiobook" { %>selected<%} %>>audiobook</option>
-    <option <% if form.Media == "video" { %>selected<%} %>>video</option>
+  <label for="format">Format</label>
+  <select name="format" id="format">
+    <option <% if form.Format == "text" { %>selected<%} %>>book</option>
+    <option <% if form.Format == "audio" { %>selected<%} %>>audiobook</option>
+    <option <% if form.Format == "video" { %>selected<%} %>>video</option>
   </select>
-  <% if errs, ok := verr["media"]; ok { %>
+  <% if errs, ok := verr["format"]; ok { %>
     <% for _, e := range errs { %>
       <div class="error"><%= e.Error() %></div>
     <% } %>

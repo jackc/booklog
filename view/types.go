@@ -23,7 +23,7 @@ type BookEditForm struct {
 	Title      string
 	Author     string
 	FinishDate string
-	Media      string
+	Format      string
 }
 
 func (f BookEditForm) Parse() (data.Book, validate.Errors) {
@@ -31,7 +31,7 @@ func (f BookEditForm) Parse() (data.Book, validate.Errors) {
 	book := data.Book{
 		Title:  f.Title,
 		Author: f.Author,
-		Media:  f.Media,
+		Format:  f.Format,
 	}
 	v := validate.New()
 

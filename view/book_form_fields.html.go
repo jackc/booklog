@@ -78,26 +78,26 @@ func BookFormFields(w io.Writer, bva *BaseViewArgs, form BookEditForm, verr vali
 </div>
 
 <div class="field">
-  <label for="media">Media</label>
-  <select name="media" id="media">
+  <label for="format">Format</label>
+  <select name="format" id="format">
     <option `)
-	if form.Media == "book" {
+	if form.Format == "text" {
 		io.WriteString(w, `selected`)
 	}
 	io.WriteString(w, `>book</option>
     <option `)
-	if form.Media == "audiobook" {
+	if form.Format == "audio" {
 		io.WriteString(w, `selected`)
 	}
 	io.WriteString(w, `>audiobook</option>
     <option `)
-	if form.Media == "video" {
+	if form.Format == "video" {
 		io.WriteString(w, `selected`)
 	}
 	io.WriteString(w, `>video</option>
   </select>
   `)
-	if errs, ok := verr["media"]; ok {
+	if errs, ok := verr["format"]; ok {
 		io.WriteString(w, `
     `)
 		for _, e := range errs {
