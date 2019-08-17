@@ -244,7 +244,7 @@ func BookImportCSVForm(w http.ResponseWriter, r *http.Request) {
 
 func BookImportCSV(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(queryExecer)
+	db := ctx.Value(RequestDBKey).(beginQueryExecer)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	r.ParseMultipartForm(10 << 20)
@@ -269,8 +269,7 @@ func BookImportCSV(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, route.BooksPath(pathUser.Username), http.StatusSeeOther)
 }
 
-// TODO - need DB transaction control - so queryExecer is insufficient
-func importBooksFromCSV(ctx context.Context, db queryExecer, ownerID int64, r io.Reader) error {
+func importBooksFromCSV(ctx context.Context, db beginQueryExecer, ownerID int64, r io.Reader) error {
 	records, err := csv.NewReader(r).ReadAll()
 	if err != nil {
 		return err
@@ -283,6 +282,12 @@ func importBooksFromCSV(ctx context.Context, db queryExecer, ownerID int64, r io
 	if len(records[0]) < 4 {
 		return errors.New("CSV must have at least 4 columns")
 	}
+
+	tx, err := db.Begin(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
 
 	for i, record := range records[1:] {
 		form := view.BookEditForm{
@@ -307,7 +312,7 @@ func importBooksFromCSV(ctx context.Context, db queryExecer, ownerID int64, r io
 		}
 	}
 
-	return nil
+	return tx.Commit(ctx)
 }
 
 func BookExportCSV(w http.ResponseWriter, r *http.Request) {

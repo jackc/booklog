@@ -18,21 +18,27 @@ func closeConn(t testing.TB, conn *pgx.Conn) {
 }
 
 func TestImportBooksFromCSV(t *testing.T) {
-	t.Parallel()
+	// TODO - Run test transactionally to be able to test in parallel and avoid manual cleanup
+	// t.Parallel()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
+
+	defer func() {
+		conn, err := pgx.Connect(ctx, os.Getenv("BOOKLOG_TEST_DB_CONN_STRING"))
+		require.NoError(t, err)
+		defer closeConn(t, conn)
+
+		_, err = conn.Exec(ctx, "delete from users")
+		require.NoError(t, err)
+	}()
 
 	conn, err := pgx.Connect(ctx, os.Getenv("BOOKLOG_TEST_DB_CONN_STRING"))
 	require.NoError(t, err)
 	defer closeConn(t, conn)
 
-	tx, err := conn.Begin(ctx, nil)
-	require.NoError(t, err)
-	defer tx.Rollback(ctx)
-
 	var userID int64
-	err = tx.QueryRow(ctx, "insert into users(username, password_digest) values('test', 'x') returning id").Scan(&userID)
+	err = conn.QueryRow(ctx, "insert into users(username, password_digest) values('test', 'x') returning id").Scan(&userID)
 	require.NoError(t, err)
 
 	in := `Title,Author,Date Finished,Format,
@@ -40,11 +46,11 @@ func TestImportBooksFromCSV(t *testing.T) {
 	The Dilbert Future ,Scott Adams ,7/10/2005,text,
 	Napoleon The Man Behind the Myth,Adam Zamoyski,6/17/2019,audio,`
 
-	err = importBooksFromCSV(ctx, tx, userID, strings.NewReader(in))
+	err = importBooksFromCSV(ctx, conn, userID, strings.NewReader(in))
 	require.NoError(t, err)
 
 	var bookCount int64
-	err = tx.QueryRow(ctx, "select count(*) from books where user_id=$1", userID).Scan(&bookCount)
+	err = conn.QueryRow(ctx, "select count(*) from books where user_id=$1", userID).Scan(&bookCount)
 	require.NoError(t, err)
 
 	require.EqualValues(t, 3, bookCount)

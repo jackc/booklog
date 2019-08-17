@@ -39,6 +39,11 @@ type queryExecer interface {
 	QueryRow(ctx context.Context, sql string, optionsAndArgs ...interface{}) pgx.Row
 }
 
+type beginQueryExecer interface {
+	queryExecer
+	Begin(ctx context.Context, txOptions *pgx.TxOptions) (*pgx.Tx, error)
+}
+
 type Session struct {
 	ID              [16]byte
 	User            data.UserMin
