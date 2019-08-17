@@ -1,6 +1,9 @@
 package validate
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Errors map[string][]error
 
@@ -13,7 +16,20 @@ func (e Errors) Error() string {
 		return "No errors"
 	}
 
-	return fmt.Sprintf("%#v", e)
+	sb := &strings.Builder{}
+
+	join := false
+	for attr, errs := range e {
+		for _, err := range errs {
+			if join {
+				sb.WriteString(" and ")
+			}
+			fmt.Fprintf(sb, "%s %v", attr, err)
+			join = true
+		}
+	}
+
+	return sb.String()
 }
 
 func (e Errors) Get(attr string) []error {

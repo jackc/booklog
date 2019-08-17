@@ -5,7 +5,7 @@ import (
 	"github.com/jackc/booklog/route"
 )
 
-func BookImportCSVForm(w io.Writer, bva *BaseViewArgs) error
+func BookImportCSVForm(w io.Writer, bva *BaseViewArgs, importErr error) error
 ---
 <% LayoutHeader(w, bva) %>
 <div class="card">
@@ -16,6 +16,10 @@ func BookImportCSVForm(w io.Writer, bva *BaseViewArgs) error
 
   <form enctype="multipart/form-data" action="<%= route.ImportBookCSVPath(bva.PathUser.Username) %>" method="post">
     <%=raw bva.CSRFField %>
+
+    <% if importErr != nil { %>
+      <div class="error"><%= importErr.Error() %></div>
+    <% } %>
 
     <div class="field">
       <label for="file">Media</label>

@@ -235,7 +235,7 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func BookImportCSVForm(w http.ResponseWriter, r *http.Request) {
-	err := view.BookImportCSVForm(w, baseViewArgsFromRequest(r))
+	err := view.BookImportCSVForm(w, baseViewArgsFromRequest(r), nil)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
@@ -258,7 +258,11 @@ func BookImportCSV(w http.ResponseWriter, r *http.Request) {
 
 	err = importBooksFromCSV(ctx, db, pathUser.ID, file)
 	if err != nil {
-		InternalServerErrorHandler(w, r, err)
+		err := view.BookImportCSVForm(w, baseViewArgsFromRequest(r), err)
+		if err != nil {
+			InternalServerErrorHandler(w, r, err)
+			return
+		}
 		return
 	}
 

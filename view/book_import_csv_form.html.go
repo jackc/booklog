@@ -7,7 +7,7 @@ import (
 	"github.com/jackc/booklog/route"
 )
 
-func BookImportCSVForm(w io.Writer, bva *BaseViewArgs) error {
+func BookImportCSVForm(w io.Writer, bva *BaseViewArgs, importErr error) error {
 	LayoutHeader(w, bva)
 	io.WriteString(w, `
 <div class="card">
@@ -21,6 +21,16 @@ func BookImportCSVForm(w io.Writer, bva *BaseViewArgs) error {
 	io.WriteString(w, `" method="post">
     `)
 	io.WriteString(w, bva.CSRFField)
+	io.WriteString(w, `
+
+    `)
+	if importErr != nil {
+		io.WriteString(w, `
+      <div class="error">`)
+		io.WriteString(w, html.EscapeString(importErr.Error()))
+		io.WriteString(w, `</div>
+    `)
+	}
 	io.WriteString(w, `
 
     <div class="field">
