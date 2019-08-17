@@ -41,7 +41,7 @@ Create the database for the Go tests
 
 ```
 createdb --locale=en_US -T template0 booklog_test
-PGDATABASE=booklog_test tern migrate -m migration -c migration/development.conf
+PGDATABASE=booklog_test tern migrate -m migration -c migration/test.conf
 ```
 
 The `N` environment variable must be set to determine how many parallel browser tests are run. Set that variable in `.envrc`.
