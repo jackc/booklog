@@ -289,7 +289,7 @@ func importBooksFromCSV(ctx context.Context, db queryExecer, ownerID int64, r io
 			Title:      record[0],
 			Author:     record[1],
 			FinishDate: record[2],
-			Format:      record[3],
+			Format:     record[3],
 		}
 		if form.Format == "" {
 			form.Format = "book"
@@ -297,13 +297,13 @@ func importBooksFromCSV(ctx context.Context, db queryExecer, ownerID int64, r io
 
 		attrs, verr := form.Parse()
 		if verr != nil {
-			return errors.Errorf("row %d: %w", i+1, verr)
+			return errors.Errorf("row %d: %w", i+2, verr)
 		}
 		attrs.UserID = ownerID
 
 		_, err := data.CreateBook(ctx, db, attrs)
 		if err != nil {
-			return errors.Errorf("row %d: %w", i+1, err)
+			return errors.Errorf("row %d: %w", i+2, err)
 		}
 	}
 
