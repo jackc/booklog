@@ -42,8 +42,8 @@ func BookFormFields(w io.Writer, bva *BaseViewArgs, form BookEditForm, verr vali
 <div class="field">
   <label for="format">Format</label>
   <select name="format" id="format">
-    <option <% if form.Format == "text" { %>selected<%} %>>book</option>
-    <option <% if form.Format == "audio" { %>selected<%} %>>audiobook</option>
+    <option <% if form.Format == "text" { %>selected<%} %>>text</option>
+    <option <% if form.Format == "audio" { %>selected<%} %>>audio</option>
     <option <% if form.Format == "video" { %>selected<%} %>>video</option>
   </select>
   <% if errs, ok := verr["format"]; ok { %>

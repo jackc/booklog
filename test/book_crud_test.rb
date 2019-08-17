@@ -14,7 +14,7 @@ class BookCrudTest < IntegrationTest
     browser.text_field(label: "Title").set "Paradise Lost"
     browser.text_field(label: "Author").set "John Milton"
     browser.date_field(label: "Finish Date").set "2019-01-01"
-    browser.select_list(label: "Format").select "audiobook"
+    browser.select_list(label: "Format").select "audio"
     browser.button(text: "Save").click
     assert browser.dd(text: "Paradise Lost").exist?
 

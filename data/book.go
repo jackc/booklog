@@ -32,7 +32,14 @@ func (book *Book) Validate() validate.Errors {
 	v := validate.New()
 	v.Presence("title", book.Title)
 	v.Presence("author", book.Author)
+
+	allowedFormats := map[string]struct{}{"text": struct{}{}, "audio": struct{}{}, "video": struct{}{}}
+
 	v.Presence("format", book.Format)
+	if _, ok := allowedFormats[book.Format]; !ok {
+		v.Add("finishDate", errors.New(`must be "text", "audio", or "video"`))
+	}
+
 	if book.FinishDate.After(time.Now()) {
 		v.Add("finishDate", errors.New("cannot be in future"))
 	}

@@ -84,12 +84,12 @@ func BookFormFields(w io.Writer, bva *BaseViewArgs, form BookEditForm, verr vali
 	if form.Format == "text" {
 		io.WriteString(w, `selected`)
 	}
-	io.WriteString(w, `>book</option>
+	io.WriteString(w, `>text</option>
     <option `)
 	if form.Format == "audio" {
 		io.WriteString(w, `selected`)
 	}
-	io.WriteString(w, `>audiobook</option>
+	io.WriteString(w, `>audio</option>
     <option `)
 	if form.Format == "video" {
 		io.WriteString(w, `selected`)
