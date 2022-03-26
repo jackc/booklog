@@ -114,10 +114,13 @@ func UpdateBook(ctx context.Context, db dbconn, book Book) error {
 // cannot be found.
 func DeleteBook(ctx context.Context, db dbconn, bookID int64) error {
 	commandTag, err := db.Exec(ctx, "delete from books where id=$1", bookID)
+	if err != nil {
+		return err
+	}
 	if string(commandTag) != "DELETE 1" {
 		return &NotFoundError{target: fmt.Sprintf("book id=%d", bookID)}
 	}
-	return err
+	return nil
 }
 
 func GetBook(ctx context.Context, db dbconn, bookID int64) (*Book, error) {

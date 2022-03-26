@@ -44,16 +44,16 @@ createdb --locale=en_US -T template0 booklog_test
 PGDATABASE=booklog_test tern migrate -m migration -c migration/test.conf
 ```
 
-The `N` environment variable must be set to determine how many parallel browser tests are run. Set that variable in `.envrc`.
+The `MT_CPU` environment variable must be set to determine how many parallel browser tests are run. Set that variable in `.envrc`.
 
 Create all browser test databases.
 
 ```
-ruby -e '(1..ENV["N"].to_i).each { |n| `createdb --locale=en_US -T template0 booklog_browser_test_#{n}` }'
+ruby -e '(1..ENV["MT_CPU"].to_i).each { |n| `createdb --locale=en_US -T template0 booklog_browser_test_#{n}` }'
 ```
 
 Migrate all browser test databases.
 
 ```
-ruby -e '(1..ENV["N"].to_i).each { |n| `PGDATABASE=booklog_browser_test_#{n} tern migrate -c migration/test.conf -m migration` }'
+ruby -e '(1..ENV["MT_CPU"].to_i).each { |n| `PGDATABASE=booklog_browser_test_#{n} tern migrate -c migration/test.conf -m migration` }'
 ```

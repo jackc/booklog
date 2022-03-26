@@ -6,5 +6,5 @@ export CSRF_KEY=change-me-to-at-least-64-characters
 export COOKIE_HASH_KEY=change-me-to-at-least-64-characters
 export COOKIE_BLOCK_KEY=change-me-to-at-least-64-characters
 
-# N is used for minitest to determine the number of concurrent workers.
-export N=8
+# MT_CPU is used for minitest to determine the number of concurrent workers.
+export MT_CPU=8
