@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/jackc/booklog/validate"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 	errors "golang.org/x/xerrors"
 )
 
@@ -103,7 +103,7 @@ func UpdateBook(ctx context.Context, db dbconn, book Book) error {
 	if err != nil {
 		return err
 	}
-	if string(commandTag) != "UPDATE 1" {
+	if commandTag.String() != "UPDATE 1" {
 		return &NotFoundError{target: fmt.Sprintf("book id=%d", book.ID)}
 	}
 
@@ -117,7 +117,7 @@ func DeleteBook(ctx context.Context, db dbconn, bookID int64) error {
 	if err != nil {
 		return err
 	}
-	if string(commandTag) != "DELETE 1" {
+	if commandTag.String() != "DELETE 1" {
 		return &NotFoundError{target: fmt.Sprintf("book id=%d", bookID)}
 	}
 	return nil

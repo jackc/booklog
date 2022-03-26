@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/jackc/booklog/data"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
 )
 

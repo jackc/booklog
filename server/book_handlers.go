@@ -13,7 +13,7 @@ import (
 	"github.com/jackc/booklog/route"
 	"github.com/jackc/booklog/validate"
 	"github.com/jackc/booklog/view"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 	errors "golang.org/x/xerrors"
 )
 
