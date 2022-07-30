@@ -77,9 +77,9 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHas
 	CSRF := csrf.Protect(csrfKey, csrf.Secure(!insecureDevMode))
 	r.Use(CSRF)
 
-	dbpool, err := pgxpool.Connect(context.Background(), databaseURL)
+	dbpool, err := pgxpool.New(context.Background(), databaseURL)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to connect to database")
+		log.Fatal().Err(err).Msg("failed to create DB pool")
 	}
 	r.Use(pgxPoolHandler(dbpool))
 
