@@ -59,6 +59,6 @@ func init() {
 	serveCmd.Flags().Bool("insecure-dev-mode", false, "Insecure development mode")
 	viper.BindPFlag("insecure_dev_mode", serveCmd.Flags().Lookup("insecure-dev-mode"))
 
-	serveCmd.Flags().StringP("database-url", "d", "127.0.0.1:3000", "Database URL or DSN")
+	serveCmd.Flags().StringP("database-url", "d", "", "Database URL or DSN")
 	viper.BindPFlag("database_url", serveCmd.Flags().Lookup("database-url"))
 }
