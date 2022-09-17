@@ -2,13 +2,13 @@ package data
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/jackc/booklog/validate"
 	"github.com/jackc/pgx/v5"
-	errors "golang.org/x/xerrors"
 )
 
 type Book struct {

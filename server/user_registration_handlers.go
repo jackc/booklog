@@ -1,13 +1,13 @@
 package server
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/jackc/booklog/data"
 	"github.com/jackc/booklog/route"
 	"github.com/jackc/booklog/validate"
 	"github.com/jackc/booklog/view"
-	errors "golang.org/x/xerrors"
 )
 
 func UserRegistrationNew(w http.ResponseWriter, r *http.Request) {

@@ -2,11 +2,11 @@ package data
 
 import (
 	"context"
+	"errors"
 
 	"github.com/jackc/booklog/validate"
 	"github.com/jackc/pgx/v5"
 	"golang.org/x/crypto/bcrypt"
-	errors "golang.org/x/xerrors"
 )
 
 type UserLoginArgs struct {

@@ -2,10 +2,10 @@ package data
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
-	errors "golang.org/x/xerrors"
 )
 
 type UserMin struct {

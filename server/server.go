@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"os"
 	"strconv"
@@ -20,7 +21,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/hlog"
-	errors "golang.org/x/xerrors"
 )
 
 // Use when setting something though the request context.
@@ -227,8 +227,8 @@ func pathUserHandler() func(http.Handler) http.Handler {
 
 			user, err := data.GetUserMinByUsername(ctx, db, chi.URLParam(r, "username"))
 			if err != nil {
-				var nfErr data.NotFoundError
-				if errors.As(err, nfErr) {
+				var nfErr *data.NotFoundError
+				if errors.As(err, &nfErr) {
 					NotFoundHandler(w, r)
 				} else {
 					InternalServerErrorHandler(w, r, err)

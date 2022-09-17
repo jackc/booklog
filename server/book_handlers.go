@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,7 +15,6 @@ import (
 	"github.com/jackc/booklog/validate"
 	"github.com/jackc/booklog/view"
 	"github.com/jackc/pgx/v5"
-	errors "golang.org/x/xerrors"
 )
 
 func BookIndex(w http.ResponseWriter, r *http.Request) {
@@ -104,8 +104,8 @@ func BookConfirmDelete(w http.ResponseWriter, r *http.Request) {
 
 	book, err := data.GetBook(ctx, db, bookID)
 	if err != nil {
-		var nfErr data.NotFoundError
-		if errors.As(err, nfErr) {
+		var nfErr *data.NotFoundError
+		if errors.As(err, &nfErr) {
 			NotFoundHandler(w, r)
 		} else {
 			InternalServerErrorHandler(w, r, err)
@@ -128,8 +128,8 @@ func BookDelete(w http.ResponseWriter, r *http.Request) {
 
 	err := data.DeleteBook(ctx, db, bookID)
 	if err != nil {
-		var nfErr data.NotFoundError
-		if errors.As(err, nfErr) {
+		var nfErr *data.NotFoundError
+		if errors.As(err, &nfErr) {
 			NotFoundHandler(w, r)
 		} else {
 			InternalServerErrorHandler(w, r, err)
@@ -147,8 +147,8 @@ func BookShow(w http.ResponseWriter, r *http.Request) {
 
 	book, err := data.GetBook(ctx, db, bookID)
 	if err != nil {
-		var nfErr data.NotFoundError
-		if errors.As(err, nfErr) {
+		var nfErr *data.NotFoundError
+		if errors.As(err, &nfErr) {
 			NotFoundHandler(w, r)
 		} else {
 			InternalServerErrorHandler(w, r, err)
@@ -224,8 +224,8 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var nfErr data.NotFoundError
-		if errors.As(err, nfErr) {
+		var nfErr *data.NotFoundError
+		if errors.As(err, &nfErr) {
 			NotFoundHandler(w, r)
 		} else {
 			InternalServerErrorHandler(w, r, err)
@@ -307,13 +307,13 @@ func importBooksFromCSV(ctx context.Context, db dbconn, ownerID int64, r io.Read
 
 		attrs, verr := form.Parse()
 		if verr != nil {
-			return errors.Errorf("row %d: %w", i+2, verr)
+			return fmt.Errorf("row %d: %w", i+2, verr)
 		}
 		attrs.UserID = ownerID
 
 		_, err := data.CreateBook(ctx, tx, attrs)
 		if err != nil {
-			return errors.Errorf("row %d: %w", i+2, err)
+			return fmt.Errorf("row %d: %w", i+2, err)
 		}
 	}
 
