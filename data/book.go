@@ -9,6 +9,7 @@ import (
 
 	"github.com/jackc/booklog/validate"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype/zeronull"
 )
 
 type Book struct {
@@ -124,60 +125,28 @@ func DeleteBook(ctx context.Context, db dbconn, bookID int64) error {
 }
 
 func GetBook(ctx context.Context, db dbconn, bookID int64) (*Book, error) {
-	var book Book
-	err := ScanIntoBook(
-		db.QueryRow(ctx, "select id, user_id, title, author, finish_date, format, location, insert_time, update_time from books where id=$1", bookID),
-		&book,
-	)
+	rows, _ := db.Query(ctx, "select id, user_id, title, author, finish_date, format, location, insert_time, update_time from books where id=$1", bookID)
+	book, err := pgx.CollectOneRow(rows, RowToAddrOfBook)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, &NotFoundError{target: fmt.Sprintf("book id=%d", bookID)}
 		}
 		return nil, err
 	}
-
-	return &book, nil
+	return book, nil
 }
 
-func ScanIntoBook(s scanner, book *Book) error {
-	var location *string
-	err := s.Scan(&book.ID, &book.UserID, &book.Title, &book.Author, &book.FinishDate, &book.Format, &location, &book.InsertTime, &book.UpdateTime)
-	if err != nil {
-		return err
-	}
-
-	if location == nil {
-		book.Location = ""
-	} else {
-		book.Location = *location
-	}
-
-	return nil
-}
-
-func ScanRowsIntoBooks(rows pgx.Rows) ([]*Book, error) {
-	var books []*Book
-	for rows.Next() {
-		var book Book
-		ScanIntoBook(rows, &book)
-		books = append(books, &book)
-	}
-	if rows.Err() != nil {
-		return nil, rows.Err()
-	}
-
-	return books, nil
+func RowToAddrOfBook(row pgx.CollectableRow) (*Book, error) {
+	var book Book
+	err := row.Scan(&book.ID, &book.UserID, &book.Title, &book.Author, &book.FinishDate, &book.Format, (*zeronull.Text)(&book.Location), &book.InsertTime, &book.UpdateTime)
+	return &book, err
 }
 
 func GetAllBooks(ctx context.Context, db dbconn, userID int64) ([]*Book, error) {
-	rows, err := db.Query(ctx, `select id, user_id, title, author, finish_date, format, location, insert_time, update_time
+	rows, _ := db.Query(ctx, `select id, user_id, title, author, finish_date, format, location, insert_time, update_time
 from books
 where user_id=$1
 order by finish_date desc`,
 		userID)
-	if err != nil {
-		return nil, err
-	}
-
-	return ScanRowsIntoBooks(rows)
+	return pgx.CollectRows(rows, RowToAddrOfBook)
 }
