@@ -1,6 +1,0 @@
-[database]
-host = /var/run/postgresql
-# Database name should be set via PGDATABASE environment variable to facilitate multiple test databases
-
-[data]
-app_user = booklog

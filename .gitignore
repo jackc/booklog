@@ -1,8 +1,6 @@
 /build
 /.envrc
-/migration/development.conf
-/migration/production.conf
-/migration/test.conf
+/postgresql/tern.conf
 node_modules
 
 /test/config.yml

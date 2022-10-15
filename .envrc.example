@@ -1,3 +1,4 @@
+PATH_add bin
 PATH_add node_modules/.bin
 
 export PGDATABASE=booklog_dev
@@ -8,3 +9,6 @@ export COOKIE_BLOCK_KEY=change-me-to-at-least-64-characters
 
 # MT_CPU is used for minitest to determine the number of concurrent workers.
 export MT_CPU=8
+
+export TERN_CONFIG=postgresql/tern.conf
+export TERN_MIGRATIONS=postgresql/migrations
