@@ -38,18 +38,10 @@ rake rerun
 
 ## Testing
 
-Create the database for the Go tests
+Create the databases the tests will use:
 
 ```
-createdb --locale=en_US -T template0 booklog_test
-PGDATABASE=booklog_test tern migrate
+psql -f bin/setup_test_databases.sql
 ```
 
 The `MT_CPU` environment variable must be set to determine how many parallel browser tests are run. Set that variable in `.envrc`.
-
-Create all browser test databases.
-
-```
-ruby -e '(1..ENV["MT_CPU"].to_i).each { |n| `dropdb --if-exists booklog_browser_test_#{n}` }'
-ruby -e '(1..ENV["MT_CPU"].to_i).each { |n| `createdb -T booklog_test booklog_browser_test_#{n}` }'
-```

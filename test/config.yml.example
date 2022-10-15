@@ -7,9 +7,9 @@ sessions:
       - serve
       - --insecure-dev-mode
       - --http-service-address=127.0.0.1:<%= port %>
-      - --database-url=postgres:///booklog_browser_test_<%= n %>
+      - --database-url=postgres:///booklog_test_<%= n %>
     stdout: tmp/test/<%= n %>.stdout
     stderr: tmp/test/<%= n %>.stderr
     app_host: http://127.0.0.1:<%= port %>
-    database_url: postgres:///booklog_browser_test_<%= n %>
+    database_url: postgres:///booklog_test_<%= n %>
 <% end %>
