@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -47,7 +48,13 @@ type Session struct {
 	sc              *securecookie.SecureCookie
 }
 
-func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHashKey []byte, cookieBlockKey []byte, databaseURL string) {
+type AppServer struct {
+	handler       http.Handler
+	listenAddress string
+	server        *http.Server
+}
+
+func NewAppServer(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHashKey []byte, cookieBlockKey []byte, dbpool *pgxpool.Pool) (*AppServer, error) {
 	log := zerolog.New(os.Stdout).With().
 		Timestamp().
 		Logger()
@@ -77,10 +84,6 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHas
 	CSRF := csrf.Protect(csrfKey, csrf.Secure(!insecureDevMode))
 	r.Use(CSRF)
 
-	dbpool, err := pgxpool.New(context.Background(), databaseURL)
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to create DB pool")
-	}
 	r.Use(pgxPoolHandler(dbpool))
 
 	r.Use(sessionHandler(securecookie.New(cookieHashKey, cookieBlockKey)))
@@ -113,7 +116,40 @@ func Serve(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHas
 
 	fileServer(r, "/static", http.Dir("build/static"))
 
-	http.ListenAndServe(listenAddress, r)
+	return &AppServer{
+		handler:       r,
+		listenAddress: listenAddress,
+	}, nil
+}
+
+func (s *AppServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.handler.ServeHTTP(w, r)
+}
+
+func (s *AppServer) Serve() error {
+	s.server = &http.Server{
+		Addr:    s.listenAddress,
+		Handler: s.handler,
+	}
+
+	fmt.Printf("Starting to listen on: %s\n", s.listenAddress)
+
+	err := s.server.ListenAndServe()
+	if err != http.ErrServerClosed {
+		return err
+	}
+
+	return nil
+}
+
+func (s *AppServer) Shutdown(ctx context.Context) error {
+	s.server.SetKeepAlivesEnabled(false)
+	err := s.server.Shutdown(ctx)
+	if err != nil {
+		return fmt.Errorf("graceful HTTP server shutdown failed: %w", err)
+	}
+
+	return nil
 }
 
 func fileServer(r chi.Router, path string, root http.FileSystem) {

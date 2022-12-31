@@ -38,10 +38,12 @@ rake rerun
 
 ## Testing
 
-Create the databases the tests will use:
+The following environment variables must be set:
 
-```
-psql -f bin/setup_test_databases.sql
-```
+* `TEST_DATABASE`: the test database name
+* `TEST_DATABASE_COUNT`: the number of test databases to use
+* `MT_CPU`: number of Ruby parallel browser tests to run
 
-The `MT_CPU` environment variable must be set to determine how many parallel browser tests are run. Set that variable in `.envrc`.
+Set these variables in `.envrc`.
+
+Run tests with `rake`.

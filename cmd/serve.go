@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"os"
 
 	"github.com/jackc/booklog/server"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -37,7 +39,23 @@ var serveCmd = &cobra.Command{
 		cookieHashKey := digestKey(32, "cookie_hash_key")
 		cookieBlockKey := digestKey(32, "cookie_block_key")
 
-		server.Serve(viper.GetString("http_service_address"), csrfKey, viper.GetBool("insecure_dev_mode"), cookieHashKey, cookieBlockKey, viper.GetString("database_url"))
+		dbpool, err := pgxpool.New(context.Background(), viper.GetString("database_url"))
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to create DB pool: %v\n", err)
+			os.Exit(1)
+		}
+
+		server, err := server.NewAppServer(viper.GetString("http_service_address"), csrfKey, viper.GetBool("insecure_dev_mode"), cookieHashKey, cookieBlockKey, dbpool)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Could not create web server: %v\n", err)
+			os.Exit(1)
+		}
+
+		err = server.Serve()
+		if err != nil {
+			os.Stderr.WriteString("Could not start web server!\n")
+			os.Exit(1)
+		}
 	},
 }
 

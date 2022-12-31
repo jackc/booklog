@@ -45,8 +45,16 @@ task :rerun do
   exec "react2fs -dir cmd,css,data,server,route,validate,view rake run"
 end
 
+file "tmp/test/.databases-prepared" => FileList["postgresql/**/*.sql", "test/testdata/*.sql"] do
+  sh "psql -f test/setup_test_databases.sql > /dev/null"
+  sh "touch tmp/test/.databases-prepared"
+end
+
+desc "Perform all preparation necessary to run tests"
+task "test:prepare" => [:build, "tmp/test/.databases-prepared"]
+
 desc "Run all tests"
-task test: :build do
+task test: "test:prepare" do
   sh "go test ./..."
 end
 Rake::TestTask.new(:test) do |t|

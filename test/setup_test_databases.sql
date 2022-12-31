@@ -10,6 +10,11 @@ create database :primary_test_database_name;
 \setenv PGDATABASE :primary_test_database_name
 \! tern migrate
 
+\o /dev/null
+\i test/testdata/pgundolog.sql
+select pgundolog.create_trigger_for_all_tables_in_schema('public');
+\o
+
 create schema testdb;
 create table testdb.databases (name text primary key, acquirer_pid int);
 
