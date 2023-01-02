@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/go-rod/rod"
-	"github.com/go-rod/rod/lib/proto"
 	"github.com/jackc/booklog/server"
 	"github.com/jackc/booklog/test/testbrowser"
 	"github.com/jackc/booklog/test/testutil"
@@ -76,18 +75,9 @@ func startServer(t *testing.T) *serverInstanceT {
 func login(t *testing.T, ctx context.Context, page *testbrowser.Page, appHost, username, password string) {
 	page.MustNavigate(fmt.Sprintf("%s/login", appHost))
 
-	page.FillIn("Username", username)
-	page.FillIn("Password", password)
-
-	rodpage := page.Page.Timeout(page.Timeout)
-
-	el, err := rodpage.ElementR(`form button, form input[type="submit"]`, "Login")
-	if err != nil {
-		t.Fatalf("failed to find clickable element: %s", "Login")
-	}
-
-	err = el.Click(proto.InputMouseButtonLeft, 1)
-	if err != nil {
-		t.Fatalf("failed to click element")
-	}
+	page.Within("form", func(scope *testbrowser.Scope) {
+		scope.FillIn("Username", username)
+		scope.FillIn("Password", password)
+		scope.ClickOn("Login")
+	})
 }

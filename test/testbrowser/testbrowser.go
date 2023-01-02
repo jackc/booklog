@@ -99,56 +99,32 @@ type Page struct {
 	Timeout time.Duration
 }
 
+func (p *Page) Scope(selector string) *Scope {
+	p.t.Helper()
+
+	return &Scope{
+		page:     p,
+		selector: selector,
+	}
+}
+
+func (p *Page) Within(selector string, fn func(scope *Scope)) {
+	p.t.Helper()
+
+	s2 := p.Scope(selector)
+	fn(s2)
+}
+
 func (p *Page) ClickOn(jsRegex string) {
 	p.t.Helper()
 
-	page := p.Page.Timeout(p.Timeout)
-
-	el, err := page.ElementR(`a, button, input[type="submit"]`, jsRegex)
-	if err != nil {
-		p.t.Fatalf("failed to find clickable element: %s", jsRegex)
-	}
-
-	err = el.Click(proto.InputMouseButtonLeft, 1)
-	if err != nil {
-		p.t.Fatalf("failed to click element")
-	}
+	p.Scope("").ClickOn(jsRegex)
 }
 
 func (p *Page) FillIn(labelOrSelector string, content string) {
 	p.t.Helper()
 
-	page := p.Page.Timeout(p.Timeout)
-	var inputEl *rod.Element
-	_, err := page.Race().ElementR("label", labelOrSelector).Handle(func(e *rod.Element) error {
-		forAttr, err := e.Attribute("for")
-		if err != nil {
-			return fmt.Errorf("unable to read label's for attribute: %w", err)
-		}
-
-		inputEl, err = page.Element("#" + *forAttr)
-		if err != nil {
-			return fmt.Errorf("unable to find element from label's for attribute: %q %w", *forAttr, err)
-		}
-
-		return nil
-	}).Element(labelOrSelector).Handle(func(e *rod.Element) error {
-		inputEl = e
-		return nil
-	}).Do()
-	if err != nil {
-		p.t.Fatalf("failed to find label or selector for %q: %v", labelOrSelector, err)
-	}
-
-	err = inputEl.SelectAllText()
-	if err != nil {
-		p.t.Fatalf("failed to select all text for %q", labelOrSelector)
-	}
-
-	err = inputEl.Input(content)
-	if err != nil {
-		p.t.Fatalf("failed to input text for %q", labelOrSelector)
-	}
+	p.Scope("").FillIn(labelOrSelector, content)
 }
 
 func (p *Page) AcceptDialog(fn func()) {
@@ -200,5 +176,75 @@ func (p *Page) DoesNotHaveContent(selector, jsRegex string) {
 
 	if found {
 		p.t.Fatalf("found element by selector %q with content matching %q when it should not have been", selector, jsRegex)
+	}
+}
+
+type Scope struct {
+	page     *Page
+	selector string
+}
+
+func (s *Scope) Scope(selector string) *Scope {
+	s2 := *s
+	s2.selector = fmt.Sprintf("%s %s", selector, s.selector)
+	return &s2
+}
+
+func (s *Scope) Within(selector string, fn func(scope *Scope)) {
+	s2 := s.Scope(selector)
+	fn(s2)
+}
+
+func (s *Scope) ClickOn(jsRegex string) {
+	s.page.t.Helper()
+
+	page := s.page.Page.Timeout(s.page.Timeout)
+
+	scopedSelector := fmt.Sprintf(`%[1]s a, %[1]s button, %[1]s input[type="submit"]`, s.selector)
+
+	el, err := page.ElementR(scopedSelector, jsRegex)
+	if err != nil {
+		s.page.t.Fatalf("failed to find clickable element: %s", jsRegex)
+	}
+
+	err = el.Click(proto.InputMouseButtonLeft, 1)
+	if err != nil {
+		s.page.t.Fatalf("failed to click element")
+	}
+}
+
+func (s *Scope) FillIn(labelOrSelector string, content string) {
+	s.page.t.Helper()
+
+	page := s.page.Page.Timeout(s.page.Timeout)
+	var inputEl *rod.Element
+	_, err := page.Race().ElementR(fmt.Sprintf("%s label", s.selector), labelOrSelector).Handle(func(e *rod.Element) error {
+		forAttr, err := e.Attribute("for")
+		if err != nil {
+			return fmt.Errorf("unable to read label's for attribute: %w", err)
+		}
+
+		inputEl, err = page.Element("#" + *forAttr)
+		if err != nil {
+			return fmt.Errorf("unable to find element from label's for attribute: %q %w", *forAttr, err)
+		}
+
+		return nil
+	}).Element(fmt.Sprintf("%s %s", s.selector, labelOrSelector)).Handle(func(e *rod.Element) error {
+		inputEl = e
+		return nil
+	}).Do()
+	if err != nil {
+		s.page.t.Fatalf("failed to find label or selector for %q: %v", labelOrSelector, err)
+	}
+
+	err = inputEl.SelectAllText()
+	if err != nil {
+		s.page.t.Fatalf("failed to select all text for %q", labelOrSelector)
+	}
+
+	err = inputEl.Input(content)
+	if err != nil {
+		s.page.t.Fatalf("failed to input text for %q", labelOrSelector)
 	}
 }
