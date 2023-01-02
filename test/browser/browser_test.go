@@ -80,4 +80,6 @@ func login(t *testing.T, ctx context.Context, page *testbrowser.Page, appHost, u
 		scope.FillIn("Password", password)
 		scope.ClickOn("Login")
 	})
+
+	page.HasContent("body", "New Book")
 }

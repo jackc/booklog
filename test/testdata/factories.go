@@ -7,6 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgxrecord"
 	"github.com/jackc/pgxutil"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
@@ -36,6 +37,13 @@ func CreateUser(t testing.TB, db DB, ctx context.Context, attrs map[string]any) 
 	}
 
 	user, err := pgxutil.Insert(ctx, db, "users", attrs)
+	require.NoError(t, err)
+
+	return user
+}
+
+func CreateBook(t testing.TB, db pgxrecord.DB, ctx context.Context, attrs map[string]any) map[string]any {
+	user, err := pgxrecord.InsertRowReturning(ctx, db, pgx.Identifier{"books"}, attrs, "*", pgx.RowToMap)
 	require.NoError(t, err)
 
 	return user
