@@ -121,6 +121,12 @@ func (p *Page) ClickOn(jsRegex string) {
 	p.Scope("").ClickOn(jsRegex)
 }
 
+func (p *Page) ElementByLabel(labelText string) *rod.Element {
+	p.t.Helper()
+
+	return p.Scope("").ElementByLabel(labelText)
+}
+
 func (p *Page) FillIn(labelOrSelector string, content string) {
 	p.t.Helper()
 
@@ -247,4 +253,26 @@ func (s *Scope) FillIn(labelOrSelector string, content string) {
 	if err != nil {
 		s.page.t.Fatalf("failed to input text for %q", labelOrSelector)
 	}
+}
+
+func (s *Scope) ElementByLabel(labelText string) *rod.Element {
+	s.page.t.Helper()
+
+	page := s.page.Page.Timeout(s.page.Timeout)
+	labelEl, err := page.ElementR(fmt.Sprintf("%s label", s.selector), labelText)
+	if err != nil {
+		s.page.t.Fatalf("failed to find label with text: %q %v", labelText, err)
+	}
+
+	forAttr, err := labelEl.Attribute("for")
+	if err != nil {
+		s.page.t.Fatalf("failed to read label's for attribute: %v", err)
+	}
+
+	inputEl, err := page.Element("#" + *forAttr)
+	if err != nil {
+		s.page.t.Fatalf("failed to find element from label's for attribute: %q %v", *forAttr, err)
+	}
+
+	return inputEl
 }
