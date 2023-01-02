@@ -1,11 +1,3 @@
 source 'https://rubygems.org'
 
-gem 'bcrypt'
-gem 'minitest'
-gem 'minitest-reporters'
-gem 'pg'
-gem 'pry'
 gem 'rake'
-gem 'sequel'
-gem 'watir'
-gem 'webdrivers'

@@ -7,7 +7,6 @@ end
 
 require "rake/clean"
 require "fileutils"
-require "rake/testtask"
 
 CLOBBER.include("build", "view/*.html.go")
 
@@ -56,11 +55,6 @@ task "test:prepare" => [:build, "tmp/test/.databases-prepared"]
 desc "Run all tests"
 task test: "test:prepare" do
   sh "go test ./..."
-end
-Rake::TestTask.new(:test) do |t|
-  t.libs << "test"
-  t.test_files = FileList['test/**/*_test.rb']
-  t.warning = false # Watir generates a lot of warnings.
 end
 
 task default: :test

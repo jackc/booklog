@@ -42,7 +42,6 @@ The following environment variables must be set:
 
 * `TEST_DATABASE`: the test database name
 * `TEST_DATABASE_COUNT`: the number of test databases to use
-* `MT_CPU`: number of Ruby parallel browser tests to run
 
 Set these variables in `.envrc`.
 
