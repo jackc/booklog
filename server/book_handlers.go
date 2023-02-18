@@ -15,6 +15,7 @@ import (
 	"github.com/jackc/booklog/validate"
 	"github.com/jackc/booklog/view"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/structify"
 )
 
 func BookIndex(w http.ResponseWriter, r *http.Request) {
@@ -196,12 +197,12 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 	bookID := int64URLParam(r, "id")
 
-	form := view.BookEditForm{
-		Title:      r.FormValue("title"),
-		Author:     r.FormValue("author"),
-		FinishDate: r.FormValue("finishDate"),
-		Format:     r.FormValue("format"),
-		Location:   r.FormValue("location"),
+	params := ctx.Value(RequestParamsKey).(map[string]any)
+	var form view.BookEditForm
+	err := structify.Parse(params, &form)
+	if err != nil {
+		InternalServerErrorHandler(w, r, err)
+		return
 	}
 	attrs, verr := form.Parse()
 	if verr != nil {
@@ -213,7 +214,7 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	attrs.ID = bookID
 
-	err := data.UpdateBook(ctx, db, attrs)
+	err = data.UpdateBook(ctx, db, attrs)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
