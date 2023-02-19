@@ -24,13 +24,6 @@ file "build/booklog-linux" => [*FileList["**/*.go"]] do |t|
   sh "GOOS=linux GOARCH=amd64 go build -o build/booklog-linux"
 end
 
-html_views = Rake::FileList.new("view/*.html")
-task view: html_views.ext(".html.go")
-
-rule(/view\/.*\.html\.go$/ => [ proc { |f| f.sub(/\.go$/, "") } ]) do |t|
-  sh "gel < #{t.prerequisites.first} | goimports > #{t.name}"
-end
-
 desc "Build"
 task build: [:view, "build/booklog", "build/static/css/main.css"]
 

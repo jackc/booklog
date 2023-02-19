@@ -1,18 +1,9 @@
-package view
-
-import (
-  "github.com/jackc/booklog/data"
-	"github.com/jackc/booklog/route"
-)
-
-func BookNew(w io.Writer, bva *BaseViewArgs, form BookEditForm, verr validate.Errors) error
----
-<% LayoutHeader(w, bva) %>
+{{template "layout_header.html" .}}
 <div class="card">
   <header>New Book</header>
 
-  <form action="<%= route.BooksPath(bva.PathUser.Username) %>" method="post">
-    <% BookFormFields(w, bva, form, verr) %>
+  <form action="{{BooksPath .bva.PathUser.Username}}" method="post">
+    {{template "book_form_fields.html" .}}
   </form>
 </div>
-<% LayoutFooter(w, bva) %>
+{{template "layout_footer.html" .}}

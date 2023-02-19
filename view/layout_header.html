@@ -1,11 +1,3 @@
-package view
-
-import (
-	"github.com/jackc/booklog/route"
-)
-
-func LayoutHeader(w io.Writer, bva *BaseViewArgs) error
----
 <!DOCTYPE html>
 <html>
   <head>
@@ -19,21 +11,21 @@ func LayoutHeader(w io.Writer, bva *BaseViewArgs) error
       <h1><a href="/">Booklog</a></h1>
       <nav>
         <ul>
-          <% if bva.PathUser != nil { %>
-            <li><a href="<%= route.NewBookPath(bva.PathUser.Username) %>">New Book</a></li>
-            <li><a href="<%= route.ImportBookCSVFormPath(bva.PathUser.Username) %>">Import</a></li>
-            <li><a href="<%= route.ExportBookCSVPath(bva.PathUser.Username) %>">Export</a></li>
-          <% } %>
-          <% if bva.CurrentUser != nil { %>
+         {{if .bva.PathUser}}
+            <li><a href="{{NewBookPath .bva.PathUser.Username}}">New Book</a></li>
+            <li><a href="{{ImportBookCSVFormPath .bva.PathUser.Username}}">Import</a></li>
+            <li><a href="{{ExportBookCSVPath .bva.PathUser.Username}}">Export</a></li>
+          {{end}}
+          {{if .bva.CurrentUser}}
             <li>
-              <form action="<%= route.LogoutPath() %>" method="POST" class="link">
-                <%=raw bva.CSRFField %>
+              <form action="{{LogoutPath}}" method="POST" class="link">
+                {{.bva.CSRFField}}
                 <button class="link">Logout</button>
               </form>
             </li>
-          <% } else { %>
-            <li><a href="<%= route.NewLoginPath() %>">Login</a></li>
-          <% } %>
+          {{else}}
+            <li><a href="{{NewLoginPath}}">Login</a></li>
+          {{end}}
         </ul>
       </nav>
     </header>

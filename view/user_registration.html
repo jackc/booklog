@@ -1,39 +1,28 @@
-package view
-
-import (
-	"github.com/jackc/booklog/route"
-)
-
-func UserRegistration(w io.Writer, bva *BaseViewArgs, form data.RegisterUserArgs, verr validate.Errors) error
----
-<% LayoutHeader(w, bva) %>
+{{template "layout_header.html" .}}
 <div class="card">
   <header>Sign Up</header>
 
-  <form action="<%= route.UserRegistrationPath() %>" method="post">
-    <%=raw bva.CSRFField %>
+  <form action="{{UserRegistrationPath}}" method="post">
+    {{.bva.CSRFField}}
 
     <div class="field">
       <label for="username">Username</label>
-      <input type="text" name="username" id="username" value="<%= form.Username %>" autofocus required>
-      <% if errs, ok := verr["username"]; ok { %>
-        <% for _, e := range errs { %>
-          <div class="error"><%= e.Error() %></div>
-        <% } %>
-      <% } %>
+      <input type="text" name="username" id="username" value="{{.form.Username}}" autofocus required>
+      {{range .verr.username}}
+        <div class="error">{{.}}</div>
+      {{end}}
     </div>
 
     <div class="field">
       <label for="password">Password</label>
-      <input type="password" name="password" id="password" value="<%= form.Password %>" required minlength="8">
-      <% if errs, ok := verr["password"]; ok { %>
-        <% for _, e := range errs { %>
-          <div class="error"><%= e.Error() %></div>
-        <% } %>
-      <% } %>
+      <input type="password" name="password" id="password" value="{{.form.Password}}" required minlength="8">
+      {{range .verr.password}}
+        <div class="error">{{.}}</div>
+      {{end}}
     </div>
 
     <button type="submit" class="btn">Sign up</button>
-    <a href="<%= route.NewLoginPath() %>">Login</a>
+    <a href="{{NewLoginPath}}">Login</a>
   </form>
 </div>
+{{template "layout_footer.html" .}}

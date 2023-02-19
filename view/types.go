@@ -2,6 +2,7 @@ package view
 
 import (
 	"errors"
+	"html/template"
 	"time"
 
 	"github.com/jackc/booklog/data"
@@ -9,7 +10,7 @@ import (
 )
 
 type BaseViewArgs struct {
-	CSRFField   string
+	CSRFField   template.HTML
 	CurrentUser *data.UserMin
 	PathUser    *data.UserMin
 }

@@ -1,19 +1,4 @@
-package view
-
-import (
-  "github.com/jackc/booklog/data"
-	"github.com/jackc/booklog/route"
-)
-
-func UserHome(
-  w io.Writer,
-  bva *BaseViewArgs,
-  yearBookLists []*YearBookList,
-  booksPerYear []data.BooksPerTimeItem,
-  booksPerMonthForLastYear []data.BooksPerTimeItem,
-) error
----
-<% LayoutHeader(w, bva) %>
+{{template "layout_header.html" .}}
 <style>
   ol.years {
     list-style: none;
@@ -118,12 +103,12 @@ func UserHome(
     <h2>Per Year</h2>
 
     <table>
-      <% for _, bpt := range booksPerYear { %>
+      {{range .booksPerYear}}
         <tr>
-          <th><%= bpt.Time.Format("2006") %></th>
-          <td><%=i bpt.Count %></td>
+          <th>{{.Time.Format "2006"}}</th>
+          <td>{{.Count}}</td>
         </tr>
-      <% } %>
+      {{end}}
     </table>
   </div>
 
@@ -131,56 +116,52 @@ func UserHome(
     <h2>Last Year Per Month</h2>
 
     <table>
-      <% for _, bpt := range booksPerMonthForLastYear { %>
+      {{range .booksPerMonthForLastYear}}
         <tr>
-          <th><%= bpt.Time.Format("January") %></th>
-          <td><%=i bpt.Count %></td>
+          <th>{{.Time.Format "January"}}</th>
+          <td>{{.Count}}</td>
         </tr>
-      <% } %>
+      {{end}}
     </table>
   </div>
 </div>
 
 <div class="card">
-  <% for _, ybl := range yearBookLists { %>
+  {{range .yearBooksLists}}
     <ol class="years">
       <li>
-        <h2><%=i ybl.Year %></h2>
+        <h2>{{.Year}}</h2>
         <ol class="books">
-          <% for _, book := range ybl.Books { %>
+          {{range .Books}}
             <li>
               <div class="when-and-how">
                 <time class="finished"
-                  datetime="<%= book.FinishDate.Format("2006-01-02") %>"
-                  title="<%= book.FinishDate.Format("January 2, 2006") %>"
+                  datetime="{{.FinishDate.Format "2006-01-02"}}"
+                  title="{{.FinishDate.Format "January 2, 2006"}}"
                 >
-                  <%= book.FinishDate.Format("January 2") %>
+                  {{.FinishDate.Format "January 2"}}
                 </time>
                 <span class="format">
-                  <%
-                  var icon string
-                  switch book.Format {
-                  case "audio":
-                    icon = "🎧"
-                  case "text":
-                    icon = "📖"
-                  case "video":
-                    icon = "📺"
-                  } %>
-                  <%= icon %>
+                  {{if eq .Format "audio"}}
+                    🎧
+                  {{else if eq .Format "text"}}
+                    📖
+                  {{else if eq .Format "video"}}
+                    📺
+                  {{end}}
                 </span>
               </div>
               <div class="what">
-                <a class="title" href="<%=raw route.BookPath(bva.PathUser.Username, book.ID) %>">
-                  <%= book.Title %>
+                <a class="title" href="{{BookPath $.bva.PathUser.Username .ID}}">
+                  {{.Title}}
                 </a>
-                <div class="author"><%= book.Author %></div>
+                <div class="author">{{.Author}}</div>
               </div>
             </li>
-          <% } %>
+          {{end}}
         </ol>
       </li>
     </ol>
-  <% } %>
+  {{end}}
 </div>
-<% LayoutFooter(w, bva) %>
+{{template "layout_footer.html" .}}

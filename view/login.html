@@ -1,46 +1,33 @@
-package view
-
-import (
-	"github.com/jackc/booklog/route"
-)
-
-func Login(w io.Writer, bva *BaseViewArgs, form data.UserLoginArgs, verr validate.Errors) error
----
-<% LayoutHeader(w, bva) %>
+{{template "layout_header.html" .}}
 <div class="card">
   <header>Login</header>
 
-  <form action="<%= route.LoginPath() %>" method="post">
-    <%=raw bva.CSRFField %>
+  <form action="{{LoginPath}}" method="post">
+    {{.bva.CSRFField}}
 
-    <% if errs, ok := verr["base"]; ok { %>
-      <% for _, e := range errs { %>
-        <div class="error"><%= e.Error() %></div>
-      <% } %>
-    <% } %>
+    {{range .verr.base}}
+      <div class="error">{{.}}</div>
+    {{end}}
 
     <div class="field">
       <label for="username">Username</label>
-      <input type="text" name="username" id="username" value="<%= form.Username %>" autofocus required>
-      <% if errs, ok := verr["username"]; ok { %>
-        <% for _, e := range errs { %>
-          <div class="error"><%= e.Error() %></div>
-        <% } %>
-      <% } %>
+      <input type="text" name="username" id="username" value="{{.form.Username}}" autofocus required>
+      {{range .verr.username}}
+        <div class="error">{{.}}</div>
+      {{end}}
     </div>
 
     <div class="field">
       <label for="password">Password</label>
-      <input type="password" name="password" id="password" value="<%= form.Password %>" required minlength="8">
-      <% if errs, ok := verr["password"]; ok { %>
-        <% for _, e := range errs { %>
-          <div class="error"><%= e.Error() %></div>
-        <% } %>
-      <% } %>
+      <input type="password" name="password" id="password" value="{{.form.Password}}" required minlength="8">
+      {{range .verr.password}}
+        <div class="error">{{.}}</div>
+      {{end}}
     </div>
 
+
     <button type="submit" class="btn">Login</button>
-    <a href="<%= route.NewUserRegistrationPath() %>">Sign up</a>
+    <a href="{{NewUserRegistrationPath}}">Sign up</a>
   </form>
 </div>
-<% LayoutFooter(w, bva) %>
+{{template "layout_footer.html" .}}

@@ -1,25 +1,16 @@
-package view
-
-import (
-  "github.com/jackc/booklog/data"
-	"github.com/jackc/booklog/route"
-)
-
-func BookImportCSVForm(w io.Writer, bva *BaseViewArgs, importErr error) error
----
-<% LayoutHeader(w, bva) %>
+{{template "layout_header.html" .}}
 <div class="card">
   <header>Import Book CSV</header>
 
   <p>CSV must include header row.</p>
   <p>CSV must include 5 columns in order: title, author, date finished, format, and location.</p>
 
-  <form enctype="multipart/form-data" action="<%= route.ImportBookCSVPath(bva.PathUser.Username) %>" method="post">
-    <%=raw bva.CSRFField %>
+  <form enctype="multipart/form-data" action="{{ImportBookCSVPath .bva.PathUser.Username}}" method="post">
+    {{.bva.CSRFField}}
 
-    <% if importErr != nil { %>
-      <div class="error"><%= importErr.Error() %></div>
-    <% } %>
+    {{if .importErr}}
+      <div class="error">{{.importErr}}</div>
+    {{end}}
 
     <div class="field">
       <label for="file">Format</label>
@@ -29,4 +20,4 @@ func BookImportCSVForm(w io.Writer, bva *BaseViewArgs, importErr error) error
     <button type="submit">Import</button>
   </form>
 </div>
-<% LayoutFooter(w, bva) %>
+{{template "layout_footer.html" .}}

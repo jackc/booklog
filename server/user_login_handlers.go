@@ -7,17 +7,16 @@ import (
 	"github.com/jackc/booklog/data"
 	"github.com/jackc/booklog/route"
 	"github.com/jackc/booklog/validate"
-	"github.com/jackc/booklog/view"
 )
 
 func UserLoginForm(w http.ResponseWriter, r *http.Request) {
 	var la data.UserLoginArgs
-
-	err := view.Login(w, baseViewArgsFromRequest(r), la, nil)
-	// err := RenderUserLoginForm(w, baseViewDataFromRequest(r), la, nil)
+	err := getRootTmpl().ExecuteTemplate(w, "login.html", map[string]any{
+		"bva":  baseViewArgsFromRequest(r),
+		"form": la,
+	})
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
-		return
 	}
 }
 
@@ -34,7 +33,11 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := view.Login(w, baseViewArgsFromRequest(r), la, verr)
+			err := getRootTmpl().ExecuteTemplate(w, "login.html", map[string]any{
+				"bva":  baseViewArgsFromRequest(r),
+				"form": la,
+				"verr": verr,
+			})
 			if err != nil {
 				InternalServerErrorHandler(w, r, err)
 			}

@@ -42,7 +42,10 @@ func BookIndex(w http.ResponseWriter, r *http.Request) {
 		ybl.Books = append(ybl.Books, book)
 	}
 
-	err = view.BookIndex(w, baseViewArgsFromRequest(r), yearBooksLists)
+	err = getRootTmpl().ExecuteTemplate(w, "book_index.html", map[string]any{
+		"bva":            baseViewArgsFromRequest(r),
+		"yearBooksLists": yearBooksLists,
+	})
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
@@ -51,7 +54,10 @@ func BookIndex(w http.ResponseWriter, r *http.Request) {
 
 func BookNew(w http.ResponseWriter, r *http.Request) {
 	var form view.BookEditForm
-	err := view.BookNew(w, baseViewArgsFromRequest(r), form, nil)
+	err := getRootTmpl().ExecuteTemplate(w, "book_new.html", map[string]any{
+		"bva":  baseViewArgsFromRequest(r),
+		"form": form,
+	})
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
@@ -72,7 +78,11 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	attrs, verr := form.Parse()
 	if verr != nil {
-		err := view.BookNew(w, baseViewArgsFromRequest(r), form, verr)
+		err := getRootTmpl().ExecuteTemplate(w, "book_new.html", map[string]any{
+			"bva":  baseViewArgsFromRequest(r),
+			"form": form,
+			"verr": verr,
+		})
 		if err != nil {
 			InternalServerErrorHandler(w, r, err)
 		}
@@ -84,7 +94,11 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := view.BookNew(w, baseViewArgsFromRequest(r), form, verr)
+			err := getRootTmpl().ExecuteTemplate(w, "book_new.html", map[string]any{
+				"bva":  baseViewArgsFromRequest(r),
+				"form": form,
+				"verr": verr,
+			})
 			if err != nil {
 				InternalServerErrorHandler(w, r, err)
 			}
@@ -114,7 +128,10 @@ func BookConfirmDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = view.BookConfirmDelete(w, baseViewArgsFromRequest(r), book)
+	err = getRootTmpl().ExecuteTemplate(w, "book_confirm_delete.html", map[string]any{
+		"bva":  baseViewArgsFromRequest(r),
+		"book": book,
+	})
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
@@ -157,7 +174,10 @@ func BookShow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = view.BookShow(w, baseViewArgsFromRequest(r), book)
+	err = getRootTmpl().ExecuteTemplate(w, "book_show.html", map[string]any{
+		"bva":  baseViewArgsFromRequest(r),
+		"book": book,
+	})
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
@@ -184,7 +204,11 @@ func BookEdit(w http.ResponseWriter, r *http.Request) {
 	}
 	form.FinishDate = FinishDate.Format("2006-01-02")
 
-	err = view.BookEdit(w, baseViewArgsFromRequest(r), bookID, form, nil)
+	err = getRootTmpl().ExecuteTemplate(w, "book_edit.html", map[string]any{
+		"bva":    baseViewArgsFromRequest(r),
+		"bookID": bookID,
+		"form":   form,
+	})
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
@@ -206,7 +230,12 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	attrs, verr := form.Parse()
 	if verr != nil {
-		err := view.BookEdit(w, baseViewArgsFromRequest(r), bookID, form, verr)
+		err := getRootTmpl().ExecuteTemplate(w, "book_edit.html", map[string]any{
+			"bva":    baseViewArgsFromRequest(r),
+			"bookID": bookID,
+			"form":   form,
+			"verr":   verr,
+		})
 		if err != nil {
 			InternalServerErrorHandler(w, r, err)
 		}
@@ -218,7 +247,12 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := view.BookEdit(w, baseViewArgsFromRequest(r), bookID, form, verr)
+			err := getRootTmpl().ExecuteTemplate(w, "book_new.html", map[string]any{
+				"bva":    baseViewArgsFromRequest(r),
+				"bookID": bookID,
+				"form":   form,
+				"verr":   verr,
+			})
 			if err != nil {
 				InternalServerErrorHandler(w, r, err)
 			}
@@ -238,7 +272,9 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func BookImportCSVForm(w http.ResponseWriter, r *http.Request) {
-	err := view.BookImportCSVForm(w, baseViewArgsFromRequest(r), nil)
+	err := getRootTmpl().ExecuteTemplate(w, "book_import_csv_form.html", map[string]any{
+		"bva": baseViewArgsFromRequest(r),
+	})
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
@@ -263,7 +299,10 @@ func BookImportCSV(w http.ResponseWriter, r *http.Request) {
 
 	err = importBooksFromCSV(ctx, conn, pathUser.ID, file)
 	if err != nil {
-		err := view.BookImportCSVForm(w, baseViewArgsFromRequest(r), err)
+		err := getRootTmpl().ExecuteTemplate(w, "book_import_csv_form.html", map[string]any{
+			"bva":       baseViewArgsFromRequest(r),
+			"importErr": err,
+		})
 		if err != nil {
 			InternalServerErrorHandler(w, r, err)
 			return

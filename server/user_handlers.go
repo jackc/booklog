@@ -43,7 +43,12 @@ func UserHome(w http.ResponseWriter, r *http.Request) {
 		ybl.Books = append(ybl.Books, book)
 	}
 
-	err = view.UserHome(w, baseViewArgsFromRequest(r), yearBooksLists, booksPerYear, booksPerMonthForLastYear)
+	err = getRootTmpl().ExecuteTemplate(w, "user_home.html", map[string]any{
+		"bva":                      baseViewArgsFromRequest(r),
+		"yearBooksLists":           yearBooksLists,
+		"booksPerYear":             booksPerYear,
+		"booksPerMonthForLastYear": booksPerMonthForLastYear,
+	})
 	if err != nil {
 		InternalServerErrorHandler(w, r, err)
 		return
