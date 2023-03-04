@@ -34,7 +34,7 @@ end
 
 desc "Watch for source changes and rebuild and rerun"
 task :rerun do
-  exec "react2fs -dir cmd,css,data,server,route,validate,view rake run"
+  exec "react2fs -dir cmd,css,data,server,route,validate,view -exclude '\.html$' rake run"
 end
 
 file "tmp/test/.databases-prepared" => FileList["postgresql/**/*.sql", "test/testdata/*.sql"] do
