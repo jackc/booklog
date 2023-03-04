@@ -10,10 +10,8 @@ require "fileutils"
 
 CLOBBER.include("build", "view/*.html.go")
 
-directory "build/static/css"
-
-file "build/static/css/main.css" => ["build/static/css", *FileList["css/*.scss"]] do
-  sh "node-sass --output-style compresses css/main.scss > build/static/css/main.css"
+file "build/frontend/manifest.json" => [*FileList["css/*.css"]] do
+  sh "vite build"
 end
 
 file "build/booklog" => [*FileList["**/*.go"]] do |t|
@@ -25,7 +23,7 @@ file "build/booklog-linux" => [*FileList["**/*.go"]] do |t|
 end
 
 desc "Build"
-task build: [:view, "build/booklog", "build/static/css/main.css"]
+task build: [:view, "build/booklog", "build/frontend/manifest.json"]
 
 desc "Run booklog"
 task run: :build do
@@ -34,7 +32,7 @@ end
 
 desc "Watch for source changes and rebuild and rerun"
 task :rerun do
-  exec "react2fs -dir cmd,css,data,server,route,validate,view -exclude '\.html$' rake run"
+  exec "react2fs -dir cmd,data,server,route,validate,view -exclude '\.html$' rake run"
 end
 
 file "tmp/test/.databases-prepared" => FileList["postgresql/**/*.sql", "test/testdata/*.sql"] do
