@@ -43,7 +43,7 @@ func UserHome(w http.ResponseWriter, r *http.Request) {
 		ybl.Books = append(ybl.Books, book)
 	}
 
-	err = getRootTmpl().ExecuteTemplate(w, "user_home.html", map[string]any{
+	err = view.RootTemplate().ExecuteTemplate(w, "user_home.html", map[string]any{
 		"bva":                      baseViewArgsFromRequest(r),
 		"yearBooksLists":           yearBooksLists,
 		"booksPerYear":             booksPerYear,

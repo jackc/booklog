@@ -42,7 +42,7 @@ func BookIndex(w http.ResponseWriter, r *http.Request) {
 		ybl.Books = append(ybl.Books, book)
 	}
 
-	err = getRootTmpl().ExecuteTemplate(w, "book_index.html", map[string]any{
+	err = view.RootTemplate().ExecuteTemplate(w, "book_index.html", map[string]any{
 		"bva":            baseViewArgsFromRequest(r),
 		"yearBooksLists": yearBooksLists,
 	})
@@ -54,7 +54,7 @@ func BookIndex(w http.ResponseWriter, r *http.Request) {
 
 func BookNew(w http.ResponseWriter, r *http.Request) {
 	var form view.BookEditForm
-	err := getRootTmpl().ExecuteTemplate(w, "book_new.html", map[string]any{
+	err := view.RootTemplate().ExecuteTemplate(w, "book_new.html", map[string]any{
 		"bva":  baseViewArgsFromRequest(r),
 		"form": form,
 	})
@@ -78,7 +78,7 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	attrs, verr := form.Parse()
 	if verr != nil {
-		err := getRootTmpl().ExecuteTemplate(w, "book_new.html", map[string]any{
+		err := view.RootTemplate().ExecuteTemplate(w, "book_new.html", map[string]any{
 			"bva":  baseViewArgsFromRequest(r),
 			"form": form,
 			"verr": verr,
@@ -94,7 +94,7 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := getRootTmpl().ExecuteTemplate(w, "book_new.html", map[string]any{
+			err := view.RootTemplate().ExecuteTemplate(w, "book_new.html", map[string]any{
 				"bva":  baseViewArgsFromRequest(r),
 				"form": form,
 				"verr": verr,
@@ -128,7 +128,7 @@ func BookConfirmDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = getRootTmpl().ExecuteTemplate(w, "book_confirm_delete.html", map[string]any{
+	err = view.RootTemplate().ExecuteTemplate(w, "book_confirm_delete.html", map[string]any{
 		"bva":  baseViewArgsFromRequest(r),
 		"book": book,
 	})
@@ -174,7 +174,7 @@ func BookShow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = getRootTmpl().ExecuteTemplate(w, "book_show.html", map[string]any{
+	err = view.RootTemplate().ExecuteTemplate(w, "book_show.html", map[string]any{
 		"bva":  baseViewArgsFromRequest(r),
 		"book": book,
 	})
@@ -204,7 +204,7 @@ func BookEdit(w http.ResponseWriter, r *http.Request) {
 	}
 	form.FinishDate = FinishDate.Format("2006-01-02")
 
-	err = getRootTmpl().ExecuteTemplate(w, "book_edit.html", map[string]any{
+	err = view.RootTemplate().ExecuteTemplate(w, "book_edit.html", map[string]any{
 		"bva":    baseViewArgsFromRequest(r),
 		"bookID": bookID,
 		"form":   form,
@@ -230,7 +230,7 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	attrs, verr := form.Parse()
 	if verr != nil {
-		err := getRootTmpl().ExecuteTemplate(w, "book_edit.html", map[string]any{
+		err := view.RootTemplate().ExecuteTemplate(w, "book_edit.html", map[string]any{
 			"bva":    baseViewArgsFromRequest(r),
 			"bookID": bookID,
 			"form":   form,
@@ -247,7 +247,7 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := getRootTmpl().ExecuteTemplate(w, "book_new.html", map[string]any{
+			err := view.RootTemplate().ExecuteTemplate(w, "book_new.html", map[string]any{
 				"bva":    baseViewArgsFromRequest(r),
 				"bookID": bookID,
 				"form":   form,
@@ -272,7 +272,7 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func BookImportCSVForm(w http.ResponseWriter, r *http.Request) {
-	err := getRootTmpl().ExecuteTemplate(w, "book_import_csv_form.html", map[string]any{
+	err := view.RootTemplate().ExecuteTemplate(w, "book_import_csv_form.html", map[string]any{
 		"bva": baseViewArgsFromRequest(r),
 	})
 	if err != nil {
@@ -299,7 +299,7 @@ func BookImportCSV(w http.ResponseWriter, r *http.Request) {
 
 	err = importBooksFromCSV(ctx, conn, pathUser.ID, file)
 	if err != nil {
-		err := getRootTmpl().ExecuteTemplate(w, "book_import_csv_form.html", map[string]any{
+		err := view.RootTemplate().ExecuteTemplate(w, "book_import_csv_form.html", map[string]any{
 			"bva":       baseViewArgsFromRequest(r),
 			"importErr": err,
 		})

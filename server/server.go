@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"html/template"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -400,61 +398,4 @@ func parseParams(r *http.Request) (map[string]any, error) {
 	}
 
 	return params, nil
-}
-
-func LoadTemplates(rootPath string) (*template.Template, error) {
-	rootTmpl := template.New("root").Funcs(template.FuncMap{
-		"UserHomePath":            route.UserHomePath,
-		"BooksPath":               route.BooksPath,
-		"BookPath":                route.BookPath,
-		"BookConfirmDeletePath":   route.BookConfirmDeletePath,
-		"EditBookPath":            route.EditBookPath,
-		"NewBookPath":             route.NewBookPath,
-		"ImportBookCSVFormPath":   route.ImportBookCSVFormPath,
-		"ImportBookCSVPath":       route.ImportBookCSVPath,
-		"ExportBookCSVPath":       route.ExportBookCSVPath,
-		"NewUserRegistrationPath": route.NewUserRegistrationPath,
-		"UserRegistrationPath":    route.UserRegistrationPath,
-		"NewLoginPath":            route.NewLoginPath,
-		"LoginPath":               route.LoginPath,
-		"LogoutPath":              route.LogoutPath,
-	})
-
-	walkFunc := func(path string, info os.FileInfo, walkErr error) error {
-		if walkErr != nil {
-			return fmt.Errorf("failed to walk for %s: %v", path, walkErr)
-		}
-
-		if info.Mode().IsRegular() {
-			tmplSrc, err := os.ReadFile(path)
-			if err != nil {
-				return err
-			}
-
-			tmplName := path[len(rootPath)+1:]
-			_, err = rootTmpl.New(tmplName).Parse(string(tmplSrc))
-			if err != nil {
-				return fmt.Errorf("failed to parse for %s: %v", path, err)
-			}
-		}
-
-		return nil
-	}
-
-	err := filepath.Walk(rootPath, walkFunc)
-	if err != nil {
-		return nil, err
-	}
-
-	return rootTmpl, nil
-}
-
-func getRootTmpl() *template.Template {
-	var err error
-	rootTmpl, err := LoadTemplates(os.Getenv("TEMP_TEMPLATE_DIR"))
-	if err != nil {
-		fmt.Println(err)
-		panic(err)
-	}
-	return rootTmpl
 }
