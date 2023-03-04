@@ -13,6 +13,7 @@ type BaseViewArgs struct {
 	CSRFField   template.HTML
 	CurrentUser *data.UserMin
 	PathUser    *data.UserMin
+	DevMode     bool
 }
 
 type YearBookList struct {

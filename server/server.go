@@ -35,6 +35,7 @@ const (
 	RequestSessionKey
 	RequestPathUserKey
 	RequestParamsKey
+	RequestDevModeKey
 )
 
 type dbconn interface {
@@ -87,6 +88,7 @@ func NewAppServer(listenAddress string, csrfKey []byte, insecureDevMode bool, co
 	CSRF := csrf.Protect(csrfKey, csrf.Secure(!insecureDevMode))
 	r.Use(CSRF)
 
+	r.Use(devModeHandler(insecureDevMode))
 	r.Use(pgxPoolHandler(dbpool))
 	r.Use(parseParamsHandler())
 
@@ -168,6 +170,18 @@ func fileServer(r chi.Router, path string, root http.FileSystem) {
 	r.Get(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fs.ServeHTTP(w, r)
 	}))
+}
+
+func devModeHandler(devMode bool) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, RequestDevModeKey, devMode)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
+
+		return http.HandlerFunc(fn)
+	}
 }
 
 func pgxPoolHandler(dbpool *pgxpool.Pool) func(http.Handler) http.Handler {
@@ -343,10 +357,16 @@ func baseViewArgsFromRequest(r *http.Request) *view.BaseViewArgs {
 		currentUser = &session.User
 	}
 
+	var devMode bool
+	if dm, ok := r.Context().Value(RequestDevModeKey).(bool); ok {
+		devMode = dm
+	}
+
 	return &view.BaseViewArgs{
 		CSRFField:   csrf.TemplateField(r),
 		CurrentUser: currentUser,
 		PathUser:    pathUser,
+		DevMode:     devMode,
 	}
 }
 
