@@ -46,9 +46,21 @@ var serveCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		htr := view.NewHTMLTemplateRenderer(viper.GetString("html_template_path"), viper.GetBool("reload_html_templates"))
+		var devMode = viper.GetBool("dev")
+		var reloadHTMLTemplates = viper.GetBool("reload_html_templates")
+		var secureCookies = viper.GetBool("secure_cookies")
+		if devMode {
+			if !viper.IsSet("reload_html_templates") {
+				reloadHTMLTemplates = true
+			}
+			if !viper.IsSet("secure_cookies") {
+				secureCookies = false
+			}
+		}
 
-		server, err := server.NewAppServer(viper.GetString("http_service_address"), csrfKey, viper.GetBool("secure_cookies"), cookieHashKey, cookieBlockKey, dbpool, htr)
+		htr := view.NewHTMLTemplateRenderer(viper.GetString("html_template_path"), reloadHTMLTemplates)
+
+		server, err := server.NewAppServer(viper.GetString("http_service_address"), csrfKey, secureCookies, cookieHashKey, cookieBlockKey, dbpool, htr, devMode)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Could not create web server: %v\n", err)
 			os.Exit(1)
@@ -88,4 +100,7 @@ func init() {
 
 	serveCmd.Flags().Bool("reload-html-templates", false, "Reload HTML templates")
 	viper.BindPFlag("reload_html_templates", serveCmd.Flags().Lookup("reload-html-templates"))
+
+	serveCmd.Flags().Bool("dev", false, "Development mode")
+	viper.BindPFlag("dev", serveCmd.Flags().Lookup("dev"))
 }
