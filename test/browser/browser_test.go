@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/booklog/server"
 	"github.com/jackc/booklog/test/testbrowser"
 	"github.com/jackc/booklog/test/testutil"
+	"github.com/jackc/booklog/view"
 	"github.com/jackc/testdb"
 	"github.com/stretchr/testify/require"
 )
@@ -59,7 +60,7 @@ func startServer(t *testing.T) *serverInstanceT {
 	cookieHashKey := make([]byte, 32)
 	cookieBlockKey := make([]byte, 32)
 
-	handler, err := server.NewAppServer("127.0.0.1:0", csrfKey, true, cookieHashKey, cookieBlockKey, db.PoolConnect(t, ctx))
+	handler, err := server.NewAppServer("127.0.0.1:0", csrfKey, false, cookieHashKey, cookieBlockKey, db.PoolConnect(t, ctx), view.NewHTMLTemplateRenderer("../../html", false), false)
 	require.NoError(t, err)
 
 	server := httptest.NewServer(handler)
