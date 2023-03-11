@@ -36,6 +36,14 @@ Run server with rake:
 rake rerun
 ```
 
+Run asset server:
+
+```
+npx vite
+```
+
+Site will be available at: http://localhost:5173/
+
 ## Testing
 
 The following environment variables must be set:
