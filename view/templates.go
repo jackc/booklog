@@ -11,20 +11,6 @@ import (
 	"github.com/jackc/cachet"
 )
 
-var cache *cachet.Cache[*template.Template]
-
-func init() {
-	cache = &cachet.Cache[*template.Template]{
-		Load: func() (*template.Template, error) {
-			fsys := os.DirFS(os.Getenv("TEMP_TEMPLATE_DIR"))
-			return loadTemplates(fsys)
-		},
-		IsStale: func() (bool, error) {
-			return false, nil
-		},
-	}
-}
-
 func loadTemplates(fsys fs.FS) (*template.Template, error) {
 	rootTmpl := template.New("root").Funcs(template.FuncMap{
 		"UserHomePath":            route.UserHomePath,
@@ -73,10 +59,27 @@ func loadTemplates(fsys fs.FS) (*template.Template, error) {
 }
 
 type HTMLTemplateRenderer struct {
+	cache *cachet.Cache[*template.Template]
+}
+
+func NewHTMLTemplateRenderer(templatePath string) *HTMLTemplateRenderer {
+	cache := &cachet.Cache[*template.Template]{
+		Load: func() (*template.Template, error) {
+			fsys := os.DirFS(templatePath)
+			return loadTemplates(fsys)
+		},
+		IsStale: func() (bool, error) {
+			return false, nil
+		},
+	}
+
+	return &HTMLTemplateRenderer{
+		cache: cache,
+	}
 }
 
 func (htr *HTMLTemplateRenderer) ExecuteTemplate(wr io.Writer, name string, data any) error {
-	rootTemplate, err := cache.Get()
+	rootTemplate, err := htr.cache.Get()
 	if err != nil {
 		return fmt.Errorf("failed to get root template from cache: %w", err)
 	}

@@ -46,7 +46,7 @@ var serveCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		htr := &view.HTMLTemplateRenderer{}
+		htr := view.NewHTMLTemplateRenderer(viper.GetString("html_path"))
 
 		server, err := server.NewAppServer(viper.GetString("http_service_address"), csrfKey, viper.GetBool("insecure_dev_mode"), cookieHashKey, cookieBlockKey, dbpool, htr)
 		if err != nil {
