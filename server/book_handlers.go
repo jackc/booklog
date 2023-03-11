@@ -21,6 +21,7 @@ import (
 func BookIndex(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(dbconn)
+	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	books, err := data.GetAllBooks(ctx, db, pathUser.ID)
@@ -42,7 +43,7 @@ func BookIndex(w http.ResponseWriter, r *http.Request) {
 		ybl.Books = append(ybl.Books, book)
 	}
 
-	err = view.RootTemplate().ExecuteTemplate(w, "book_index.html", map[string]any{
+	err = htr.ExecuteTemplate(w, "book_index.html", map[string]any{
 		"bva":            baseViewArgsFromRequest(r),
 		"yearBooksLists": yearBooksLists,
 	})
@@ -53,8 +54,10 @@ func BookIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func BookNew(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
 	var form view.BookEditForm
-	err := view.RootTemplate().ExecuteTemplate(w, "book_new.html", map[string]any{
+	err := htr.ExecuteTemplate(w, "book_new.html", map[string]any{
 		"bva":  baseViewArgsFromRequest(r),
 		"form": form,
 	})
@@ -67,6 +70,7 @@ func BookNew(w http.ResponseWriter, r *http.Request) {
 func BookCreate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(dbconn)
+	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	form := view.BookEditForm{
@@ -78,7 +82,7 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	attrs, verr := form.Parse()
 	if verr != nil {
-		err := view.RootTemplate().ExecuteTemplate(w, "book_new.html", map[string]any{
+		err := htr.ExecuteTemplate(w, "book_new.html", map[string]any{
 			"bva":  baseViewArgsFromRequest(r),
 			"form": form,
 			"verr": verr,
@@ -94,7 +98,7 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := view.RootTemplate().ExecuteTemplate(w, "book_new.html", map[string]any{
+			err := htr.ExecuteTemplate(w, "book_new.html", map[string]any{
 				"bva":  baseViewArgsFromRequest(r),
 				"form": form,
 				"verr": verr,
@@ -115,6 +119,7 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 func BookConfirmDelete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(dbconn)
+	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
 	bookID := int64URLParam(r, "id")
 
 	book, err := data.GetBook(ctx, db, bookID)
@@ -128,7 +133,7 @@ func BookConfirmDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = view.RootTemplate().ExecuteTemplate(w, "book_confirm_delete.html", map[string]any{
+	err = htr.ExecuteTemplate(w, "book_confirm_delete.html", map[string]any{
 		"bva":  baseViewArgsFromRequest(r),
 		"book": book,
 	})
@@ -161,6 +166,7 @@ func BookDelete(w http.ResponseWriter, r *http.Request) {
 func BookShow(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(dbconn)
+	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
 	bookID := int64URLParam(r, "id")
 
 	book, err := data.GetBook(ctx, db, bookID)
@@ -174,7 +180,7 @@ func BookShow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = view.RootTemplate().ExecuteTemplate(w, "book_show.html", map[string]any{
+	err = htr.ExecuteTemplate(w, "book_show.html", map[string]any{
 		"bva":  baseViewArgsFromRequest(r),
 		"book": book,
 	})
@@ -187,6 +193,7 @@ func BookShow(w http.ResponseWriter, r *http.Request) {
 func BookEdit(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(dbconn)
+	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 	bookID := int64URLParam(r, "id")
 
@@ -204,7 +211,7 @@ func BookEdit(w http.ResponseWriter, r *http.Request) {
 	}
 	form.FinishDate = FinishDate.Format("2006-01-02")
 
-	err = view.RootTemplate().ExecuteTemplate(w, "book_edit.html", map[string]any{
+	err = htr.ExecuteTemplate(w, "book_edit.html", map[string]any{
 		"bva":    baseViewArgsFromRequest(r),
 		"bookID": bookID,
 		"form":   form,
@@ -218,6 +225,7 @@ func BookEdit(w http.ResponseWriter, r *http.Request) {
 func BookUpdate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(dbconn)
+	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 	bookID := int64URLParam(r, "id")
 
@@ -230,7 +238,7 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	attrs, verr := form.Parse()
 	if verr != nil {
-		err := view.RootTemplate().ExecuteTemplate(w, "book_edit.html", map[string]any{
+		err := htr.ExecuteTemplate(w, "book_edit.html", map[string]any{
 			"bva":    baseViewArgsFromRequest(r),
 			"bookID": bookID,
 			"form":   form,
@@ -247,7 +255,7 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := view.RootTemplate().ExecuteTemplate(w, "book_new.html", map[string]any{
+			err := htr.ExecuteTemplate(w, "book_new.html", map[string]any{
 				"bva":    baseViewArgsFromRequest(r),
 				"bookID": bookID,
 				"form":   form,
@@ -272,7 +280,9 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func BookImportCSVForm(w http.ResponseWriter, r *http.Request) {
-	err := view.RootTemplate().ExecuteTemplate(w, "book_import_csv_form.html", map[string]any{
+	ctx := r.Context()
+	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
+	err := htr.ExecuteTemplate(w, "book_import_csv_form.html", map[string]any{
 		"bva": baseViewArgsFromRequest(r),
 	})
 	if err != nil {
@@ -286,6 +296,7 @@ func BookImportCSVForm(w http.ResponseWriter, r *http.Request) {
 func BookImportCSV(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	conn := ctx.Value(RequestDBKey).(dbconn)
+	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	r.ParseMultipartForm(10 << 20)
@@ -299,7 +310,7 @@ func BookImportCSV(w http.ResponseWriter, r *http.Request) {
 
 	err = importBooksFromCSV(ctx, conn, pathUser.ID, file)
 	if err != nil {
-		err := view.RootTemplate().ExecuteTemplate(w, "book_import_csv_form.html", map[string]any{
+		err := htr.ExecuteTemplate(w, "book_import_csv_form.html", map[string]any{
 			"bva":       baseViewArgsFromRequest(r),
 			"importErr": err,
 		})

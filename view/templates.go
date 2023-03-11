@@ -3,6 +3,7 @@ package view
 import (
 	"fmt"
 	"html/template"
+	"io"
 	"io/fs"
 	"os"
 
@@ -71,6 +72,14 @@ func loadTemplates(fsys fs.FS) (*template.Template, error) {
 	return rootTmpl, nil
 }
 
-func RootTemplate() *template.Template {
-	return cache.MustGet()
+type HTMLTemplateRenderer struct {
+}
+
+func (htr *HTMLTemplateRenderer) ExecuteTemplate(wr io.Writer, name string, data any) error {
+	rootTemplate, err := cache.Get()
+	if err != nil {
+		return fmt.Errorf("failed to get root template from cache: %w", err)
+	}
+
+	return rootTemplate.ExecuteTemplate(wr, name, data)
 }

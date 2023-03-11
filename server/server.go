@@ -36,6 +36,7 @@ const (
 	RequestPathUserKey
 	RequestParamsKey
 	RequestDevModeKey
+	RequestHTMLTemplateRendererKey
 )
 
 type dbconn interface {
@@ -58,7 +59,7 @@ type AppServer struct {
 	server        *http.Server
 }
 
-func NewAppServer(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHashKey []byte, cookieBlockKey []byte, dbpool *pgxpool.Pool) (*AppServer, error) {
+func NewAppServer(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHashKey []byte, cookieBlockKey []byte, dbpool *pgxpool.Pool, htr *view.HTMLTemplateRenderer) (*AppServer, error) {
 	log := zerolog.New(os.Stdout).With().
 		Timestamp().
 		Logger()
@@ -90,6 +91,7 @@ func NewAppServer(listenAddress string, csrfKey []byte, insecureDevMode bool, co
 
 	r.Use(devModeHandler(insecureDevMode))
 	r.Use(pgxPoolHandler(dbpool))
+	r.Use(htmlTemplateRendererHandler(htr))
 	r.Use(parseParamsHandler())
 
 	r.Use(sessionHandler(securecookie.New(cookieHashKey, cookieBlockKey)))
@@ -189,6 +191,18 @@ func pgxPoolHandler(dbpool *pgxpool.Pool) func(http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 			ctx = context.WithValue(ctx, RequestDBKey, dbpool)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
+
+		return http.HandlerFunc(fn)
+	}
+}
+
+func htmlTemplateRendererHandler(htr *view.HTMLTemplateRenderer) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, RequestHTMLTemplateRendererKey, htr)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		}
 

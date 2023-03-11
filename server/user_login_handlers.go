@@ -11,8 +11,10 @@ import (
 )
 
 func UserLoginForm(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
 	var la data.UserLoginArgs
-	err := view.RootTemplate().ExecuteTemplate(w, "login.html", map[string]any{
+	err := htr.ExecuteTemplate(w, "login.html", map[string]any{
 		"bva":  baseViewArgsFromRequest(r),
 		"form": la,
 	})
@@ -24,6 +26,7 @@ func UserLoginForm(w http.ResponseWriter, r *http.Request) {
 func UserLogin(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(dbconn)
+	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
 
 	la := data.UserLoginArgs{
 		Username: r.FormValue("username"),
@@ -34,7 +37,7 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := view.RootTemplate().ExecuteTemplate(w, "login.html", map[string]any{
+			err := htr.ExecuteTemplate(w, "login.html", map[string]any{
 				"bva":  baseViewArgsFromRequest(r),
 				"form": la,
 				"verr": verr,

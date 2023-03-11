@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/jackc/booklog/server"
+	"github.com/jackc/booklog/view"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -45,7 +46,9 @@ var serveCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		server, err := server.NewAppServer(viper.GetString("http_service_address"), csrfKey, viper.GetBool("insecure_dev_mode"), cookieHashKey, cookieBlockKey, dbpool)
+		htr := &view.HTMLTemplateRenderer{}
+
+		server, err := server.NewAppServer(viper.GetString("http_service_address"), csrfKey, viper.GetBool("insecure_dev_mode"), cookieHashKey, cookieBlockKey, dbpool, htr)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Could not create web server: %v\n", err)
 			os.Exit(1)
@@ -79,4 +82,7 @@ func init() {
 
 	serveCmd.Flags().StringP("database-url", "d", "", "Database URL or DSN")
 	viper.BindPFlag("database_url", serveCmd.Flags().Lookup("database-url"))
+
+	serveCmd.Flags().String("html-path", "html", "HTML template path")
+	viper.BindPFlag("html_path", serveCmd.Flags().Lookup("html-path"))
 }

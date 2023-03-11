@@ -10,6 +10,7 @@ import (
 func UserHome(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(dbconn)
+	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	booksPerYear, err := data.BooksPerYear(ctx, db, pathUser.ID)
@@ -43,7 +44,7 @@ func UserHome(w http.ResponseWriter, r *http.Request) {
 		ybl.Books = append(ybl.Books, book)
 	}
 
-	err = view.RootTemplate().ExecuteTemplate(w, "user_home.html", map[string]any{
+	err = htr.ExecuteTemplate(w, "user_home.html", map[string]any{
 		"bva":                      baseViewArgsFromRequest(r),
 		"yearBooksLists":           yearBooksLists,
 		"booksPerYear":             booksPerYear,

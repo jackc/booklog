@@ -11,9 +11,11 @@ import (
 )
 
 func UserRegistrationNew(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
 	var rua data.RegisterUserArgs
 
-	err := view.RootTemplate().ExecuteTemplate(w, "user_registration.html", map[string]any{
+	err := htr.ExecuteTemplate(w, "user_registration.html", map[string]any{
 		"bva":  baseViewArgsFromRequest(r),
 		"form": rua,
 	})
@@ -26,6 +28,7 @@ func UserRegistrationNew(w http.ResponseWriter, r *http.Request) {
 func UserRegistrationCreate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	db := ctx.Value(RequestDBKey).(dbconn)
+	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
 
 	rua := data.RegisterUserArgs{
 		Username: r.FormValue("username"),
@@ -36,7 +39,7 @@ func UserRegistrationCreate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := view.RootTemplate().ExecuteTemplate(w, "user_registration.html", map[string]any{
+			err := htr.ExecuteTemplate(w, "user_registration.html", map[string]any{
 				"bva":  baseViewArgsFromRequest(r),
 				"form": rua,
 				"verr": verr,
