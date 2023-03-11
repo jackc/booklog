@@ -1,6 +1,7 @@
 package view
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -11,24 +12,27 @@ import (
 	"github.com/jackc/cachet"
 )
 
-func loadTemplates(fsys fs.FS) (*template.Template, error) {
-	rootTmpl := template.New("root").Funcs(template.FuncMap{
-		"UserHomePath":            route.UserHomePath,
-		"BooksPath":               route.BooksPath,
-		"BookPath":                route.BookPath,
-		"BookConfirmDeletePath":   route.BookConfirmDeletePath,
-		"EditBookPath":            route.EditBookPath,
-		"NewBookPath":             route.NewBookPath,
-		"ImportBookCSVFormPath":   route.ImportBookCSVFormPath,
-		"ImportBookCSVPath":       route.ImportBookCSVPath,
-		"ExportBookCSVPath":       route.ExportBookCSVPath,
-		"NewUserRegistrationPath": route.NewUserRegistrationPath,
-		"UserRegistrationPath":    route.UserRegistrationPath,
-		"NewLoginPath":            route.NewLoginPath,
-		"LoginPath":               route.LoginPath,
-		"LogoutPath":              route.LogoutPath,
-	})
+func LoadManifest(path string) (map[string]string, error) {
+	manifestBytes, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("LoadManifest: %w", err)
+	}
 
+	var manifest map[string]any
+	err = json.Unmarshal(manifestBytes, &manifest)
+	if err != nil {
+		return nil, fmt.Errorf("LoadManifest %s: %w", path, err)
+	}
+
+	assetMap := make(map[string]string, len(manifest))
+	for k, v := range manifest {
+		assetMap["/"+k] = "/" + v.(map[string]any)["file"].(string)
+	}
+
+	return assetMap, nil
+}
+
+func loadTemplates(fsys fs.FS, rootTmpl *template.Template) error {
 	walkFunc := func(path string, d fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return fmt.Errorf("failed to walk for %s: %v", path, walkErr)
@@ -52,21 +56,58 @@ func loadTemplates(fsys fs.FS) (*template.Template, error) {
 
 	err := fs.WalkDir(fsys, ".", walkFunc)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return rootTmpl, nil
+	return nil
 }
 
 type HTMLTemplateRenderer struct {
 	cache *cachet.Cache[*template.Template]
 }
 
-func NewHTMLTemplateRenderer(templatePath string, liveReload bool) *HTMLTemplateRenderer {
+func NewHTMLTemplateRenderer(templatePath string, assetMap map[string]string, liveReload bool) *HTMLTemplateRenderer {
+	funcMap := template.FuncMap{
+		"UserHomePath":            route.UserHomePath,
+		"BooksPath":               route.BooksPath,
+		"BookPath":                route.BookPath,
+		"BookConfirmDeletePath":   route.BookConfirmDeletePath,
+		"EditBookPath":            route.EditBookPath,
+		"NewBookPath":             route.NewBookPath,
+		"ImportBookCSVFormPath":   route.ImportBookCSVFormPath,
+		"ImportBookCSVPath":       route.ImportBookCSVPath,
+		"ExportBookCSVPath":       route.ExportBookCSVPath,
+		"NewUserRegistrationPath": route.NewUserRegistrationPath,
+		"UserRegistrationPath":    route.UserRegistrationPath,
+		"NewLoginPath":            route.NewLoginPath,
+		"LoginPath":               route.LoginPath,
+		"LogoutPath":              route.LogoutPath,
+	}
+
+	if assetMap == nil {
+		funcMap["assetPath"] = func(name string) (string, error) {
+			return name, nil
+		}
+	} else {
+		funcMap["assetPath"] = func(name string) (string, error) {
+			path, ok := assetMap[name]
+			if !ok {
+				return "", fmt.Errorf("unknown asset: %v", name)
+			}
+
+			return path, nil
+		}
+	}
 	cache := &cachet.Cache[*template.Template]{
 		Load: func() (*template.Template, error) {
 			fsys := os.DirFS(templatePath)
-			return loadTemplates(fsys)
+			tmpl := template.New("root").Funcs(funcMap)
+			err := loadTemplates(fsys, tmpl)
+			if err != nil {
+				return nil, err
+			}
+
+			return tmpl, nil
 		},
 	}
 

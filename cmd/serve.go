@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/jackc/booklog/server"
 	"github.com/jackc/booklog/view"
@@ -58,9 +59,20 @@ var serveCmd = &cobra.Command{
 			}
 		}
 
-		htr := view.NewHTMLTemplateRenderer(viper.GetString("html_template_path"), reloadHTMLTemplates)
+		frontendPath := viper.GetString("frontend_path")
+		var assetMap map[string]string
+		if frontendPath != "" {
+			var err error
+			assetMap, err = view.LoadManifest(filepath.Join(frontendPath, "manifest.json"))
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to load manifest.json: %v\n", err)
+				os.Exit(1)
+			}
+		}
 
-		server, err := server.NewAppServer(viper.GetString("http_service_address"), csrfKey, secureCookies, cookieHashKey, cookieBlockKey, dbpool, htr, devMode)
+		htr := view.NewHTMLTemplateRenderer(viper.GetString("html_template_path"), assetMap, reloadHTMLTemplates)
+
+		server, err := server.NewAppServer(viper.GetString("http_service_address"), csrfKey, secureCookies, cookieHashKey, cookieBlockKey, dbpool, htr, devMode, frontendPath)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Could not create web server: %v\n", err)
 			os.Exit(1)
@@ -103,4 +115,7 @@ func init() {
 
 	serveCmd.Flags().Bool("dev", false, "Development mode")
 	viper.BindPFlag("dev", serveCmd.Flags().Lookup("dev"))
+
+	serveCmd.Flags().String("frontend-path", "", "Read manifest.json from here and serve ./assets (empty means disable)")
+	viper.BindPFlag("frontend_path", serveCmd.Flags().Lookup("frontend-path"))
 }

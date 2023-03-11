@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"strconv"
 	"testing"
 
@@ -60,7 +61,10 @@ func startServer(t *testing.T) *serverInstanceT {
 	cookieHashKey := make([]byte, 32)
 	cookieBlockKey := make([]byte, 32)
 
-	handler, err := server.NewAppServer("127.0.0.1:0", csrfKey, false, cookieHashKey, cookieBlockKey, db.PoolConnect(t, ctx), view.NewHTMLTemplateRenderer("../../html", false), false)
+	assetMap, err := view.LoadManifest(filepath.Join("..", "..", "build", "frontend", "manifest.json"))
+	require.NoError(t, err)
+
+	handler, err := server.NewAppServer("127.0.0.1:0", csrfKey, false, cookieHashKey, cookieBlockKey, db.PoolConnect(t, ctx), view.NewHTMLTemplateRenderer("../../html", assetMap, false), false, "../../build/frontend/assets")
 	require.NoError(t, err)
 
 	server := httptest.NewServer(handler)

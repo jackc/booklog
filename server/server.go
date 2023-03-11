@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -59,7 +60,7 @@ type AppServer struct {
 	server        *http.Server
 }
 
-func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cookieHashKey []byte, cookieBlockKey []byte, dbpool *pgxpool.Pool, htr *view.HTMLTemplateRenderer, devMode bool) (*AppServer, error) {
+func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cookieHashKey []byte, cookieBlockKey []byte, dbpool *pgxpool.Pool, htr *view.HTMLTemplateRenderer, devMode bool, frontendPath string) (*AppServer, error) {
 	log := zerolog.New(os.Stdout).With().
 		Timestamp().
 		Logger()
@@ -122,7 +123,9 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 		r.Method("GET", "/books.csv", http.HandlerFunc(BookExportCSV))
 	})
 
-	fileServer(r, "/static", http.Dir("build/static"))
+	if frontendPath != "" {
+		fileServer(r, "/assets", http.Dir(filepath.Join(frontendPath, "assets")))
+	}
 
 	return &AppServer{
 		handler:       r,
