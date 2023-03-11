@@ -46,7 +46,7 @@ var serveCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		htr := view.NewHTMLTemplateRenderer(viper.GetString("html_path"))
+		htr := view.NewHTMLTemplateRenderer(viper.GetString("html_template_path"), viper.GetBool("reload_html_templates"))
 
 		server, err := server.NewAppServer(viper.GetString("http_service_address"), csrfKey, viper.GetBool("secure_cookies"), cookieHashKey, cookieBlockKey, dbpool, htr)
 		if err != nil {
@@ -83,6 +83,9 @@ func init() {
 	serveCmd.Flags().StringP("database-url", "d", "", "Database URL or DSN")
 	viper.BindPFlag("database_url", serveCmd.Flags().Lookup("database-url"))
 
-	serveCmd.Flags().String("html-path", "html", "HTML template path")
-	viper.BindPFlag("html_path", serveCmd.Flags().Lookup("html-path"))
+	serveCmd.Flags().String("html-template-path", "html", "HTML template path")
+	viper.BindPFlag("html_template_path", serveCmd.Flags().Lookup("html-template-path"))
+
+	serveCmd.Flags().Bool("reload-html-templates", false, "Reload HTML templates")
+	viper.BindPFlag("reload_html_templates", serveCmd.Flags().Lookup("reload-html-templates"))
 }

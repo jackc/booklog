@@ -62,15 +62,24 @@ type HTMLTemplateRenderer struct {
 	cache *cachet.Cache[*template.Template]
 }
 
-func NewHTMLTemplateRenderer(templatePath string) *HTMLTemplateRenderer {
+func NewHTMLTemplateRenderer(templatePath string, liveReload bool) *HTMLTemplateRenderer {
 	cache := &cachet.Cache[*template.Template]{
 		Load: func() (*template.Template, error) {
 			fsys := os.DirFS(templatePath)
 			return loadTemplates(fsys)
 		},
-		IsStale: func() (bool, error) {
-			return false, nil
-		},
+	}
+
+	if liveReload {
+		// Reload every time. We could track the modified timestamp of all files and only reload when needed but that would
+		// still require walking templatePath for each request. It would be faster than reloading all templates every time
+		// but it has not been an issue at this point. Beyond that, fsnotify could be used, but that would bring in an
+		// external dependency and can require changing the max open files.
+		//
+		// Until performance becomes an issue do the simplest thing that can possibly work.
+		cache.IsStale = func() (bool, error) {
+			return true, nil
+		}
 	}
 
 	return &HTMLTemplateRenderer{

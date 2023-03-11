@@ -27,7 +27,7 @@ task build: [:view, "build/booklog", "build/frontend/manifest.json"]
 
 desc "Run booklog"
 task run: :build do
-  exec "build/booklog serve --secure-cookies=false"
+  exec "build/booklog serve --secure-cookies=false --reload-html-templates=true"
 end
 
 desc "Watch for source changes and rebuild and rerun"
