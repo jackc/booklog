@@ -48,7 +48,7 @@ var serveCmd = &cobra.Command{
 
 		htr := view.NewHTMLTemplateRenderer(viper.GetString("html_path"))
 
-		server, err := server.NewAppServer(viper.GetString("http_service_address"), csrfKey, viper.GetBool("insecure_dev_mode"), cookieHashKey, cookieBlockKey, dbpool, htr)
+		server, err := server.NewAppServer(viper.GetString("http_service_address"), csrfKey, viper.GetBool("secure_cookies"), cookieHashKey, cookieBlockKey, dbpool, htr)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Could not create web server: %v\n", err)
 			os.Exit(1)
@@ -77,8 +77,8 @@ func init() {
 	serveCmd.Flags().String("cookie-block-key", "", "Cookie block key")
 	viper.BindPFlag("cookie_block_key", serveCmd.Flags().Lookup("cookie-block-key"))
 
-	serveCmd.Flags().Bool("insecure-dev-mode", false, "Insecure development mode")
-	viper.BindPFlag("insecure_dev_mode", serveCmd.Flags().Lookup("insecure-dev-mode"))
+	serveCmd.Flags().Bool("secure-cookies", true, "Set Secure flag on cookies")
+	viper.BindPFlag("secure_cookies", serveCmd.Flags().Lookup("secure-cookies"))
 
 	serveCmd.Flags().StringP("database-url", "d", "", "Database URL or DSN")
 	viper.BindPFlag("database_url", serveCmd.Flags().Lookup("database-url"))

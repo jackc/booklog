@@ -59,7 +59,7 @@ type AppServer struct {
 	server        *http.Server
 }
 
-func NewAppServer(listenAddress string, csrfKey []byte, insecureDevMode bool, cookieHashKey []byte, cookieBlockKey []byte, dbpool *pgxpool.Pool, htr *view.HTMLTemplateRenderer) (*AppServer, error) {
+func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cookieHashKey []byte, cookieBlockKey []byte, dbpool *pgxpool.Pool, htr *view.HTMLTemplateRenderer) (*AppServer, error) {
 	log := zerolog.New(os.Stdout).With().
 		Timestamp().
 		Logger()
@@ -86,10 +86,10 @@ func NewAppServer(listenAddress string, csrfKey []byte, insecureDevMode bool, co
 
 	r.Use(middleware.Recoverer)
 
-	CSRF := csrf.Protect(csrfKey, csrf.Secure(!insecureDevMode))
+	CSRF := csrf.Protect(csrfKey, csrf.Secure(secureCookies))
 	r.Use(CSRF)
 
-	r.Use(devModeHandler(insecureDevMode))
+	r.Use(devModeHandler(secureCookies))
 	r.Use(pgxPoolHandler(dbpool))
 	r.Use(htmlTemplateRendererHandler(htr))
 	r.Use(parseParamsHandler())
