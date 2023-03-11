@@ -1,5 +1,6 @@
 import { defineConfig } from "vite"
 import FullReload from "vite-plugin-full-reload"
+import viteCompression from 'vite-plugin-compression'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -12,6 +13,7 @@ export default defineConfig({
   },
   plugins: [
     FullReload(["html/*.html"]),
+    viteCompression(),
   ],
   build: {
     outDir: "build/frontend",
