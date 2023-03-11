@@ -7,7 +7,22 @@ import (
 	"os"
 
 	"github.com/jackc/booklog/route"
+	"github.com/jackc/cachet"
 )
+
+var cache *cachet.Cache[*template.Template]
+
+func init() {
+	cache = &cachet.Cache[*template.Template]{
+		Load: func() (*template.Template, error) {
+			fsys := os.DirFS(os.Getenv("TEMP_TEMPLATE_DIR"))
+			return loadTemplates(fsys)
+		},
+		IsStale: func() (bool, error) {
+			return false, nil
+		},
+	}
+}
 
 func loadTemplates(fsys fs.FS) (*template.Template, error) {
 	rootTmpl := template.New("root").Funcs(template.FuncMap{
@@ -57,13 +72,5 @@ func loadTemplates(fsys fs.FS) (*template.Template, error) {
 }
 
 func RootTemplate() *template.Template {
-	fsys := os.DirFS(os.Getenv("TEMP_TEMPLATE_DIR"))
-
-	var err error
-	rootTmpl, err := loadTemplates(fsys)
-	if err != nil {
-		fmt.Println(err)
-		panic(err)
-	}
-	return rootTmpl
+	return cache.MustGet()
 }

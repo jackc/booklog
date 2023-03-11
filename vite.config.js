@@ -11,7 +11,7 @@ export default defineConfig({
     }
   },
   plugins: [
-    FullReload(["view/*.html"]),
+    FullReload(["html/*.html"]),
   ],
   build: {
     outDir: "build/frontend",
