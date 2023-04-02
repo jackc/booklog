@@ -58,6 +58,8 @@ type AppServer struct {
 	handler       http.Handler
 	listenAddress string
 	server        *http.Server
+
+	htr *view.HTMLTemplateRenderer
 }
 
 func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cookieHashKey []byte, cookieBlockKey []byte, dbpool *pgxpool.Pool, htr *view.HTMLTemplateRenderer, devMode bool, frontendPath string) (*AppServer, error) {
@@ -66,6 +68,13 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 		Logger()
 
 	r := chi.NewRouter()
+
+	appServer := &AppServer{
+		handler:       r,
+		listenAddress: listenAddress,
+
+		htr: htr,
+	}
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -110,27 +119,14 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 		r.Use(pathUserHandler())
 		r.Use(requireSameSessionUserAndPathUserHandler())
 		r.Method("GET", "/", http.HandlerFunc(UserHome))
-		r.Method("GET", "/books", http.HandlerFunc(BookIndex))
-		r.Method("GET", "/books/new", http.HandlerFunc(BookNew))
-		r.Method("POST", "/books", http.HandlerFunc(BookCreate))
-		r.Method("GET", "/books/{id}/edit", parseInt64URLParam("id")(http.HandlerFunc(BookEdit)))
-		r.Method("GET", "/books/{id}", parseInt64URLParam("id")(http.HandlerFunc(BookShow)))
-		r.Method("GET", "/books/{id}/confirm_delete", parseInt64URLParam("id")(http.HandlerFunc(BookConfirmDelete)))
-		r.Method("PATCH", "/books/{id}", parseInt64URLParam("id")(http.HandlerFunc(BookUpdate)))
-		r.Method("DELETE", "/books/{id}", parseInt64URLParam("id")(http.HandlerFunc(BookDelete)))
-		r.Method("GET", "/books/import_csv/form", http.HandlerFunc(BookImportCSVForm))
-		r.Method("POST", "/books/import_csv", http.HandlerFunc(BookImportCSV))
-		r.Method("GET", "/books.csv", http.HandlerFunc(BookExportCSV))
+		mountBookHandlers(r, appServer)
 	})
 
 	if frontendPath != "" {
 		fileServer(r, "/assets", http.Dir(filepath.Join(frontendPath, "assets")))
 	}
 
-	return &AppServer{
-		handler:       r,
-		listenAddress: listenAddress,
-	}, nil
+	return appServer, nil
 }
 
 func (s *AppServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {

@@ -10,7 +10,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/booklog/data"
+	"github.com/jackc/booklog/myhandler"
 	"github.com/jackc/booklog/route"
 	"github.com/jackc/booklog/validate"
 	"github.com/jackc/booklog/view"
@@ -18,16 +20,59 @@ import (
 	"github.com/jackc/structify"
 )
 
-func BookIndex(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+type HandlerEnv struct {
+	request *myhandler.Request[HandlerEnv]
+
+	dbconn *pgx.Conn
+}
+
+// TODO -- LazyConn? A wrapper around *pgxpool.Pool that only acquires a *pgx.Conn on demand, but then uses the same one
+// for all subsequent calls. Maybe it should not have a direct dependency on *pgxpool.Pool, but instead have functions to acquire and release.
+
+func (env *HandlerEnv) DBConn() *pgx.Conn {
+	if env.dbconn == nil {
+		// TODO
+	}
+	return env.dbconn
+}
+
+func mountBookHandlers(r chi.Router, appServer *AppServer) http.Handler {
+	config := &myhandler.Config[HandlerEnv]{
+		HTMLTemplateRenderer: appServer.htr,
+
+		BuildEnv: func(ctx context.Context, request *myhandler.Request[HandlerEnv]) (*HandlerEnv, error) {
+			return &HandlerEnv{
+				request: request,
+			}, nil
+		},
+		CleanupEnv: func(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
+			return nil
+		},
+	}
+
+	r.Method("GET", "/books", myhandler.NewHandler(config, BookIndex))
+	r.Method("GET", "/books/new", http.HandlerFunc(BookNew))
+	r.Method("POST", "/books", http.HandlerFunc(BookCreate))
+	r.Method("GET", "/books/{id}/edit", parseInt64URLParam("id")(http.HandlerFunc(BookEdit)))
+	r.Method("GET", "/books/{id}", parseInt64URLParam("id")(http.HandlerFunc(BookShow)))
+	r.Method("GET", "/books/{id}/confirm_delete", parseInt64URLParam("id")(http.HandlerFunc(BookConfirmDelete)))
+	r.Method("PATCH", "/books/{id}", parseInt64URLParam("id")(http.HandlerFunc(BookUpdate)))
+	r.Method("DELETE", "/books/{id}", parseInt64URLParam("id")(http.HandlerFunc(BookDelete)))
+	r.Method("GET", "/books/import_csv/form", http.HandlerFunc(BookImportCSVForm))
+	r.Method("POST", "/books/import_csv", http.HandlerFunc(BookImportCSV))
+	r.Method("GET", "/books.csv", http.HandlerFunc(BookExportCSV))
+
+	return r
+}
+
+func BookIndex(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
+	// db := request.Env().DB()
 	db := ctx.Value(RequestDBKey).(dbconn)
-	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	books, err := data.GetAllBooks(ctx, db, pathUser.ID)
 	if err != nil {
-		InternalServerErrorHandler(w, r, err)
-		return
+		return err
 	}
 
 	yearBooksLists := make([]*view.YearBookList, 0)
@@ -43,14 +88,10 @@ func BookIndex(w http.ResponseWriter, r *http.Request) {
 		ybl.Books = append(ybl.Books, book)
 	}
 
-	err = htr.ExecuteTemplate(w, "book_index.html", map[string]any{
-		"bva":            baseViewArgsFromRequest(r),
+	return request.RenderHTMLTemplate("book_index.html", map[string]any{
+		"bva":            baseViewArgsFromRequest(request.Request()),
 		"yearBooksLists": yearBooksLists,
 	})
-	if err != nil {
-		InternalServerErrorHandler(w, r, err)
-		return
-	}
 }
 
 func BookNew(w http.ResponseWriter, r *http.Request) {
