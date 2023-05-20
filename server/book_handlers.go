@@ -12,27 +12,34 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/booklog/data"
+	"github.com/jackc/booklog/lazypgxconn"
 	"github.com/jackc/booklog/myhandler"
 	"github.com/jackc/booklog/route"
 	"github.com/jackc/booklog/validate"
 	"github.com/jackc/booklog/view"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/structify"
 )
 
 type HandlerEnv struct {
 	request *myhandler.Request[HandlerEnv]
 
-	dbconn *pgx.Conn
+	dbconn *lazypgxconn.Conn
 }
 
 // TODO -- LazyConn? A wrapper around *pgxpool.Pool that only acquires a *pgx.Conn on demand, but then uses the same one
 // for all subsequent calls. Maybe it should not have a direct dependency on *pgxpool.Pool, but instead have functions to acquire and release.
 
-func (env *HandlerEnv) DBConn() *pgx.Conn {
-	if env.dbconn == nil {
-		// TODO
-	}
+// On second thought, maybe using a database connection is so common that a lazy system isn't the right approach. Maybe
+// HandlerEnv should directly acquire and release the conn. If an endpoint doesn't need it a different handler type
+// could be used of this type could be configurable.
+
+// But then on third thought, maybe it is better to have a lazy system. Or at least the wrapper concept. The win with
+// the wrapper is customizable acquire and release logic such as setting the user for RLS and unsetting it before
+// returning it to the pool.
+
+func (env *HandlerEnv) DBConn() *lazypgxconn.Conn {
 	return env.dbconn
 }
 
@@ -41,33 +48,44 @@ func mountBookHandlers(r chi.Router, appServer *AppServer) http.Handler {
 		HTMLTemplateRenderer: appServer.htr,
 
 		BuildEnv: func(ctx context.Context, request *myhandler.Request[HandlerEnv]) (*HandlerEnv, error) {
+			dbpool := ctx.Value(RequestDBKey).(*pgxpool.Pool)
 			return &HandlerEnv{
 				request: request,
+				dbconn: lazypgxconn.New(func() (*pgx.Conn, any, error) {
+					poolConn, err := dbpool.Acquire(ctx)
+					if err != nil {
+						return nil, nil, err
+					}
+					return poolConn.Conn(), poolConn, nil
+				}, func(conn *pgx.Conn, memo any) error {
+					memo.(*pgxpool.Conn).Release()
+					return nil
+				}),
 			}, nil
 		},
 		CleanupEnv: func(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
-			return nil
+			err := request.Env.dbconn.Release()
+			return err
 		},
 	}
 
 	r.Method("GET", "/books", myhandler.NewHandler(config, BookIndex))
-	r.Method("GET", "/books/new", http.HandlerFunc(BookNew))
-	r.Method("POST", "/books", http.HandlerFunc(BookCreate))
-	r.Method("GET", "/books/{id}/edit", parseInt64URLParam("id")(http.HandlerFunc(BookEdit)))
-	r.Method("GET", "/books/{id}", parseInt64URLParam("id")(http.HandlerFunc(BookShow)))
-	r.Method("GET", "/books/{id}/confirm_delete", parseInt64URLParam("id")(http.HandlerFunc(BookConfirmDelete)))
-	r.Method("PATCH", "/books/{id}", parseInt64URLParam("id")(http.HandlerFunc(BookUpdate)))
-	r.Method("DELETE", "/books/{id}", parseInt64URLParam("id")(http.HandlerFunc(BookDelete)))
-	r.Method("GET", "/books/import_csv/form", http.HandlerFunc(BookImportCSVForm))
-	r.Method("POST", "/books/import_csv", http.HandlerFunc(BookImportCSV))
-	r.Method("GET", "/books.csv", http.HandlerFunc(BookExportCSV))
+	r.Method("GET", "/books/new", myhandler.NewHandler(config, BookNew))
+	r.Method("POST", "/books", myhandler.NewHandler(config, BookCreate))
+	r.Method("GET", "/books/{id}/edit", parseInt64URLParam("id")(myhandler.NewHandler(config, BookEdit)))
+	r.Method("GET", "/books/{id}", parseInt64URLParam("id")(myhandler.NewHandler(config, BookShow)))
+	r.Method("GET", "/books/{id}/confirm_delete", parseInt64URLParam("id")(myhandler.NewHandler(config, BookConfirmDelete)))
+	r.Method("PATCH", "/books/{id}", parseInt64URLParam("id")(myhandler.NewHandler(config, BookUpdate)))
+	r.Method("DELETE", "/books/{id}", parseInt64URLParam("id")(myhandler.NewHandler(config, BookDelete)))
+	r.Method("GET", "/books/import_csv/form", myhandler.NewHandler(config, BookImportCSVForm))
+	r.Method("POST", "/books/import_csv", myhandler.NewHandler(config, BookImportCSV))
+	r.Method("GET", "/books.csv", myhandler.NewHandler(config, BookExportCSV))
 
 	return r
 }
 
 func BookIndex(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
-	// db := request.Env().DB()
-	db := ctx.Value(RequestDBKey).(dbconn)
+	db := request.Env.dbconn
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	books, err := data.GetAllBooks(ctx, db, pathUser.ID)
@@ -94,44 +112,32 @@ func BookIndex(ctx context.Context, request *myhandler.Request[HandlerEnv]) erro
 	})
 }
 
-func BookNew(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
+func BookNew(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
 	var form view.BookEditForm
-	err := htr.ExecuteTemplate(w, "book_new.html", map[string]any{
-		"bva":  baseViewArgsFromRequest(r),
+	return request.RenderHTMLTemplate("book_new.html", map[string]any{
+		"bva":  baseViewArgsFromRequest(request.Request()),
 		"form": form,
 	})
-	if err != nil {
-		InternalServerErrorHandler(w, r, err)
-		return
-	}
 }
 
-func BookCreate(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(dbconn)
-	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
+func BookCreate(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
+	db := request.Env.dbconn
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	form := view.BookEditForm{
-		Title:      r.FormValue("title"),
-		Author:     r.FormValue("author"),
-		FinishDate: r.FormValue("finishDate"),
-		Format:     r.FormValue("format"),
-		Location:   r.FormValue("location"),
+		Title:      request.Request().FormValue("title"),
+		Author:     request.Request().FormValue("author"),
+		FinishDate: request.Request().FormValue("finishDate"),
+		Format:     request.Request().FormValue("format"),
+		Location:   request.Request().FormValue("location"),
 	}
 	attrs, verr := form.Parse()
 	if verr != nil {
-		err := htr.ExecuteTemplate(w, "book_new.html", map[string]any{
-			"bva":  baseViewArgsFromRequest(r),
+		return request.RenderHTMLTemplate("book_new.html", map[string]any{
+			"bva":  baseViewArgsFromRequest(request.Request()),
 			"form": form,
 			"verr": verr,
 		})
-		if err != nil {
-			InternalServerErrorHandler(w, r, err)
-		}
-		return
 	}
 	attrs.UserID = pathUser.ID
 
@@ -139,104 +145,85 @@ func BookCreate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := htr.ExecuteTemplate(w, "book_new.html", map[string]any{
-				"bva":  baseViewArgsFromRequest(r),
+			return request.RenderHTMLTemplate("book_new.html", map[string]any{
+				"bva":  baseViewArgsFromRequest(request.Request()),
 				"form": form,
 				"verr": verr,
 			})
-			if err != nil {
-				InternalServerErrorHandler(w, r, err)
-			}
-			return
 		}
-
-		InternalServerErrorHandler(w, r, err)
-		return
+		return err
 	}
 
-	http.Redirect(w, r, route.BookPath(pathUser.Username, book.ID), http.StatusSeeOther)
+	http.Redirect(request.ResponseWriter(), request.Request(), route.BookPath(pathUser.Username, book.ID), http.StatusSeeOther)
+	return nil
 }
 
-func BookConfirmDelete(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(dbconn)
-	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
-	bookID := int64URLParam(r, "id")
+func BookConfirmDelete(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
+	db := request.Env.dbconn
+	bookID := int64URLParam(request.Request(), "id")
 
 	book, err := data.GetBook(ctx, db, bookID)
 	if err != nil {
 		var nfErr *data.NotFoundError
 		if errors.As(err, &nfErr) {
-			NotFoundHandler(w, r)
+			NotFoundHandler(request.ResponseWriter(), request.Request())
+			return nil
 		} else {
-			InternalServerErrorHandler(w, r, err)
+			return err
 		}
-		return
 	}
 
-	err = htr.ExecuteTemplate(w, "book_confirm_delete.html", map[string]any{
-		"bva":  baseViewArgsFromRequest(r),
+	return request.RenderHTMLTemplate("book_confirm_delete.html", map[string]any{
+		"bva":  baseViewArgsFromRequest(request.Request()),
 		"book": book,
 	})
-	if err != nil {
-		InternalServerErrorHandler(w, r, err)
-		return
-	}
 }
 
-func BookDelete(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(dbconn)
+func BookDelete(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
+	db := request.Env.dbconn
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
-	bookID := int64URLParam(r, "id")
+	bookID := int64URLParam(request.Request(), "id")
 
 	err := data.DeleteBook(ctx, db, bookID)
 	if err != nil {
 		var nfErr *data.NotFoundError
 		if errors.As(err, &nfErr) {
-			NotFoundHandler(w, r)
+			NotFoundHandler(request.ResponseWriter(), request.Request())
+			return nil
 		} else {
-			InternalServerErrorHandler(w, r, err)
+			return err
 		}
-		return
 	}
 
-	http.Redirect(w, r, route.BooksPath(pathUser.Username), http.StatusSeeOther)
+	http.Redirect(request.ResponseWriter(), request.Request(), route.BooksPath(pathUser.Username), http.StatusSeeOther)
+	return nil
 }
 
-func BookShow(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(dbconn)
-	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
-	bookID := int64URLParam(r, "id")
+func BookShow(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
+	db := request.Env.dbconn
+	bookID := int64URLParam(request.Request(), "id")
 
 	book, err := data.GetBook(ctx, db, bookID)
 	if err != nil {
 		var nfErr *data.NotFoundError
 		if errors.As(err, &nfErr) {
-			NotFoundHandler(w, r)
+			NotFoundHandler(request.ResponseWriter(), request.Request())
+			return nil
 		} else {
-			InternalServerErrorHandler(w, r, err)
+			return err
 		}
-		return
 	}
 
-	err = htr.ExecuteTemplate(w, "book_show.html", map[string]any{
-		"bva":  baseViewArgsFromRequest(r),
+	return request.RenderHTMLTemplate("book_show.html", map[string]any{
+		"bva":  baseViewArgsFromRequest(request.Request()),
 		"book": book,
 	})
-	if err != nil {
-		InternalServerErrorHandler(w, r, err)
-		return
-	}
 }
 
-func BookEdit(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(dbconn)
-	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
+func BookEdit(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
+	db := request.Env.dbconn
+	bookID := int64URLParam(request.Request(), "id")
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
-	bookID := int64URLParam(r, "id")
 
 	var form view.BookEditForm
 	var FinishDate time.Time
@@ -244,51 +231,40 @@ func BookEdit(w http.ResponseWriter, r *http.Request) {
 		Scan(&form.Title, &form.Author, &FinishDate, &form.Format, &form.Location)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			NotFoundHandler(w, r)
+			NotFoundHandler(request.ResponseWriter(), request.Request())
+			return nil
 		} else {
-			InternalServerErrorHandler(w, r, err)
+			return err
 		}
-		return
 	}
 	form.FinishDate = FinishDate.Format("2006-01-02")
 
-	err = htr.ExecuteTemplate(w, "book_edit.html", map[string]any{
-		"bva":    baseViewArgsFromRequest(r),
+	return request.RenderHTMLTemplate("book_edit.html", map[string]any{
+		"bva":    baseViewArgsFromRequest(request.Request()),
 		"bookID": bookID,
 		"form":   form,
 	})
-	if err != nil {
-		InternalServerErrorHandler(w, r, err)
-		return
-	}
 }
 
-func BookUpdate(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(dbconn)
-	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
+func BookUpdate(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
+	db := request.Env.dbconn
+	bookID := int64URLParam(request.Request(), "id")
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
-	bookID := int64URLParam(r, "id")
 
 	params := ctx.Value(RequestParamsKey).(map[string]any)
 	var form view.BookEditForm
 	err := structify.Parse(params, &form)
 	if err != nil {
-		InternalServerErrorHandler(w, r, err)
-		return
+		return err
 	}
 	attrs, verr := form.Parse()
 	if verr != nil {
-		err := htr.ExecuteTemplate(w, "book_edit.html", map[string]any{
-			"bva":    baseViewArgsFromRequest(r),
+		return request.RenderHTMLTemplate("book_edit.html", map[string]any{
+			"bva":    baseViewArgsFromRequest(request.Request()),
 			"bookID": bookID,
 			"form":   form,
 			"verr":   verr,
 		})
-		if err != nil {
-			InternalServerErrorHandler(w, r, err)
-		}
-		return
 	}
 	attrs.ID = bookID
 
@@ -296,73 +272,57 @@ func BookUpdate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := htr.ExecuteTemplate(w, "book_new.html", map[string]any{
-				"bva":    baseViewArgsFromRequest(r),
+			return request.RenderHTMLTemplate("book_new.html", map[string]any{
+				"bva":    baseViewArgsFromRequest(request.Request()),
 				"bookID": bookID,
 				"form":   form,
 				"verr":   verr,
 			})
-			if err != nil {
-				InternalServerErrorHandler(w, r, err)
-			}
-			return
 		}
 
 		var nfErr *data.NotFoundError
 		if errors.As(err, &nfErr) {
-			NotFoundHandler(w, r)
+			NotFoundHandler(request.ResponseWriter(), request.Request())
+			return nil
 		} else {
-			InternalServerErrorHandler(w, r, err)
+			return err
 		}
-		return
 	}
 
-	http.Redirect(w, r, route.BookPath(pathUser.Username, bookID), http.StatusSeeOther)
+	http.Redirect(request.ResponseWriter(), request.Request(), route.BookPath(pathUser.Username, bookID), http.StatusSeeOther)
+	return nil
 }
 
-func BookImportCSVForm(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
-	err := htr.ExecuteTemplate(w, "book_import_csv_form.html", map[string]any{
-		"bva": baseViewArgsFromRequest(r),
+func BookImportCSVForm(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
+	return request.RenderHTMLTemplate("book_import_csv_form.html", map[string]any{
+		"bva": baseViewArgsFromRequest(request.Request()),
 	})
-	if err != nil {
-		InternalServerErrorHandler(w, r, err)
-		return
-	}
 }
 
 // TODO - do transactions right
 
-func BookImportCSV(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	conn := ctx.Value(RequestDBKey).(dbconn)
-	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
+func BookImportCSV(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
+	db := request.Env.dbconn
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
-	r.ParseMultipartForm(10 << 20)
+	request.Request().ParseMultipartForm(10 << 20)
 
-	file, _, err := r.FormFile("file")
+	file, _, err := request.Request().FormFile("file")
 	if err != nil {
-		InternalServerErrorHandler(w, r, err)
-		return
+		return err
 	}
 	defer file.Close()
 
-	err = importBooksFromCSV(ctx, conn, pathUser.ID, file)
+	err = importBooksFromCSV(ctx, db, pathUser.ID, file)
 	if err != nil {
-		err := htr.ExecuteTemplate(w, "book_import_csv_form.html", map[string]any{
-			"bva":       baseViewArgsFromRequest(r),
+		return request.RenderHTMLTemplate("book_import_csv_form.html", map[string]any{
+			"bva":       baseViewArgsFromRequest(request.Request()),
 			"importErr": err,
 		})
-		if err != nil {
-			InternalServerErrorHandler(w, r, err)
-			return
-		}
-		return
 	}
 
-	http.Redirect(w, r, route.BooksPath(pathUser.Username), http.StatusSeeOther)
+	http.Redirect(request.ResponseWriter(), request.Request(), route.BooksPath(pathUser.Username), http.StatusSeeOther)
+	return nil
 }
 
 func importBooksFromCSV(ctx context.Context, db dbconn, ownerID int64, r io.Reader) error {
@@ -412,9 +372,8 @@ func importBooksFromCSV(ctx context.Context, db dbconn, ownerID int64, r io.Read
 	return tx.Commit(ctx)
 }
 
-func BookExportCSV(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(dbconn)
+func BookExportCSV(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
+	db := request.Env.dbconn
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	buf := &bytes.Buffer{}
@@ -432,21 +391,16 @@ order by finish_date desc`, pathUser.ID)
 		csvWriter.Write([]string{title, author, finishDate.Format("2006-01-02"), format})
 	}
 	if rows.Err() != nil {
-		InternalServerErrorHandler(w, r, rows.Err())
-		return
+		return rows.Err()
 	}
 
 	csvWriter.Flush()
 	if csvWriter.Error() != nil {
-		InternalServerErrorHandler(w, r, csvWriter.Error())
-		return
+		return csvWriter.Error()
 	}
 
-	w.Header().Set("Content-Type", "text/csv")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=booklog-%s.csv", pathUser.Username))
-	_, err := buf.WriteTo(w)
-	if err != nil {
-		InternalServerErrorHandler(w, r, err)
-		return
-	}
+	request.ResponseWriter().Header().Set("Content-Type", "text/csv")
+	request.ResponseWriter().Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=booklog-%s.csv", pathUser.Username))
+	_, err := buf.WriteTo(request.ResponseWriter())
+	return err
 }

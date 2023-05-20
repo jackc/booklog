@@ -68,6 +68,9 @@ func startServer(t *testing.T) *serverInstanceT {
 	require.NoError(t, err)
 
 	server := httptest.NewServer(handler)
+	t.Cleanup(func() {
+		server.Close()
+	})
 
 	instance := &serverInstanceT{
 		Server: server,
