@@ -134,7 +134,7 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 
 	r.Use(sessionHandler(securecookie.New(cookieHashKey, cookieBlockKey)))
 
-	r.Method("GET", "/", http.HandlerFunc(RootHandler))
+	r.Method("GET", "/", myhandler.NewHandler(config, RootHandler))
 	r.Method("GET", "/user_registration/new", myhandler.NewHandler(config, UserRegistrationNew))
 	r.Method("POST", "/user_registration", myhandler.NewHandler(config, UserRegistrationCreate))
 
