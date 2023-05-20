@@ -18,6 +18,8 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/securecookie"
 	"github.com/jackc/booklog/data"
+	"github.com/jackc/booklog/lazypgxconn"
+	"github.com/jackc/booklog/myhandler"
 	"github.com/jackc/booklog/route"
 	"github.com/jackc/booklog/view"
 	"github.com/jackc/pgx/v5"
@@ -63,6 +65,7 @@ type AppServer struct {
 }
 
 func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cookieHashKey []byte, cookieBlockKey []byte, dbpool *pgxpool.Pool, htr *view.HTMLTemplateRenderer, devMode bool, frontendPath string) (*AppServer, error) {
+
 	log := zerolog.New(os.Stdout).With().
 		Timestamp().
 		Logger()
@@ -74,6 +77,31 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 		listenAddress: listenAddress,
 
 		htr: htr,
+	}
+
+	config := &myhandler.Config[HandlerEnv]{
+		HTMLTemplateRenderer: appServer.htr,
+
+		BuildEnv: func(ctx context.Context, request *myhandler.Request[HandlerEnv]) (*HandlerEnv, error) {
+			dbpool := ctx.Value(RequestDBKey).(*pgxpool.Pool)
+			return &HandlerEnv{
+				request: request,
+				dbconn: lazypgxconn.New(func() (*pgx.Conn, any, error) {
+					poolConn, err := dbpool.Acquire(ctx)
+					if err != nil {
+						return nil, nil, err
+					}
+					return poolConn.Conn(), poolConn, nil
+				}, func(conn *pgx.Conn, memo any) error {
+					memo.(*pgxpool.Conn).Release()
+					return nil
+				}),
+			}, nil
+		},
+		CleanupEnv: func(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
+			err := request.Env.dbconn.Release()
+			return err
+		},
 	}
 
 	r.Use(middleware.RequestID)
@@ -107,8 +135,8 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 	r.Use(sessionHandler(securecookie.New(cookieHashKey, cookieBlockKey)))
 
 	r.Method("GET", "/", http.HandlerFunc(RootHandler))
-	r.Method("GET", "/user_registration/new", http.HandlerFunc(UserRegistrationNew))
-	r.Method("POST", "/user_registration", http.HandlerFunc(UserRegistrationCreate))
+	r.Method("GET", "/user_registration/new", myhandler.NewHandler(config, UserRegistrationNew))
+	r.Method("POST", "/user_registration", myhandler.NewHandler(config, UserRegistrationCreate))
 
 	r.Method("GET", "/login", http.HandlerFunc(UserLoginForm))
 	r.Method("POST", "/login/handle", http.HandlerFunc(UserLogin))
