@@ -1,34 +1,30 @@
 package server
 
 import (
-	"net/http"
+	"context"
 
 	"github.com/jackc/booklog/data"
+	"github.com/jackc/booklog/myhandler"
 	"github.com/jackc/booklog/view"
 )
 
-func UserHome(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(dbconn)
-	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
+func UserHome(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
+	db := request.Env.dbconn
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	booksPerYear, err := data.BooksPerYear(ctx, db, pathUser.ID)
 	if err != nil {
-		InternalServerErrorHandler(w, r, err)
-		return
+		return err
 	}
 
 	booksPerMonthForLastYear, err := data.BooksPerMonthForLastYear(ctx, db, pathUser.ID)
 	if err != nil {
-		InternalServerErrorHandler(w, r, err)
-		return
+		return err
 	}
 
 	books, err := data.GetAllBooks(ctx, db, pathUser.ID)
 	if err != nil {
-		InternalServerErrorHandler(w, r, err)
-		return
+		return err
 	}
 
 	yearBooksLists := make([]*view.YearBookList, 0, len(booksPerYear))
@@ -44,14 +40,10 @@ func UserHome(w http.ResponseWriter, r *http.Request) {
 		ybl.Books = append(ybl.Books, book)
 	}
 
-	err = htr.ExecuteTemplate(w, "user_home.html", map[string]any{
-		"bva":                      baseViewArgsFromRequest(r),
+	return request.RenderHTMLTemplate("user_home.html", map[string]any{
+		"bva":                      baseViewArgsFromRequest(request.Request()),
 		"yearBooksLists":           yearBooksLists,
 		"booksPerYear":             booksPerYear,
 		"booksPerMonthForLastYear": booksPerMonthForLastYear,
 	})
-	if err != nil {
-		InternalServerErrorHandler(w, r, err)
-		return
-	}
 }

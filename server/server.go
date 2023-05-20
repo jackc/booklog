@@ -146,7 +146,7 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 	r.Route("/users/{username}", func(r chi.Router) {
 		r.Use(pathUserHandler())
 		r.Use(requireSameSessionUserAndPathUserHandler())
-		r.Method("GET", "/", http.HandlerFunc(UserHome))
+		r.Method("GET", "/", myhandler.NewHandler(config, UserHome))
 		mountBookHandlers(r, appServer)
 	})
 
