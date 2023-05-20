@@ -1,80 +1,68 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
 	"github.com/jackc/booklog/data"
+	"github.com/jackc/booklog/myhandler"
 	"github.com/jackc/booklog/route"
 	"github.com/jackc/booklog/validate"
-	"github.com/jackc/booklog/view"
 )
 
-func UserLoginForm(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
+func UserLoginForm(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
 	var la data.UserLoginArgs
-	err := htr.ExecuteTemplate(w, "login.html", map[string]any{
-		"bva":  baseViewArgsFromRequest(r),
+	return request.RenderHTMLTemplate("login.html", map[string]any{
+		"bva":  baseViewArgsFromRequest(request.Request()),
 		"form": la,
 	})
-	if err != nil {
-		InternalServerErrorHandler(w, r, err)
-	}
 }
 
-func UserLogin(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(dbconn)
-	htr := ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer)
+func UserLogin(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
+	db := request.Env.dbconn
 
 	la := data.UserLoginArgs{
-		Username: r.FormValue("username"),
-		Password: r.FormValue("password"),
+		Username: request.Request().FormValue("username"),
+		Password: request.Request().FormValue("password"),
 	}
 
 	userSessionID, err := data.UserLogin(ctx, db, la)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			err := htr.ExecuteTemplate(w, "login.html", map[string]any{
-				"bva":  baseViewArgsFromRequest(r),
+			return request.RenderHTMLTemplate("login.html", map[string]any{
+				"bva":  baseViewArgsFromRequest(request.Request()),
 				"form": la,
 				"verr": verr,
 			})
-			if err != nil {
-				InternalServerErrorHandler(w, r, err)
-			}
-			return
 		}
 
-		InternalServerErrorHandler(w, r, err)
-		return
+		return err
 	}
 
-	err = setSessionCookie(w, r, userSessionID)
+	err = setSessionCookie(request.ResponseWriter(), request.Request(), userSessionID)
 	if err != nil {
-		InternalServerErrorHandler(w, r, err)
-		return
+		return err
 	}
 
-	http.Redirect(w, r, route.UserHomePath(la.Username), http.StatusSeeOther)
+	http.Redirect(request.ResponseWriter(), request.Request(), route.UserHomePath(la.Username), http.StatusSeeOther)
+	return nil
 }
 
-func UserLogout(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	db := ctx.Value(RequestDBKey).(dbconn)
+func UserLogout(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
+	db := request.Env.dbconn
 	session := ctx.Value(RequestSessionKey).(*Session)
 
 	if session.IsAuthenticated {
 		_, err := db.Exec(ctx, "delete from user_sessions where id=$1", session.ID)
 		if err != nil {
-			InternalServerErrorHandler(w, r, err)
-			return
+			return err
 		}
 	}
 
-	clearSessionCookie(w)
+	clearSessionCookie(request.ResponseWriter())
 
-	http.Redirect(w, r, route.NewLoginPath(), http.StatusSeeOther)
+	http.Redirect(request.ResponseWriter(), request.Request(), route.NewLoginPath(), http.StatusSeeOther)
+	return nil
 }

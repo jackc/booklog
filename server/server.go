@@ -138,10 +138,10 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 	r.Method("GET", "/user_registration/new", myhandler.NewHandler(config, UserRegistrationNew))
 	r.Method("POST", "/user_registration", myhandler.NewHandler(config, UserRegistrationCreate))
 
-	r.Method("GET", "/login", http.HandlerFunc(UserLoginForm))
-	r.Method("POST", "/login/handle", http.HandlerFunc(UserLogin))
+	r.Method("GET", "/login", myhandler.NewHandler(config, UserLoginForm))
+	r.Method("POST", "/login/handle", myhandler.NewHandler(config, UserLogin))
 
-	r.Method("POST", "/logout", http.HandlerFunc(UserLogout))
+	r.Method("POST", "/logout", myhandler.NewHandler(config, UserLogout))
 
 	r.Route("/users/{username}", func(r chi.Router) {
 		r.Use(pathUserHandler())
