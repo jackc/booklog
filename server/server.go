@@ -2,12 +2,14 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -16,7 +18,6 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/securecookie"
 	"github.com/jackc/booklog/data"
-	"github.com/jackc/booklog/lazypgxconn"
 	"github.com/jackc/booklog/myhandler"
 	"github.com/jackc/booklog/route"
 	"github.com/jackc/booklog/view"
@@ -35,6 +36,9 @@ const (
 	RequestDBKey
 	RequestSessionKey
 	RequestPathUserKey
+	RequestParamsKey
+	RequestDevModeKey
+	RequestHTMLTemplateRendererKey
 )
 
 type dbconn interface {
@@ -78,24 +82,10 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 		HTMLTemplateRenderer: appServer.htr,
 
 		BuildEnv: func(ctx context.Context, request *myhandler.Request[HandlerEnv]) (*HandlerEnv, error) {
-			dbpool := ctx.Value(RequestDBKey).(*pgxpool.Pool)
-			return &HandlerEnv{
-				dbconn: lazypgxconn.New(func() (*pgx.Conn, any, error) {
-					poolConn, err := dbpool.Acquire(ctx)
-					if err != nil {
-						return nil, nil, err
-					}
-					return poolConn.Conn(), poolConn, nil
-				}, func(conn *pgx.Conn, memo any) error {
-					memo.(*pgxpool.Conn).Release()
-					return nil
-				}),
-				devMode: devMode,
-			}, nil
+			return &HandlerEnv{}, nil
 		},
 		CleanupEnv: func(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
-			err := request.Env.dbconn.Release()
-			return err
+			return nil
 		},
 	}
 
@@ -122,7 +112,10 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 	CSRF := csrf.Protect(csrfKey, csrf.Secure(secureCookies))
 	r.Use(CSRF)
 
+	r.Use(devModeHandler(devMode))
 	r.Use(pgxPoolHandler(dbpool))
+	r.Use(htmlTemplateRendererHandler(htr))
+	r.Use(parseParamsHandler())
 
 	r.Use(sessionHandler(securecookie.New(cookieHashKey, cookieBlockKey)))
 
@@ -193,11 +186,35 @@ func fileServer(r chi.Router, path string, root http.FileSystem) {
 	}))
 }
 
+func devModeHandler(devMode bool) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, RequestDevModeKey, devMode)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
+
+		return http.HandlerFunc(fn)
+	}
+}
+
 func pgxPoolHandler(dbpool *pgxpool.Pool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 			ctx = context.WithValue(ctx, RequestDBKey, dbpool)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
+
+		return http.HandlerFunc(fn)
+	}
+}
+
+func htmlTemplateRendererHandler(htr *view.HTMLTemplateRenderer) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, RequestHTMLTemplateRendererKey, htr)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		}
 
@@ -354,22 +371,77 @@ func int64URLParam(r *http.Request, name string) int64 {
 	return r.Context().Value(ctxURLParamKey(name)).(int64)
 }
 
-func baseViewArgsFromRequest(r *myhandler.Request[HandlerEnv]) *view.BaseViewArgs {
+func baseViewArgsFromRequest(r *http.Request) *view.BaseViewArgs {
 	var pathUser *data.UserMin
-	if um, ok := r.Request().Context().Value(RequestPathUserKey).(*data.UserMin); ok {
+	if um, ok := r.Context().Value(RequestPathUserKey).(*data.UserMin); ok {
 		pathUser = um
 	}
 
-	session := r.Request().Context().Value(RequestSessionKey).(*Session)
+	session := r.Context().Value(RequestSessionKey).(*Session)
 	var currentUser *data.UserMin
 	if session.IsAuthenticated {
 		currentUser = &session.User
 	}
 
+	var devMode bool
+	if dm, ok := r.Context().Value(RequestDevModeKey).(bool); ok {
+		devMode = dm
+	}
+
 	return &view.BaseViewArgs{
-		CSRFField:   csrf.TemplateField(r.Request()),
+		CSRFField:   csrf.TemplateField(r),
 		CurrentUser: currentUser,
 		PathUser:    pathUser,
-		DevMode:     r.Env.devMode,
+		DevMode:     devMode,
 	}
+}
+
+func parseParamsHandler() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			params, err := parseParams(r)
+			if err != nil {
+				InternalServerErrorHandler(w, r, err)
+			}
+
+			ctx = context.WithValue(ctx, RequestParamsKey, params)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
+
+		return http.HandlerFunc(fn)
+	}
+}
+
+func parseParams(r *http.Request) (map[string]any, error) {
+	params := make(map[string]any)
+
+	routeParams := chi.RouteContext(r.Context()).URLParams
+	for i := 0; i < len(routeParams.Keys); i++ {
+		params[routeParams.Keys[i]] = routeParams.Values[i]
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		return nil, err
+	}
+
+	for key, values := range r.Form {
+		if len(values) > 0 {
+			if strings.HasSuffix(key, "[]") {
+				params[key[:len(key)-2]] = values
+			} else {
+				params[key] = values[0]
+			}
+		}
+	}
+
+	if r.Header.Get("Content-Type") == "application/json" {
+		decoder := json.NewDecoder(r.Body)
+		if err := decoder.Decode(&params); err != nil {
+			return nil, err
+		}
+	}
+
+	return params, nil
 }

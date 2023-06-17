@@ -9,18 +9,19 @@ import (
 	"github.com/jackc/booklog/myhandler"
 	"github.com/jackc/booklog/route"
 	"github.com/jackc/booklog/validate"
+	"github.com/jackc/booklog/view"
 )
 
 func UserLoginForm(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
 	var la data.UserLoginArgs
-	return request.RenderHTMLTemplate("login.html", map[string]any{
-		"bva":  baseViewArgsFromRequest(request),
+	return ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer).ExecuteTemplate(request.ResponseWriter(), "login.html", map[string]any{
+		"bva":  baseViewArgsFromRequest(request.Request()),
 		"form": la,
 	})
 }
 
 func UserLogin(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
-	db := request.Env.dbconn
+	db := ctx.Value(RequestDBKey).(dbconn)
 
 	la := data.UserLoginArgs{
 		Username: request.Request().FormValue("username"),
@@ -31,8 +32,8 @@ func UserLogin(ctx context.Context, request *myhandler.Request[HandlerEnv]) erro
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			return request.RenderHTMLTemplate("login.html", map[string]any{
-				"bva":  baseViewArgsFromRequest(request),
+			return ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer).ExecuteTemplate(request.ResponseWriter(), "login.html", map[string]any{
+				"bva":  baseViewArgsFromRequest(request.Request()),
 				"form": la,
 				"verr": verr,
 			})
@@ -51,7 +52,7 @@ func UserLogin(ctx context.Context, request *myhandler.Request[HandlerEnv]) erro
 }
 
 func UserLogout(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
-	db := request.Env.dbconn
+	db := ctx.Value(RequestDBKey).(dbconn)
 	session := ctx.Value(RequestSessionKey).(*Session)
 
 	if session.IsAuthenticated {

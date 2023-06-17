@@ -9,18 +9,19 @@ import (
 	"github.com/jackc/booklog/myhandler"
 	"github.com/jackc/booklog/route"
 	"github.com/jackc/booklog/validate"
+	"github.com/jackc/booklog/view"
 )
 
 func UserRegistrationNew(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
 	var rua data.RegisterUserArgs
-	return request.RenderHTMLTemplate("user_registration.html", map[string]any{
-		"bva":  baseViewArgsFromRequest(request),
+	return ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer).ExecuteTemplate(request.ResponseWriter(), "user_registration.html", map[string]any{
+		"bva":  baseViewArgsFromRequest(request.Request()),
 		"form": rua,
 	})
 }
 
 func UserRegistrationCreate(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
-	db := request.Env.dbconn
+	db := ctx.Value(RequestDBKey).(dbconn)
 
 	rua := data.RegisterUserArgs{
 		Username: request.Request().FormValue("username"),
@@ -31,8 +32,8 @@ func UserRegistrationCreate(ctx context.Context, request *myhandler.Request[Hand
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			return request.RenderHTMLTemplate("user_registration.html", map[string]any{
-				"bva":  baseViewArgsFromRequest(request),
+			return ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer).ExecuteTemplate(request.ResponseWriter(), "user_registration.html", map[string]any{
+				"bva":  baseViewArgsFromRequest(request.Request()),
 				"form": rua,
 				"verr": verr,
 			})

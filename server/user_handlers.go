@@ -9,7 +9,7 @@ import (
 )
 
 func UserHome(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
-	db := request.Env.dbconn
+	db := ctx.Value(RequestDBKey).(dbconn)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
 	booksPerYear, err := data.BooksPerYear(ctx, db, pathUser.ID)
@@ -40,8 +40,8 @@ func UserHome(ctx context.Context, request *myhandler.Request[HandlerEnv]) error
 		ybl.Books = append(ybl.Books, book)
 	}
 
-	return request.RenderHTMLTemplate("user_home.html", map[string]any{
-		"bva":                      baseViewArgsFromRequest(request),
+	return ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer).ExecuteTemplate(request.ResponseWriter(), "user_home.html", map[string]any{
+		"bva":                      baseViewArgsFromRequest(request.Request()),
 		"yearBooksLists":           yearBooksLists,
 		"booksPerYear":             booksPerYear,
 		"booksPerMonthForLastYear": booksPerMonthForLastYear,
