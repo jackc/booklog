@@ -39,7 +39,6 @@ const (
 	RequestPathUserKey
 	RequestParamsKey
 	RequestDevModeKey
-	RequestHTMLTemplateRendererKey
 )
 
 type dbconn interface {
@@ -129,7 +128,6 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 
 	r.Use(devModeHandler(devMode))
 	r.Use(pgxPoolHandler(dbpool))
-	r.Use(htmlTemplateRendererHandler(htr))
 	r.Use(parseParamsHandler())
 
 	r.Use(sessionHandler(securecookie.New(cookieHashKey, cookieBlockKey)))
@@ -218,18 +216,6 @@ func pgxPoolHandler(dbpool *pgxpool.Pool) func(http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 			ctx = context.WithValue(ctx, RequestDBKey, dbpool)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		}
-
-		return http.HandlerFunc(fn)
-	}
-}
-
-func htmlTemplateRendererHandler(htr *view.HTMLTemplateRenderer) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		fn := func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-			ctx = context.WithValue(ctx, RequestHTMLTemplateRendererKey, htr)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		}
 
