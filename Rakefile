@@ -8,7 +8,7 @@ end
 require "rake/clean"
 require "fileutils"
 
-CLOBBER.include("build", "view/*.html.go")
+CLOBBER.include("build")
 
 file "build/frontend/manifest.json" => [*FileList["css/*.css"]] do
   sh "vite build"
@@ -23,7 +23,7 @@ file "build/booklog-linux" => [*FileList["**/*.go"]] do |t|
 end
 
 desc "Build"
-task build: [:view, "build/booklog", "build/frontend/manifest.json"]
+task build: ["build/booklog", "build/frontend/manifest.json"]
 
 desc "Run booklog"
 task run: :build do
