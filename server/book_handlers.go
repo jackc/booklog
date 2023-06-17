@@ -106,7 +106,7 @@ func BookIndex(ctx context.Context, request *myhandler.Request[HandlerEnv]) erro
 	}
 
 	return request.RenderHTMLTemplate("book_index.html", map[string]any{
-		"bva":            baseViewArgsFromRequest(request.Request()),
+		"bva":            baseViewArgsFromRequest(request),
 		"yearBooksLists": yearBooksLists,
 	})
 }
@@ -114,7 +114,7 @@ func BookIndex(ctx context.Context, request *myhandler.Request[HandlerEnv]) erro
 func BookNew(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
 	var form view.BookEditForm
 	return request.RenderHTMLTemplate("book_new.html", map[string]any{
-		"bva":  baseViewArgsFromRequest(request.Request()),
+		"bva":  baseViewArgsFromRequest(request),
 		"form": form,
 	})
 }
@@ -133,7 +133,7 @@ func BookCreate(ctx context.Context, request *myhandler.Request[HandlerEnv]) err
 	attrs, verr := form.Parse()
 	if verr != nil {
 		return request.RenderHTMLTemplate("book_new.html", map[string]any{
-			"bva":  baseViewArgsFromRequest(request.Request()),
+			"bva":  baseViewArgsFromRequest(request),
 			"form": form,
 			"verr": verr,
 		})
@@ -145,7 +145,7 @@ func BookCreate(ctx context.Context, request *myhandler.Request[HandlerEnv]) err
 		var verr validate.Errors
 		if errors.As(err, &verr) {
 			return request.RenderHTMLTemplate("book_new.html", map[string]any{
-				"bva":  baseViewArgsFromRequest(request.Request()),
+				"bva":  baseViewArgsFromRequest(request),
 				"form": form,
 				"verr": verr,
 			})
@@ -173,7 +173,7 @@ func BookConfirmDelete(ctx context.Context, request *myhandler.Request[HandlerEn
 	}
 
 	return request.RenderHTMLTemplate("book_confirm_delete.html", map[string]any{
-		"bva":  baseViewArgsFromRequest(request.Request()),
+		"bva":  baseViewArgsFromRequest(request),
 		"book": book,
 	})
 }
@@ -214,7 +214,7 @@ func BookShow(ctx context.Context, request *myhandler.Request[HandlerEnv]) error
 	}
 
 	return request.RenderHTMLTemplate("book_show.html", map[string]any{
-		"bva":  baseViewArgsFromRequest(request.Request()),
+		"bva":  baseViewArgsFromRequest(request),
 		"book": book,
 	})
 }
@@ -239,7 +239,7 @@ func BookEdit(ctx context.Context, request *myhandler.Request[HandlerEnv]) error
 	form.FinishDate = FinishDate.Format("2006-01-02")
 
 	return request.RenderHTMLTemplate("book_edit.html", map[string]any{
-		"bva":    baseViewArgsFromRequest(request.Request()),
+		"bva":    baseViewArgsFromRequest(request),
 		"bookID": bookID,
 		"form":   form,
 	})
@@ -260,7 +260,7 @@ func BookUpdate(ctx context.Context, request *myhandler.Request[HandlerEnv]) err
 	attrs, verr := form.Parse()
 	if verr != nil {
 		return request.RenderHTMLTemplate("book_edit.html", map[string]any{
-			"bva":    baseViewArgsFromRequest(request.Request()),
+			"bva":    baseViewArgsFromRequest(request),
 			"bookID": bookID,
 			"form":   form,
 			"verr":   verr,
@@ -273,7 +273,7 @@ func BookUpdate(ctx context.Context, request *myhandler.Request[HandlerEnv]) err
 		var verr validate.Errors
 		if errors.As(err, &verr) {
 			return request.RenderHTMLTemplate("book_new.html", map[string]any{
-				"bva":    baseViewArgsFromRequest(request.Request()),
+				"bva":    baseViewArgsFromRequest(request),
 				"bookID": bookID,
 				"form":   form,
 				"verr":   verr,
@@ -295,7 +295,7 @@ func BookUpdate(ctx context.Context, request *myhandler.Request[HandlerEnv]) err
 
 func BookImportCSVForm(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
 	return request.RenderHTMLTemplate("book_import_csv_form.html", map[string]any{
-		"bva": baseViewArgsFromRequest(request.Request()),
+		"bva": baseViewArgsFromRequest(request),
 	})
 }
 
@@ -316,7 +316,7 @@ func BookImportCSV(ctx context.Context, request *myhandler.Request[HandlerEnv]) 
 	err = importBooksFromCSV(ctx, db, pathUser.ID, file)
 	if err != nil {
 		return request.RenderHTMLTemplate("book_import_csv_form.html", map[string]any{
-			"bva":       baseViewArgsFromRequest(request.Request()),
+			"bva":       baseViewArgsFromRequest(request),
 			"importErr": err,
 		})
 	}

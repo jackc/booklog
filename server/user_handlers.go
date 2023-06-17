@@ -41,7 +41,7 @@ func UserHome(ctx context.Context, request *myhandler.Request[HandlerEnv]) error
 	}
 
 	return request.RenderHTMLTemplate("user_home.html", map[string]any{
-		"bva":                      baseViewArgsFromRequest(request.Request()),
+		"bva":                      baseViewArgsFromRequest(request),
 		"yearBooksLists":           yearBooksLists,
 		"booksPerYear":             booksPerYear,
 		"booksPerMonthForLastYear": booksPerMonthForLastYear,

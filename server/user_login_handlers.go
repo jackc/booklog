@@ -14,7 +14,7 @@ import (
 func UserLoginForm(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
 	var la data.UserLoginArgs
 	return request.RenderHTMLTemplate("login.html", map[string]any{
-		"bva":  baseViewArgsFromRequest(request.Request()),
+		"bva":  baseViewArgsFromRequest(request),
 		"form": la,
 	})
 }
@@ -32,7 +32,7 @@ func UserLogin(ctx context.Context, request *myhandler.Request[HandlerEnv]) erro
 		var verr validate.Errors
 		if errors.As(err, &verr) {
 			return request.RenderHTMLTemplate("login.html", map[string]any{
-				"bva":  baseViewArgsFromRequest(request.Request()),
+				"bva":  baseViewArgsFromRequest(request),
 				"form": la,
 				"verr": verr,
 			})

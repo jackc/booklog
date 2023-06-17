@@ -14,7 +14,7 @@ import (
 func UserRegistrationNew(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
 	var rua data.RegisterUserArgs
 	return request.RenderHTMLTemplate("user_registration.html", map[string]any{
-		"bva":  baseViewArgsFromRequest(request.Request()),
+		"bva":  baseViewArgsFromRequest(request),
 		"form": rua,
 	})
 }
@@ -32,7 +32,7 @@ func UserRegistrationCreate(ctx context.Context, request *myhandler.Request[Hand
 		var verr validate.Errors
 		if errors.As(err, &verr) {
 			return request.RenderHTMLTemplate("user_registration.html", map[string]any{
-				"bva":  baseViewArgsFromRequest(request.Request()),
+				"bva":  baseViewArgsFromRequest(request),
 				"form": rua,
 				"verr": verr,
 			})

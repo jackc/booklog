@@ -368,25 +368,25 @@ func int64URLParam(r *http.Request, name string) int64 {
 	return r.Context().Value(ctxURLParamKey(name)).(int64)
 }
 
-func baseViewArgsFromRequest(r *http.Request) *view.BaseViewArgs {
+func baseViewArgsFromRequest(r *myhandler.Request[HandlerEnv]) *view.BaseViewArgs {
 	var pathUser *data.UserMin
-	if um, ok := r.Context().Value(RequestPathUserKey).(*data.UserMin); ok {
+	if um, ok := r.Request().Context().Value(RequestPathUserKey).(*data.UserMin); ok {
 		pathUser = um
 	}
 
-	session := r.Context().Value(RequestSessionKey).(*Session)
+	session := r.Request().Context().Value(RequestSessionKey).(*Session)
 	var currentUser *data.UserMin
 	if session.IsAuthenticated {
 		currentUser = &session.User
 	}
 
 	var devMode bool
-	if dm, ok := r.Context().Value(RequestDevModeKey).(bool); ok {
+	if dm, ok := r.Request().Context().Value(RequestDevModeKey).(bool); ok {
 		devMode = dm
 	}
 
 	return &view.BaseViewArgs{
-		CSRFField:   csrf.TemplateField(r),
+		CSRFField:   csrf.TemplateField(r.Request()),
 		CurrentUser: currentUser,
 		PathUser:    pathUser,
 		DevMode:     devMode,
