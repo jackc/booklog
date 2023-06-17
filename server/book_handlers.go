@@ -18,7 +18,6 @@ import (
 	"github.com/jackc/booklog/validate"
 	"github.com/jackc/booklog/view"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type HandlerEnv struct {
@@ -42,32 +41,7 @@ func (env *HandlerEnv) DBConn() *lazypgxconn.Conn {
 	return env.dbconn
 }
 
-func mountBookHandlers(r chi.Router, appServer *AppServer) http.Handler {
-	config := &myhandler.Config[HandlerEnv]{
-		HTMLTemplateRenderer: appServer.htr,
-
-		BuildEnv: func(ctx context.Context, request *myhandler.Request[HandlerEnv]) (*HandlerEnv, error) {
-			dbpool := ctx.Value(RequestDBKey).(*pgxpool.Pool)
-			return &HandlerEnv{
-				request: request,
-				dbconn: lazypgxconn.New(func() (*pgx.Conn, any, error) {
-					poolConn, err := dbpool.Acquire(ctx)
-					if err != nil {
-						return nil, nil, err
-					}
-					return poolConn.Conn(), poolConn, nil
-				}, func(conn *pgx.Conn, memo any) error {
-					memo.(*pgxpool.Conn).Release()
-					return nil
-				}),
-			}, nil
-		},
-		CleanupEnv: func(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
-			err := request.Env.dbconn.Release()
-			return err
-		},
-	}
-
+func mountBookHandlers(r chi.Router, config *myhandler.Config[HandlerEnv]) http.Handler {
 	r.Method("GET", "/books", myhandler.NewHandler(config, BookIndex))
 	r.Method("GET", "/books/new", myhandler.NewHandler(config, BookNew))
 	r.Method("POST", "/books", myhandler.NewHandler(config, BookCreate))
