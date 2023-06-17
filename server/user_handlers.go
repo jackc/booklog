@@ -2,13 +2,13 @@ package server
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/jackc/booklog/data"
-	"github.com/jackc/booklog/myhandler"
 	"github.com/jackc/booklog/view"
 )
 
-func UserHome(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
+func UserHome(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	db := ctx.Value(RequestDBKey).(dbconn)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
@@ -40,8 +40,8 @@ func UserHome(ctx context.Context, request *myhandler.Request[HandlerEnv]) error
 		ybl.Books = append(ybl.Books, book)
 	}
 
-	return ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer).ExecuteTemplate(request.ResponseWriter(), "user_home.html", map[string]any{
-		"bva":                      baseViewArgsFromRequest(request.Request()),
+	return ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer).ExecuteTemplate(w, "user_home.html", map[string]any{
+		"bva":                      baseViewArgsFromRequest(r),
 		"yearBooksLists":           yearBooksLists,
 		"booksPerYear":             booksPerYear,
 		"booksPerMonthForLastYear": booksPerMonthForLastYear,

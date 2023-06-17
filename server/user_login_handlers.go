@@ -6,34 +6,33 @@ import (
 	"net/http"
 
 	"github.com/jackc/booklog/data"
-	"github.com/jackc/booklog/myhandler"
 	"github.com/jackc/booklog/route"
 	"github.com/jackc/booklog/validate"
 	"github.com/jackc/booklog/view"
 )
 
-func UserLoginForm(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
+func UserLoginForm(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	var la data.UserLoginArgs
-	return ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer).ExecuteTemplate(request.ResponseWriter(), "login.html", map[string]any{
-		"bva":  baseViewArgsFromRequest(request.Request()),
+	return ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer).ExecuteTemplate(w, "login.html", map[string]any{
+		"bva":  baseViewArgsFromRequest(r),
 		"form": la,
 	})
 }
 
-func UserLogin(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
+func UserLogin(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	db := ctx.Value(RequestDBKey).(dbconn)
 
 	la := data.UserLoginArgs{
-		Username: request.Request().FormValue("username"),
-		Password: request.Request().FormValue("password"),
+		Username: r.FormValue("username"),
+		Password: r.FormValue("password"),
 	}
 
 	userSessionID, err := data.UserLogin(ctx, db, la)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {
-			return ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer).ExecuteTemplate(request.ResponseWriter(), "login.html", map[string]any{
-				"bva":  baseViewArgsFromRequest(request.Request()),
+			return ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer).ExecuteTemplate(w, "login.html", map[string]any{
+				"bva":  baseViewArgsFromRequest(r),
 				"form": la,
 				"verr": verr,
 			})
@@ -42,16 +41,16 @@ func UserLogin(ctx context.Context, request *myhandler.Request[HandlerEnv]) erro
 		return err
 	}
 
-	err = setSessionCookie(request.ResponseWriter(), request.Request(), userSessionID)
+	err = setSessionCookie(w, r, userSessionID)
 	if err != nil {
 		return err
 	}
 
-	http.Redirect(request.ResponseWriter(), request.Request(), route.UserHomePath(la.Username), http.StatusSeeOther)
+	http.Redirect(w, r, route.UserHomePath(la.Username), http.StatusSeeOther)
 	return nil
 }
 
-func UserLogout(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
+func UserLogout(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	db := ctx.Value(RequestDBKey).(dbconn)
 	session := ctx.Value(RequestSessionKey).(*Session)
 
@@ -62,8 +61,8 @@ func UserLogout(ctx context.Context, request *myhandler.Request[HandlerEnv]) err
 		}
 	}
 
-	clearSessionCookie(request.ResponseWriter())
+	clearSessionCookie(w)
 
-	http.Redirect(request.ResponseWriter(), request.Request(), route.NewLoginPath(), http.StatusSeeOther)
+	http.Redirect(w, r, route.NewLoginPath(), http.StatusSeeOther)
 	return nil
 }

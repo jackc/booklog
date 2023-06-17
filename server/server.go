@@ -17,8 +17,8 @@ import (
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/securecookie"
+	"github.com/jackc/booklog/bee"
 	"github.com/jackc/booklog/data"
-	"github.com/jackc/booklog/myhandler"
 	"github.com/jackc/booklog/route"
 	"github.com/jackc/booklog/view"
 	"github.com/jackc/pgx/v5"
@@ -78,17 +78,6 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 		htr: htr,
 	}
 
-	config := &myhandler.Config[HandlerEnv]{
-		HTMLTemplateRenderer: appServer.htr,
-
-		BuildEnv: func(ctx context.Context, request *myhandler.Request[HandlerEnv]) (*HandlerEnv, error) {
-			return &HandlerEnv{}, nil
-		},
-		CleanupEnv: func(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
-			return nil
-		},
-	}
-
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 
@@ -119,20 +108,28 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 
 	r.Use(sessionHandler(securecookie.New(cookieHashKey, cookieBlockKey)))
 
-	r.Method("GET", "/", myhandler.NewHandler(config, RootHandler))
-	r.Method("GET", "/user_registration/new", myhandler.NewHandler(config, UserRegistrationNew))
-	r.Method("POST", "/user_registration", myhandler.NewHandler(config, UserRegistrationCreate))
+	hb := &bee.HandlerBuilder{}
+	hb.ErrorHandlers = []bee.ErrorHandler{
+		func(w http.ResponseWriter, r *http.Request, err error) (bool, error) {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return true, nil
+		},
+	}
 
-	r.Method("GET", "/login", myhandler.NewHandler(config, UserLoginForm))
-	r.Method("POST", "/login/handle", myhandler.NewHandler(config, UserLogin))
+	r.Method("GET", "/", hb.New(RootHandler))
+	r.Method("GET", "/user_registration/new", hb.New(UserRegistrationNew))
+	r.Method("POST", "/user_registration", hb.New(UserRegistrationCreate))
 
-	r.Method("POST", "/logout", myhandler.NewHandler(config, UserLogout))
+	r.Method("GET", "/login", hb.New(UserLoginForm))
+	r.Method("POST", "/login/handle", hb.New(UserLogin))
+
+	r.Method("POST", "/logout", hb.New(UserLogout))
 
 	r.Route("/users/{username}", func(r chi.Router) {
 		r.Use(pathUserHandler())
 		r.Use(requireSameSessionUserAndPathUserHandler())
-		r.Method("GET", "/", myhandler.NewHandler(config, UserHome))
-		mountBookHandlers(r, config)
+		r.Method("GET", "/", hb.New(UserHome))
+		mountBookHandlers(r, hb)
 	})
 
 	if frontendPath != "" {
