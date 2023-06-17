@@ -99,7 +99,7 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 
 	r.Use(middleware.Recoverer)
 
-	CSRF := csrf.Protect(csrfKey, csrf.Secure(secureCookies))
+	CSRF := csrf.Protect(csrfKey, csrf.Path("/"), csrf.Secure(secureCookies))
 	r.Use(CSRF)
 
 	r.Use(devModeHandler(devMode))
