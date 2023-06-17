@@ -81,7 +81,6 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 		BuildEnv: func(ctx context.Context, request *myhandler.Request[HandlerEnv]) (*HandlerEnv, error) {
 			dbpool := ctx.Value(RequestDBKey).(*pgxpool.Pool)
 			return &HandlerEnv{
-				request: request,
 				dbconn: lazypgxconn.New(func() (*pgx.Conn, any, error) {
 					poolConn, err := dbpool.Acquire(ctx)
 					if err != nil {

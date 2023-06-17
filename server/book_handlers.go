@@ -21,8 +21,6 @@ import (
 )
 
 type HandlerEnv struct {
-	request *myhandler.Request[HandlerEnv]
-
 	dbconn *lazypgxconn.Conn
 }
 
