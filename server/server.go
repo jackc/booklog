@@ -35,7 +35,6 @@ const (
 	RequestDBKey
 	RequestSessionKey
 	RequestPathUserKey
-	RequestDevModeKey
 )
 
 type dbconn interface {
@@ -91,6 +90,7 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 					memo.(*pgxpool.Conn).Release()
 					return nil
 				}),
+				devMode: devMode,
 			}, nil
 		},
 		CleanupEnv: func(ctx context.Context, request *myhandler.Request[HandlerEnv]) error {
@@ -122,7 +122,6 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 	CSRF := csrf.Protect(csrfKey, csrf.Secure(secureCookies))
 	r.Use(CSRF)
 
-	r.Use(devModeHandler(devMode))
 	r.Use(pgxPoolHandler(dbpool))
 
 	r.Use(sessionHandler(securecookie.New(cookieHashKey, cookieBlockKey)))
@@ -192,18 +191,6 @@ func fileServer(r chi.Router, path string, root http.FileSystem) {
 	r.Get(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fs.ServeHTTP(w, r)
 	}))
-}
-
-func devModeHandler(devMode bool) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		fn := func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-			ctx = context.WithValue(ctx, RequestDevModeKey, devMode)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		}
-
-		return http.HandlerFunc(fn)
-	}
 }
 
 func pgxPoolHandler(dbpool *pgxpool.Pool) func(http.Handler) http.Handler {
@@ -379,15 +366,10 @@ func baseViewArgsFromRequest(r *myhandler.Request[HandlerEnv]) *view.BaseViewArg
 		currentUser = &session.User
 	}
 
-	var devMode bool
-	if dm, ok := r.Request().Context().Value(RequestDevModeKey).(bool); ok {
-		devMode = dm
-	}
-
 	return &view.BaseViewArgs{
 		CSRFField:   csrf.TemplateField(r.Request()),
 		CurrentUser: currentUser,
 		PathUser:    pathUser,
-		DevMode:     devMode,
+		DevMode:     r.Env.devMode,
 	}
 }

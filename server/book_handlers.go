@@ -21,7 +21,8 @@ import (
 )
 
 type HandlerEnv struct {
-	dbconn *lazypgxconn.Conn
+	dbconn  *lazypgxconn.Conn
+	devMode bool
 }
 
 // TODO -- LazyConn? A wrapper around *pgxpool.Pool that only acquires a *pgx.Conn on demand, but then uses the same one
