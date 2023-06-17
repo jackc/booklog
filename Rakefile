@@ -14,8 +14,10 @@ file "build/frontend/manifest.json" => [*FileList["css/*.css"]] do
   sh "vite build"
 end
 
-file "build/booklog" => [*FileList["**/*.go"]] do |t|
+file "build/booklog" => FileList["Rakefile", "*.go", "go.*", "**/*.go"].exclude(/_test.go$/) do |t|
   sh "go build -o build/booklog"
+  # To enable debugging
+  # sh %q[go build -o build/booklog -gcflags="all=-N -l"]
 end
 
 file "build/booklog-linux" => [*FileList["**/*.go"]] do |t|
