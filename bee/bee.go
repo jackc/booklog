@@ -104,15 +104,14 @@ func (hb *HandlerBuilder) New(fn func(ctx context.Context, w http.ResponseWriter
 				digest.Write(brw.b.Bytes())
 			} else {
 				buf := brw.b.Bytes()
-				pos := 0
-				for pos < len(buf) {
-					loc := hb.ETagDigestFilter.FindIndex(buf[pos:])
+				for len(buf) > 0 {
+					loc := hb.ETagDigestFilter.FindIndex(buf)
 					if loc == nil {
-						digest.Write(buf[pos:])
-						pos = len(buf)
+						digest.Write(buf)
+						buf = buf[len(buf):]
 					} else {
-						digest.Write(buf[pos : pos+loc[0]])
-						pos = loc[1]
+						digest.Write(buf[:loc[0]])
+						buf = buf[loc[1]:]
 					}
 				}
 			}
