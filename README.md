@@ -12,7 +12,7 @@ https://direnv.net/ - Manage environment variables
 Highly Recommended:
 
 https://github.com/asdf-vm/asdf - Version management for Ruby and Node
-https://github.com/jackc/react2fs - Restart server when files change
+https://github.com/watchexec/watchexec - Restart server when files change (needed for `rake rerun`)
 
 Make a copy of all files that end in `.example` but without the `.example` and edit the new files as needed to configure development environment.
 
