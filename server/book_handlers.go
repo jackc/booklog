@@ -19,7 +19,6 @@ import (
 	"github.com/jackc/booklog/view"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jackc/structify"
 )
 
 type HandlerEnv struct {
@@ -251,11 +250,12 @@ func BookUpdate(ctx context.Context, request *myhandler.Request[HandlerEnv]) err
 	bookID := int64URLParam(request.Request(), "id")
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
-	params := ctx.Value(RequestParamsKey).(map[string]any)
-	var form view.BookEditForm
-	err := structify.Parse(params, &form)
-	if err != nil {
-		return err
+	form := view.BookEditForm{
+		Title:      request.Request().FormValue("title"),
+		Author:     request.Request().FormValue("author"),
+		FinishDate: request.Request().FormValue("finishDate"),
+		Format:     request.Request().FormValue("format"),
+		Location:   request.Request().FormValue("location"),
 	}
 	attrs, verr := form.Parse()
 	if verr != nil {
@@ -268,7 +268,7 @@ func BookUpdate(ctx context.Context, request *myhandler.Request[HandlerEnv]) err
 	}
 	attrs.ID = bookID
 
-	err = data.UpdateBook(ctx, db, attrs)
+	err := data.UpdateBook(ctx, db, attrs)
 	if err != nil {
 		var verr validate.Errors
 		if errors.As(err, &verr) {

@@ -11,7 +11,6 @@ require (
 	github.com/jackc/cachet v0.0.0-20230311143827-d9837660ae5e
 	github.com/jackc/pgx/v5 v5.1.1
 	github.com/jackc/pgxrecord v0.0.0-20221210234038-42bc3a46158f
-	github.com/jackc/structify v0.0.0-20230218050314-6917018b3dad
 	github.com/jackc/testdb v0.0.0-20221015161059-a3705a386fe0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/rs/zerolog v1.28.0

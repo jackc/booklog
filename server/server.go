@@ -2,14 +2,12 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -37,7 +35,6 @@ const (
 	RequestDBKey
 	RequestSessionKey
 	RequestPathUserKey
-	RequestParamsKey
 	RequestDevModeKey
 )
 
@@ -128,7 +125,6 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 
 	r.Use(devModeHandler(devMode))
 	r.Use(pgxPoolHandler(dbpool))
-	r.Use(parseParamsHandler())
 
 	r.Use(sessionHandler(securecookie.New(cookieHashKey, cookieBlockKey)))
 
@@ -395,54 +391,4 @@ func baseViewArgsFromRequest(r *http.Request) *view.BaseViewArgs {
 		PathUser:    pathUser,
 		DevMode:     devMode,
 	}
-}
-
-func parseParamsHandler() func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		fn := func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-			params, err := parseParams(r)
-			if err != nil {
-				InternalServerErrorHandler(w, r, err)
-			}
-
-			ctx = context.WithValue(ctx, RequestParamsKey, params)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		}
-
-		return http.HandlerFunc(fn)
-	}
-}
-
-func parseParams(r *http.Request) (map[string]any, error) {
-	params := make(map[string]any)
-
-	routeParams := chi.RouteContext(r.Context()).URLParams
-	for i := 0; i < len(routeParams.Keys); i++ {
-		params[routeParams.Keys[i]] = routeParams.Values[i]
-	}
-
-	err := r.ParseForm()
-	if err != nil {
-		return nil, err
-	}
-
-	for key, values := range r.Form {
-		if len(values) > 0 {
-			if strings.HasSuffix(key, "[]") {
-				params[key[:len(key)-2]] = values
-			} else {
-				params[key] = values[0]
-			}
-		}
-	}
-
-	if r.Header.Get("Content-Type") == "application/json" {
-		decoder := json.NewDecoder(r.Body)
-		if err := decoder.Decode(&params); err != nil {
-			return nil, err
-		}
-	}
-
-	return params, nil
 }
