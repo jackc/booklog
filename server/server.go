@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -109,12 +110,14 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 
 	r.Use(sessionHandler(securecookie.New(cookieHashKey, cookieBlockKey)))
 
-	hb := &bee.HandlerBuilder{}
-	hb.ErrorHandlers = []bee.ErrorHandler{
-		func(w http.ResponseWriter, r *http.Request, err error) (bool, error) {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return true, nil
+	hb := &bee.HandlerBuilder{
+		ErrorHandlers: []bee.ErrorHandler{
+			func(w http.ResponseWriter, r *http.Request, err error) (bool, error) {
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return true, nil
+			},
 		},
+		ETagDigestFilter: regexp.MustCompile(`<input type="hidden" name="gorilla.csrf.Token" value="[^"]+">`),
 	}
 
 	r.Method("GET", "/", hb.New(RootHandler))
