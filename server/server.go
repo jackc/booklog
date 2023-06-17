@@ -78,6 +78,7 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 		htr: htr,
 	}
 
+	r.Use(middleware.Compress(5))
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 

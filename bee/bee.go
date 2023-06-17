@@ -74,6 +74,12 @@ func (hb *HandlerBuilder) New(fn func(ctx context.Context, w http.ResponseWriter
 			}
 		}
 
+		// Even though the net/http package will set the Content-Type header if it is not set, we do it here so that
+		// Content-Type is available for middleware such as chi/middleware/Compress.
+		if brw.Header().Get("Content-Type") == "" {
+			brw.Header().Set("Content-Type", http.DetectContentType(brw.b.Bytes()))
+		}
+
 		if brw.statusCode != 0 {
 			brw.w.WriteHeader(brw.statusCode)
 		}
