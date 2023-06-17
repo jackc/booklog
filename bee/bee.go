@@ -4,6 +4,8 @@ package bee
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
 	"net/http"
 	"sync"
 )
@@ -78,6 +80,18 @@ func (hb *HandlerBuilder) New(fn func(ctx context.Context, w http.ResponseWriter
 		// Content-Type is available for middleware such as chi/middleware/Compress.
 		if brw.Header().Get("Content-Type") == "" {
 			brw.Header().Set("Content-Type", http.DetectContentType(brw.b.Bytes()))
+		}
+
+		if r.Method == http.MethodGet && brw.Header().Get("ETag") == "" {
+			bodyDigest := sha256.Sum256(brw.b.Bytes())
+			etag := `W/"` + base64.URLEncoding.EncodeToString(bodyDigest[:]) + `"`
+
+			if r.Header.Get("If-None-Match") == etag {
+				brw.w.WriteHeader(http.StatusNotModified)
+				return
+			}
+
+			brw.w.Header().Set("ETag", etag)
 		}
 
 		if brw.statusCode != 0 {
