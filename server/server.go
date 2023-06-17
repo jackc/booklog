@@ -279,6 +279,7 @@ func setSessionCookie(w http.ResponseWriter, r *http.Request, userSessionID [16]
 		Path:     "/",
 		Secure:   false, // TODO - true when not in insecure dev mode
 		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
 	}
 	http.SetCookie(w, cookie)
 
