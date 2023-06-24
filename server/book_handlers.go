@@ -10,8 +10,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/jackc/booklog/bee"
 	"github.com/jackc/booklog/data"
 	"github.com/jackc/booklog/route"
 	"github.com/jackc/booklog/validate"
@@ -29,22 +27,6 @@ import (
 // But then on third thought, maybe it is better to have a lazy system. Or at least the wrapper concept. The win with
 // the wrapper is customizable acquire and release logic such as setting the user for RLS and unsetting it before
 // returning it to the pool.
-
-func mountBookHandlers(r chi.Router, hb *bee.HandlerBuilder) http.Handler {
-	r.Method("GET", "/books", hb.New(BookIndex))
-	r.Method("GET", "/books/new", hb.New(BookNew))
-	r.Method("POST", "/books", hb.New(BookCreate))
-	r.Method("GET", "/books/{id}/edit", parseInt64URLParam("id")(hb.New(BookEdit)))
-	r.Method("GET", "/books/{id}", parseInt64URLParam("id")(hb.New(BookShow)))
-	r.Method("GET", "/books/{id}/confirm_delete", parseInt64URLParam("id")(hb.New(BookConfirmDelete)))
-	r.Method("PATCH", "/books/{id}", parseInt64URLParam("id")(hb.New(BookUpdate)))
-	r.Method("DELETE", "/books/{id}", parseInt64URLParam("id")(hb.New(BookDelete)))
-	r.Method("GET", "/books/import_csv/form", hb.New(BookImportCSVForm))
-	r.Method("POST", "/books/import_csv", hb.New(BookImportCSV))
-	r.Method("GET", "/books.csv", hb.New(BookExportCSV))
-
-	return r
-}
 
 func BookIndex(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	db := ctx.Value(RequestDBKey).(dbconn)

@@ -133,7 +133,17 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 		r.Use(pathUserHandler())
 		r.Use(requireSameSessionUserAndPathUserHandler())
 		r.Method("GET", "/", hb.New(UserHome))
-		mountBookHandlers(r, hb)
+		r.Method("GET", "/books", hb.New(BookIndex))
+		r.Method("GET", "/books/new", hb.New(BookNew))
+		r.Method("POST", "/books", hb.New(BookCreate))
+		r.Method("GET", "/books/{id}/edit", parseInt64URLParam("id")(hb.New(BookEdit)))
+		r.Method("GET", "/books/{id}", parseInt64URLParam("id")(hb.New(BookShow)))
+		r.Method("GET", "/books/{id}/confirm_delete", parseInt64URLParam("id")(hb.New(BookConfirmDelete)))
+		r.Method("PATCH", "/books/{id}", parseInt64URLParam("id")(hb.New(BookUpdate)))
+		r.Method("DELETE", "/books/{id}", parseInt64URLParam("id")(hb.New(BookDelete)))
+		r.Method("GET", "/books/import_csv/form", hb.New(BookImportCSVForm))
+		r.Method("POST", "/books/import_csv", hb.New(BookImportCSV))
+		r.Method("GET", "/books.csv", hb.New(BookExportCSV))
 	})
 
 	if frontendPath != "" {
