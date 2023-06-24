@@ -19,9 +19,6 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type HandlerEnv struct {
-}
-
 // TODO -- LazyConn? A wrapper around *pgxpool.Pool that only acquires a *pgx.Conn on demand, but then uses the same one
 // for all subsequent calls. Maybe it should not have a direct dependency on *pgxpool.Pool, but instead have functions to acquire and release.
 
