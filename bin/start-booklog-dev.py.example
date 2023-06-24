@@ -1,0 +1,31 @@
+#!/usr/bin/env python3.7
+
+import iterm2
+
+async def main(connection):
+    booklogPath = '~/dev/booklog/'
+
+    app = await iterm2.async_get_app(connection)
+    window = app.current_terminal_window
+    if window is None:
+        print("No current window")
+        exit()
+
+    appServerTab = window.current_tab
+
+    booklogServerSession = appServerTab.current_session
+    await booklogServerSession.async_send_text(f'cd {booklogPath}\n')
+    await booklogServerSession.async_send_text('rake rerun\n')
+
+    viteSession = await booklogServerSession.async_split_pane(vertical=False)
+    await viteSession.async_send_text(f'cd {booklogPath}\n')
+    await viteSession.async_send_text('npx vite\n')
+
+    booklogConsoleTab = await window.async_create_tab()
+    booklogConsoleSession = booklogConsoleTab.current_session
+    await booklogConsoleSession.async_send_text(f'cd {booklogPath}\n')
+    await booklogConsoleSession.async_send_text('code .\n')
+
+    await booklogConsoleTab.async_activate()
+
+iterm2.run_until_complete(main)

@@ -44,6 +44,17 @@ npx vite
 
 Site will be available at: http://localhost:5173/
 
+## Iterm2 Script
+
+`bin/start-booklog-dev.py.example` contains an example script to start all needed programs for development. It does the following:
+
+* Start booklog server.
+* Split the window and run the asset server
+* Create a tab for a console.
+* Open booklog in VS Code.
+
+Make a copy of this file without the `.example`. Symlink the file into `~/Library/Application Support/iTerm2/Scripts`. e.g. `ln -s ~/dev/booklog/bin/start-isoamp-dev.py ~/Library/Application\ Support/iTerm2/Scripts`.  This script will then be available in the iTerm2 Scripts menu as well as the cmd+shift+o "Open Quickly" window. You can now edit the file if needed.
+
 ## Testing
 
 The following environment variables must be set:

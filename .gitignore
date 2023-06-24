@@ -9,3 +9,5 @@ node_modules
 !/tmp/test
 /tmp/test/*
 !/tmp/test/.keep
+
+/bin/start-booklog-dev.py
