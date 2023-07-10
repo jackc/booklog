@@ -7,6 +7,7 @@ import (
 
 	"github.com/jackc/booklog/data"
 	"github.com/jackc/booklog/validate"
+	"github.com/jackc/errortree"
 )
 
 type BaseViewArgs struct {
@@ -29,7 +30,7 @@ type BookEditForm struct {
 	Location   string
 }
 
-func (f BookEditForm) Parse() (data.Book, validate.Errors) {
+func (f BookEditForm) Parse() (data.Book, *errortree.Node) {
 	var err error
 	book := data.Book{
 		Title:    f.Title,
@@ -52,7 +53,7 @@ func (f BookEditForm) Parse() (data.Book, validate.Errors) {
 	}
 
 	if v.Err() != nil {
-		return book, v.Err().(validate.Errors)
+		return book, v.Err().(*errortree.Node)
 	}
 
 	return book, nil

@@ -5,14 +5,14 @@
   <form action="{{LoginPath}}" method="post">
     {{.bva.CSRFField}}
 
-    {{range .verr.base}}
+    {{range .verr.Get "base"}}
       <div class="error">{{.}}</div>
     {{end}}
 
     <div class="field">
       <label for="username">Username</label>
       <input type="text" name="username" id="username" value="{{.form.Username}}" autofocus required>
-      {{range .verr.username}}
+      {{range .verr.Get "username"}}
         <div class="error">{{.}}</div>
       {{end}}
     </div>
@@ -20,7 +20,7 @@
     <div class="field">
       <label for="password">Password</label>
       <input type="password" name="password" id="password" value="{{.form.Password}}" required minlength="8">
-      {{range .verr.password}}
+      {{range .verr.Get "password"}}
         <div class="error">{{.}}</div>
       {{end}}
     </div>

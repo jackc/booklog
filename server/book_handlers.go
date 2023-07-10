@@ -12,8 +12,8 @@ import (
 
 	"github.com/jackc/booklog/data"
 	"github.com/jackc/booklog/route"
-	"github.com/jackc/booklog/validate"
 	"github.com/jackc/booklog/view"
+	"github.com/jackc/errortree"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/structify"
 )
@@ -83,7 +83,7 @@ func BookCreate(ctx context.Context, w http.ResponseWriter, r *http.Request, par
 
 	book, err := data.CreateBook(ctx, db, attrs)
 	if err != nil {
-		var verr validate.Errors
+		var verr *errortree.Node
 		if errors.As(err, &verr) {
 			return ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer).ExecuteTemplate(w, "book_new.html", map[string]any{
 				"bva":  baseViewArgsFromRequest(r),
@@ -206,7 +206,7 @@ func BookUpdate(ctx context.Context, w http.ResponseWriter, r *http.Request, par
 
 	err := data.UpdateBook(ctx, db, attrs)
 	if err != nil {
-		var verr validate.Errors
+		var verr *errortree.Node
 		if errors.As(err, &verr) {
 			return ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer).ExecuteTemplate(w, "book_new.html", map[string]any{
 				"bva":    baseViewArgsFromRequest(r),

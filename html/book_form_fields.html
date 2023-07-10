@@ -3,7 +3,7 @@
 <div class="field">
   <label for="title">Title</label>
   <input type="text" name="title" id="title" value="{{.form.Title}}" >
-  {{range .verr.title}}
+  {{range .verr.Get "title"}}
     <div class="error">{{.}}</div>
   {{end}}
 </div>
@@ -11,7 +11,7 @@
 <div class="field">
   <label for="author">Author</label>
   <input type="text" name="author" id="author" value="{{.form.Author}}" >
-  {{range .verr.author}}
+  {{range .verr.Get "author"}}
     <div class="error">{{.}}</div>
   {{end}}
 </div>
@@ -19,7 +19,7 @@
 <div class="field">
   <label for="finishDate">Finish Date</label>
   <input type="date" name="finishDate" id="finishDate" value="{{.form.FinishDate}}" >
-  {{range .verr.finishDate}}
+  {{range .verr.Get "finishDate"}}
     <div class="error">{{.}}</div>
   {{end}}
 </div>
@@ -31,7 +31,7 @@
     <option {{if eq .form.Format "audio"}}selected{{end}}>audio</option>
     <option {{if eq .form.Format "video"}}selected{{end}}>video</option>
   </select>
-  {{range .verr.format}}
+  {{range .verr.Get "format"}}
     <div class="error">{{.}}</div>
   {{end}}
 </div>
@@ -39,7 +39,7 @@
 <div class="field">
   <label for="location">Location</label>
   <input type="text" name="location" id="location" value="{{.form.Location}}" >
-  {{range .verr.location}}
+  {{range .verr.Get "location"}}
     <div class="error">{{.}}</div>
   {{end}}
 </div>

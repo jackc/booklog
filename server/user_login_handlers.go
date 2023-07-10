@@ -7,8 +7,8 @@ import (
 
 	"github.com/jackc/booklog/data"
 	"github.com/jackc/booklog/route"
-	"github.com/jackc/booklog/validate"
 	"github.com/jackc/booklog/view"
+	"github.com/jackc/errortree"
 )
 
 func UserLoginForm(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]any) error {
@@ -29,7 +29,7 @@ func UserLogin(ctx context.Context, w http.ResponseWriter, r *http.Request, para
 
 	userSessionID, err := data.UserLogin(ctx, db, la)
 	if err != nil {
-		var verr validate.Errors
+		var verr *errortree.Node
 		if errors.As(err, &verr) {
 			return ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer).ExecuteTemplate(w, "login.html", map[string]any{
 				"bva":  baseViewArgsFromRequest(r),

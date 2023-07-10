@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/booklog/validate"
+	"github.com/jackc/errortree"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype/zeronull"
 )
@@ -31,7 +32,7 @@ func (book *Book) Normalize() {
 	book.Location = strings.TrimSpace(book.Location)
 }
 
-func (book *Book) Validate() validate.Errors {
+func (book *Book) Validate() *errortree.Node {
 	v := validate.New()
 	v.Presence("title", book.Title)
 	v.Presence("author", book.Author)
@@ -48,7 +49,7 @@ func (book *Book) Validate() validate.Errors {
 	}
 
 	if v.Err() != nil {
-		return v.Err().(validate.Errors)
+		return v.Err().(*errortree.Node)
 	}
 
 	return nil

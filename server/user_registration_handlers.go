@@ -7,8 +7,8 @@ import (
 
 	"github.com/jackc/booklog/data"
 	"github.com/jackc/booklog/route"
-	"github.com/jackc/booklog/validate"
 	"github.com/jackc/booklog/view"
+	"github.com/jackc/errortree"
 )
 
 func UserRegistrationNew(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]any) error {
@@ -29,7 +29,7 @@ func UserRegistrationCreate(ctx context.Context, w http.ResponseWriter, r *http.
 
 	userSessionID, err := data.RegisterUser(ctx, db, rua)
 	if err != nil {
-		var verr validate.Errors
+		var verr *errortree.Node
 		if errors.As(err, &verr) {
 			return ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer).ExecuteTemplate(w, "user_registration.html", map[string]any{
 				"bva":  baseViewArgsFromRequest(r),

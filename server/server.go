@@ -109,6 +109,7 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 	hb := &bee.HandlerBuilder{
 		ErrorHandlers: []bee.ErrorHandler{
 			func(w http.ResponseWriter, r *http.Request, err error) (bool, error) {
+				fmt.Println(err)
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 				return true, nil
 			},
