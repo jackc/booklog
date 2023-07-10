@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/booklog/view"
 )
 
-func UserLoginForm(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func UserLoginForm(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]any) error {
 	var la data.UserLoginArgs
 	return ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer).ExecuteTemplate(w, "login.html", map[string]any{
 		"bva":  baseViewArgsFromRequest(r),
@@ -19,7 +19,7 @@ func UserLoginForm(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 	})
 }
 
-func UserLogin(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func UserLogin(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]any) error {
 	db := ctx.Value(RequestDBKey).(dbconn)
 
 	la := data.UserLoginArgs{
@@ -50,7 +50,7 @@ func UserLogin(ctx context.Context, w http.ResponseWriter, r *http.Request) erro
 	return nil
 }
 
-func UserLogout(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func UserLogout(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]any) error {
 	db := ctx.Value(RequestDBKey).(dbconn)
 	session := ctx.Value(RequestSessionKey).(*Session)
 

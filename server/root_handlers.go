@@ -7,7 +7,7 @@ import (
 	"github.com/jackc/booklog/route"
 )
 
-func RootHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func RootHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]any) error {
 	session := ctx.Value(RequestSessionKey).(*Session)
 
 	if session.IsAuthenticated {

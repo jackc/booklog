@@ -15,6 +15,7 @@ import (
 	"github.com/jackc/booklog/validate"
 	"github.com/jackc/booklog/view"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/structify"
 )
 
 // TODO -- LazyConn? A wrapper around *pgxpool.Pool that only acquires a *pgx.Conn on demand, but then uses the same one
@@ -28,7 +29,7 @@ import (
 // the wrapper is customizable acquire and release logic such as setting the user for RLS and unsetting it before
 // returning it to the pool.
 
-func BookIndex(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func BookIndex(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]any) error {
 	db := ctx.Value(RequestDBKey).(dbconn)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
@@ -56,7 +57,7 @@ func BookIndex(ctx context.Context, w http.ResponseWriter, r *http.Request) erro
 	})
 }
 
-func BookNew(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func BookNew(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]any) error {
 	var form view.BookEditForm
 	return ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer).ExecuteTemplate(w, "book_new.html", map[string]any{
 		"bva":  baseViewArgsFromRequest(r),
@@ -64,17 +65,12 @@ func BookNew(ctx context.Context, w http.ResponseWriter, r *http.Request) error 
 	})
 }
 
-func BookCreate(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func BookCreate(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]any) error {
 	db := ctx.Value(RequestDBKey).(dbconn)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
-	form := view.BookEditForm{
-		Title:      r.FormValue("title"),
-		Author:     r.FormValue("author"),
-		FinishDate: r.FormValue("finishDate"),
-		Format:     r.FormValue("format"),
-		Location:   r.FormValue("location"),
-	}
+	var form view.BookEditForm
+	_ = structify.Parse(params, &form)
 	attrs, verr := form.Parse()
 	if verr != nil {
 		return ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer).ExecuteTemplate(w, "book_new.html", map[string]any{
@@ -102,7 +98,7 @@ func BookCreate(ctx context.Context, w http.ResponseWriter, r *http.Request) err
 	return nil
 }
 
-func BookConfirmDelete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func BookConfirmDelete(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]any) error {
 	db := ctx.Value(RequestDBKey).(dbconn)
 	bookID := int64URLParam(r, "id")
 
@@ -123,7 +119,7 @@ func BookConfirmDelete(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	})
 }
 
-func BookDelete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func BookDelete(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]any) error {
 	db := ctx.Value(RequestDBKey).(dbconn)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 	bookID := int64URLParam(r, "id")
@@ -143,7 +139,7 @@ func BookDelete(ctx context.Context, w http.ResponseWriter, r *http.Request) err
 	return nil
 }
 
-func BookShow(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func BookShow(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]any) error {
 	db := ctx.Value(RequestDBKey).(dbconn)
 	bookID := int64URLParam(r, "id")
 
@@ -164,7 +160,7 @@ func BookShow(ctx context.Context, w http.ResponseWriter, r *http.Request) error
 	})
 }
 
-func BookEdit(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func BookEdit(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]any) error {
 	db := ctx.Value(RequestDBKey).(dbconn)
 	bookID := int64URLParam(r, "id")
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
@@ -190,18 +186,13 @@ func BookEdit(ctx context.Context, w http.ResponseWriter, r *http.Request) error
 	})
 }
 
-func BookUpdate(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func BookUpdate(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]any) error {
 	db := ctx.Value(RequestDBKey).(dbconn)
 	bookID := int64URLParam(r, "id")
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
-	form := view.BookEditForm{
-		Title:      r.FormValue("title"),
-		Author:     r.FormValue("author"),
-		FinishDate: r.FormValue("finishDate"),
-		Format:     r.FormValue("format"),
-		Location:   r.FormValue("location"),
-	}
+	var form view.BookEditForm
+	_ = structify.Parse(params, &form)
 	attrs, verr := form.Parse()
 	if verr != nil {
 		return ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer).ExecuteTemplate(w, "book_edit.html", map[string]any{
@@ -238,7 +229,7 @@ func BookUpdate(ctx context.Context, w http.ResponseWriter, r *http.Request) err
 	return nil
 }
 
-func BookImportCSVForm(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func BookImportCSVForm(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]any) error {
 	return ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer).ExecuteTemplate(w, "book_import_csv_form.html", map[string]any{
 		"bva": baseViewArgsFromRequest(r),
 	})
@@ -246,7 +237,7 @@ func BookImportCSVForm(ctx context.Context, w http.ResponseWriter, r *http.Reque
 
 // TODO - do transactions right
 
-func BookImportCSV(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func BookImportCSV(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]any) error {
 	db := ctx.Value(RequestDBKey).(dbconn)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
@@ -317,7 +308,7 @@ func importBooksFromCSV(ctx context.Context, db dbconn, ownerID int64, r io.Read
 	return tx.Commit(ctx)
 }
 
-func BookExportCSV(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func BookExportCSV(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]any) error {
 	db := ctx.Value(RequestDBKey).(dbconn)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 

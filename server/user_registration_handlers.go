@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/booklog/view"
 )
 
-func UserRegistrationNew(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func UserRegistrationNew(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]any) error {
 	var rua data.RegisterUserArgs
 	return ctx.Value(RequestHTMLTemplateRendererKey).(*view.HTMLTemplateRenderer).ExecuteTemplate(w, "user_registration.html", map[string]any{
 		"bva":  baseViewArgsFromRequest(r),
@@ -19,7 +19,7 @@ func UserRegistrationNew(ctx context.Context, w http.ResponseWriter, r *http.Req
 	})
 }
 
-func UserRegistrationCreate(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func UserRegistrationCreate(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]any) error {
 	db := ctx.Value(RequestDBKey).(dbconn)
 
 	rua := data.RegisterUserArgs{

@@ -15,9 +15,13 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"net/http"
 	"regexp"
+	"strings"
 	"sync"
+
+	"github.com/go-chi/chi/v5"
 )
 
 var bufPool = sync.Pool{
@@ -64,7 +68,7 @@ type HandlerBuilder struct {
 }
 
 // New returns a new http.Handler that calls fn. If fn returns an error then the error is passed to the ErrorHandlers.
-func (hb *HandlerBuilder) New(fn func(ctx context.Context, w http.ResponseWriter, r *http.Request) error) http.Handler {
+func (hb *HandlerBuilder) New(fn func(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]any) error) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		b := bufPool.Get().(*bytes.Buffer)
 		defer func() {
@@ -77,7 +81,13 @@ func (hb *HandlerBuilder) New(fn func(ctx context.Context, w http.ResponseWriter
 			b: b,
 		}
 
-		err := fn(r.Context(), brw, r)
+		params, err := parseParams(r)
+		if err != nil {
+			http.Error(w, "Bad Request", http.StatusBadRequest)
+			return
+		}
+
+		err = fn(r.Context(), brw, r, params)
 		if err != nil {
 			brw.Reset()
 			for _, eh := range hb.ErrorHandlers {
@@ -132,4 +142,52 @@ func (hb *HandlerBuilder) New(fn func(ctx context.Context, w http.ResponseWriter
 		}
 		brw.b.WriteTo(brw.w)
 	})
+}
+
+func parseParams(r *http.Request) (map[string]any, error) {
+	params := make(map[string]any)
+
+	routeParams := chi.RouteContext(r.Context()).URLParams
+	for i := 0; i < len(routeParams.Keys); i++ {
+		params[routeParams.Keys[i]] = routeParams.Values[i]
+	}
+
+	addValuesToParams := func(m map[string][]string) {
+		for key, values := range m {
+			if len(values) > 0 {
+				if strings.HasSuffix(key, "[]") {
+					params[key[:len(key)-2]] = values
+				} else {
+					params[key] = values[0]
+				}
+			}
+		}
+	}
+
+	addValuesToParams(r.URL.Query())
+
+	contentType := r.Header.Get("Content-Type")
+	switch {
+	case contentType == "application/json":
+		decoder := json.NewDecoder(r.Body)
+		decoder.UseNumber()
+		err := decoder.Decode(&params)
+		if err != nil {
+			return nil, err
+		}
+	case contentType == "application/x-www-form-urlencoded":
+		err := r.ParseForm()
+		if err != nil {
+			return nil, err
+		}
+		addValuesToParams(r.PostForm)
+	case strings.HasPrefix(contentType, "multipart/form-data"):
+		err := r.ParseMultipartForm(5 * 1024 * 1024)
+		if err != nil {
+			return nil, err
+		}
+		addValuesToParams(r.MultipartForm.Value)
+	}
+
+	return params, nil
 }

@@ -142,6 +142,8 @@ github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
 github.com/jackc/cachet v0.0.0-20230311211947-c9ca1bde8830 h1:YzlE5sS9UR5/AMLSEaYmQn004Y4kqXi3Y1vE5isOJ4Y=
 github.com/jackc/cachet v0.0.0-20230311211947-c9ca1bde8830/go.mod h1:EdDu7KuTGTgklGe9gFc6ldVcQ7oaMVma44kNAEXQCic=
+github.com/jackc/errortree v0.0.0-20230218213547-c5e1d8612a3f h1:EyPO8Z4WMGcu1stbVBK6Q0EQ1MBOq0NdvmTFMQ84TqQ=
+github.com/jackc/errortree v0.0.0-20230218213547-c5e1d8612a3f/go.mod h1:sI6WvU4sj7pXEvSGzzWJrB6Nf278YaOHOPe4WwoxC+g=
 github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=
 github.com/jackc/pgpassfile v1.0.0/go.mod h1:CEx0iS5ambNFdcRtxPj5JhEz+xB6uRky5eyVu/W2HEg=
 github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a h1:bbPeKD0xmW/Y25WS6cokEszi5g+S0QxI/d45PkRi7Nk=
@@ -152,6 +154,8 @@ github.com/jackc/pgxrecord v0.0.0-20230213211727-6680ebb56bcc h1:I0nI8MZ4m06dxI3
 github.com/jackc/pgxrecord v0.0.0-20230213211727-6680ebb56bcc/go.mod h1:4JYiLbDlD73YCeo9U02tAA93Api5g5i6oZJTMcRnwHg=
 github.com/jackc/puddle/v2 v2.2.0 h1:RdcDk92EJBuBS55nQMMYFXTxwstHug4jkhT5pq8VxPk=
 github.com/jackc/puddle/v2 v2.2.0/go.mod h1:vriiEXHvEE654aYKXXjOvZM39qJ0q+azkZFrfEOc3H4=
+github.com/jackc/structify v0.0.0-20230218213732-dd25d3a8012b h1:1Cpc/8jpPvWoHiuaa2BV4QVH8OFP6nwFMjoL79qmnkw=
+github.com/jackc/structify v0.0.0-20230218213732-dd25d3a8012b/go.mod h1:08XsKE5GTR8EUnIN32V8e9N9jkBhnJMON42Cb90lS9E=
 github.com/jackc/testdb v0.0.0-20221015161059-a3705a386fe0 h1:hVfu7y+cM0g6w/V+wK1KuRjlGKGDS9lfamwTzmDZZkQ=
 github.com/jackc/testdb v0.0.0-20221015161059-a3705a386fe0/go.mod h1:657T1zynMu9PQNZk2HC6KTbzRmzge0/rhTtDTIviIwA=
 github.com/jstemmer/go-junit-report v0.0.0-20190106144839-af01ea7f8024/go.mod h1:6v2b51hI/fHJwM22ozAgKL4VKDeJcHhJFhtBdhmNjmU=

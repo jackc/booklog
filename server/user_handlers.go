@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/booklog/view"
 )
 
-func UserHome(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func UserHome(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]any) error {
 	db := ctx.Value(RequestDBKey).(dbconn)
 	pathUser := ctx.Value(RequestPathUserKey).(*data.UserMin)
 
