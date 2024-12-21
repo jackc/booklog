@@ -6,14 +6,14 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgxrecord"
+	"github.com/jackc/pgxutil"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
 )
 
 var counter atomic.Int64
 
-func CreateUser(t testing.TB, db pgxrecord.DB, ctx context.Context, attrs map[string]any) map[string]any {
+func CreateUser(t testing.TB, db pgxutil.DB, ctx context.Context, attrs map[string]any) map[string]any {
 	var password []byte
 	if s, ok := attrs["password"].(string); ok {
 		password = []byte(s)
@@ -29,14 +29,14 @@ func CreateUser(t testing.TB, db pgxrecord.DB, ctx context.Context, attrs map[st
 		attrs["username"] = "test"
 	}
 
-	user, err := pgxrecord.InsertRowReturning(ctx, db, pgx.Identifier{"users"}, attrs, "*", pgx.RowToMap)
+	user, err := pgxutil.InsertRowReturning(ctx, db, pgx.Identifier{"users"}, attrs, "*", pgx.RowToMap)
 	require.NoError(t, err)
 
 	return user
 }
 
-func CreateBook(t testing.TB, db pgxrecord.DB, ctx context.Context, attrs map[string]any) map[string]any {
-	user, err := pgxrecord.InsertRowReturning(ctx, db, pgx.Identifier{"books"}, attrs, "*", pgx.RowToMap)
+func CreateBook(t testing.TB, db pgxutil.DB, ctx context.Context, attrs map[string]any) map[string]any {
+	user, err := pgxutil.InsertRowReturning(ctx, db, pgx.Identifier{"books"}, attrs, "*", pgx.RowToMap)
 	require.NoError(t, err)
 
 	return user

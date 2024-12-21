@@ -11,7 +11,7 @@ require (
 	github.com/jackc/cachet v0.0.0-20230311211947-c9ca1bde8830
 	github.com/jackc/errortree v0.0.0-20230218213547-c5e1d8612a3f
 	github.com/jackc/pgx/v5 v5.7.2
-	github.com/jackc/pgxrecord v0.0.0-20230213211727-6680ebb56bcc
+	github.com/jackc/pgxutil v0.0.0-20231015020832-ec5434149869
 	github.com/jackc/structify v0.0.0-20230218213732-dd25d3a8012b
 	github.com/jackc/testdb v0.0.0-20221015161059-a3705a386fe0
 	github.com/mitchellh/go-homedir v1.1.0
@@ -51,7 +51,6 @@ require (
 	github.com/ysmood/got v0.40.0 // indirect
 	github.com/ysmood/gson v0.7.3 // indirect
 	github.com/ysmood/leakless v0.9.0 // indirect
-	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67 // indirect
 	golang.org/x/sys v0.28.0 // indirect

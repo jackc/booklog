@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgxrecord"
+	"github.com/jackc/pgxutil"
 )
 
 type BooksPerTimeItem struct {
@@ -14,7 +14,7 @@ type BooksPerTimeItem struct {
 }
 
 func BooksPerYear(ctx context.Context, db dbconn, userID int64) ([]BooksPerTimeItem, error) {
-	return pgxrecord.Select(
+	return pgxutil.Select(
 		ctx,
 		db,
 		"select date_trunc('year', finish_date), count(*) from books where user_id=$1 group by 1 order by 1 desc",
@@ -24,7 +24,7 @@ func BooksPerYear(ctx context.Context, db dbconn, userID int64) ([]BooksPerTimeI
 }
 
 func BooksPerMonthForLastYear(ctx context.Context, db dbconn, userID int64) ([]BooksPerTimeItem, error) {
-	return pgxrecord.Select(
+	return pgxutil.Select(
 		ctx,
 		db,
 		`select months, count(books.id)

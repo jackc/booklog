@@ -7,7 +7,7 @@ import (
 
 	"github.com/jackc/booklog/test/testdata"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgxrecord"
+	"github.com/jackc/pgxutil"
 	"github.com/stretchr/testify/require"
 )
 
@@ -33,7 +33,7 @@ func TestBookCRUDCycle(t *testing.T) {
 
 	page.HasContent("dd", "Paradise Lost")
 
-	books, err := pgxrecord.Select(ctx, db, "select * from books", nil, pgx.RowToMap)
+	books, err := pgxutil.Select(ctx, db, "select * from books", nil, pgx.RowToMap)
 	require.NoError(t, err)
 	require.Len(t, books, 1)
 	require.Equal(t, "Paradise Lost", books[0]["title"])
