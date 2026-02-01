@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-rod/rod"
+	"github.com/go-rod/rod/lib/launcher"
 	"github.com/go-rod/rod/lib/proto"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/semaphore"
@@ -28,6 +29,15 @@ type ManagerConfig struct {
 
 func NewManager(config ManagerConfig) (*Manager, error) {
 	browser := rod.New()
+
+	if os.Getenv("TESTBROWSER_CHROME_BINARY") != "" {
+		controlURL, err := launcher.New().Bin(os.Getenv("TESTBROWSER_CHROME_BINARY")).Launch()
+		if err != nil {
+			return nil, fmt.Errorf("launch chrome failed: %w", err)
+		}
+		browser = browser.ControlURL(controlURL)
+	}
+
 	err := browser.Connect()
 	if err != nil {
 		return nil, fmt.Errorf("connect to browser failed: %w", err)

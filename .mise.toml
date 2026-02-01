@@ -1,0 +1,19 @@
+[env]
+# PATH additions from .envrc
+_.path = ["{{config_root}}/bin", "{{config_root}}/node_modules/.bin"]
+
+# Environment variables from .envrc
+PGDATABASE = "booklog_dev"
+BOOKLOG_TEST_DB_CONN_STRING = "database=booklog_test"
+TEST_DATABASE = "booklog_test"
+TEST_DATABASE_COUNT = "8"
+CSRF_KEY = "9v2ZFwTTrK4pPz2IUmrsiV8OHVkWzM2FzeYF6wSMfCOdahYrcTwC3fY9ej4UoXK5QUSSSQYtWk0L9OztQ4JqmswrONYMBDUonxuqeAe7oOUDkPQ4Bsq98vYkvPRQst"
+COOKIE_HASH_KEY = "cplqrXJDIqxFevJ1Sef3uAL2vv0D4vcv3HGBz7ugpfBL3BBDugXdCoNE4vwvGwH9RrEfXm1xpX5SFAID9gq353tuuxvLt1bUkuOGVizxnO1bwU4F0ZJLaILHTsugAaER"
+COOKIE_BLOCK_KEY = "wsCCdukxhoG5bQIfo0rJu7p6oKcHTWY0saEwSO7U79gN1wb0Q4zQqQQ3RjWFHCSqe9i7BODnHmGo03hnl6rCuZjy5uhz1ctasHSv0C1qt1WDBz6O1C113AYNYDXCmsrd"
+TERN_CONFIG = "postgresql/tern.conf"
+TERN_MIGRATIONS = "postgresql/migrations"
+TESTBROWSER_CHROME_BINARY = "{{env.HOME}}/.cache/ms-playwright/chromium-1208/chrome-linux/chrome"
+
+[tools]
+nodejs = "22.12.0"
+ruby = "4.0.1"

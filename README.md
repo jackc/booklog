@@ -4,39 +4,24 @@ Booklog is a simple tool to track read books.
 
 ## Development
 
-Required Prerequisites:
+The preferred development environment is the provided devcontainer. There are VS Code tasks defined to automatically
+start the Go HTTP server and the Vite server. Unfortunately, the first time the devcontainer is created the tasks will
+run before the devcontainer is fully setup. So those tasks will need to be manually restarted the first time the project
+is used.
 
-https://github.com/jackc/tern - for database migrations
-https://direnv.net/ - Manage environment variables
-
-Highly Recommended:
-
-https://github.com/asdf-vm/asdf - Version management for Ruby and Node
-https://github.com/watchexec/watchexec - Restart server when files change (needed for `rake rerun`)
-
-Make a copy of all files that end in `.example` but without the `.example` and edit the new files as needed to configure development environment.
-
-Create database and user.
+Tests are run with `rake`.
 
 ```
-createdb --locale=en_US -T template0 booklog_dev
-createuser booklog
+rake
 ```
 
-
-```
-npm install
-bundle install
-tern migrate -m migration -c migration/development.conf
-```
-
-Run server with rake:
+There is a rake task that will automatically recompile and restart the backend server whenever any Go code changes.
 
 ```
 rake rerun
 ```
 
-Run asset server:
+In another terminal start the vite development server.
 
 ```
 npx vite

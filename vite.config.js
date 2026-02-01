@@ -5,6 +5,7 @@ import viteCompression from 'vite-plugin-compression'
 // https://vitejs.dev/config/
 export default defineConfig({
   server: {
+    host: "127.0.0.1",
     proxy: {
       "^/(?!@vite|@fs|src|__vite|node_modules|assets|css).*": {
         target: "http://127.0.0.1:3000"

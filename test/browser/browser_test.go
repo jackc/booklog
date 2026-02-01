@@ -43,8 +43,6 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
-	baseBrowser = rod.New().MustConnect()
-
 	os.Exit(m.Run())
 }
 
