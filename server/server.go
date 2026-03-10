@@ -117,6 +117,11 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 		ETagDigestFilter: regexp.MustCompile(`<input type="hidden" name="gorilla.csrf.Token" value="[^"]+">`),
 	}
 
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+
 	r.Method("GET", "/", hb.New(RootHandler))
 	r.Method("GET", "/user_registration/new", hb.New(UserRegistrationNew))
 	r.Method("POST", "/user_registration", hb.New(UserRegistrationCreate))
