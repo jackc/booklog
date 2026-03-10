@@ -8,12 +8,12 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/jackc/booklog/server"
 	"github.com/jackc/booklog/view"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // serveCmd represents the serve command
@@ -21,10 +21,46 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Start web server",
 	Run: func(cmd *cobra.Command, args []string) {
-		digestKey := func(size int, keyName string) []byte {
+		// Helper to get string config with CLI > Env > Default precedence
+		getString := func(flagName, envVar string) string {
+			flag := cmd.Flags().Lookup(flagName)
+			if flag != nil && flag.Changed {
+				return flag.Value.String()
+			}
+			if envValue, ok := os.LookupEnv(envVar); ok {
+				return envValue
+			}
+			if flag != nil {
+				return flag.Value.String()
+			}
+			return ""
+		}
+
+		// Helper to get bool config with CLI > Env > Default precedence
+		// Returns (value, wasExplicitlySet)
+		getBool := func(flagName, envVar string) (bool, bool) {
+			flag := cmd.Flags().Lookup(flagName)
+			if flag != nil && flag.Changed {
+				val, _ := strconv.ParseBool(flag.Value.String())
+				return val, true
+			}
+			if envValue, ok := os.LookupEnv(envVar); ok {
+				val, err := strconv.ParseBool(envValue)
+				if err == nil {
+					return val, true
+				}
+			}
+			if flag != nil {
+				val, _ := strconv.ParseBool(flag.Value.String())
+				return val, false
+			}
+			return false, false
+		}
+
+		digestKey := func(size int, keyValue, keyName string) []byte {
 			buf := make([]byte, size)
-			if s := viper.GetString(keyName); len(s) >= size {
-				h := sha256.Sum256([]byte(s))
+			if len(keyValue) >= size {
+				h := sha256.Sum256([]byte(keyValue))
 				copy(buf, h[:])
 			} else {
 				fmt.Fprintf(os.Stderr, "%s not set or too short. Using random key.\n", keyName)
@@ -33,33 +69,33 @@ var serveCmd = &cobra.Command{
 					os.Exit(1)
 				}
 			}
-
 			return buf
 		}
 
-		csrfKey := digestKey(32, "csrf_key")
-		cookieHashKey := digestKey(32, "cookie_hash_key")
-		cookieBlockKey := digestKey(32, "cookie_block_key")
+		csrfKey := digestKey(32, getString("csrf-key", "CSRF_KEY"), "csrf_key")
+		cookieHashKey := digestKey(32, getString("cookie-hash-key", "COOKIE_HASH_KEY"), "cookie_hash_key")
+		cookieBlockKey := digestKey(32, getString("cookie-block-key", "COOKIE_BLOCK_KEY"), "cookie_block_key")
 
-		dbpool, err := pgxpool.New(context.Background(), viper.GetString("database_url"))
+		dbpool, err := pgxpool.New(context.Background(), getString("database-url", "DATABASE_URL"))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "failed to create DB pool: %v\n", err)
 			os.Exit(1)
 		}
 
-		var devMode = viper.GetBool("dev")
-		var reloadHTMLTemplates = viper.GetBool("reload_html_templates")
-		var secureCookies = viper.GetBool("secure_cookies")
+		devMode, _ := getBool("dev", "DEV")
+		reloadHTMLTemplates, reloadHTMLTemplatesSet := getBool("reload-html-templates", "RELOAD_HTML_TEMPLATES")
+		secureCookies, secureCookiesSet := getBool("secure-cookies", "SECURE_COOKIES")
+
 		if devMode {
-			if !viper.IsSet("reload_html_templates") {
+			if !reloadHTMLTemplatesSet {
 				reloadHTMLTemplates = true
 			}
-			if !viper.IsSet("secure_cookies") {
+			if !secureCookiesSet {
 				secureCookies = false
 			}
 		}
 
-		frontendPath := viper.GetString("frontend_path")
+		frontendPath := getString("frontend-path", "FRONTEND_PATH")
 		var assetMap map[string]string
 		if frontendPath != "" {
 			var err error
@@ -70,9 +106,19 @@ var serveCmd = &cobra.Command{
 			}
 		}
 
-		htr := view.NewHTMLTemplateRenderer(viper.GetString("html_template_path"), assetMap, reloadHTMLTemplates)
+		htr := view.NewHTMLTemplateRenderer(getString("html-template-path", "HTML_TEMPLATE_PATH"), assetMap, reloadHTMLTemplates)
 
-		server, err := server.NewAppServer(viper.GetString("http_service_address"), csrfKey, secureCookies, cookieHashKey, cookieBlockKey, dbpool, htr, devMode, frontendPath)
+		server, err := server.NewAppServer(
+			getString("http-service-address", "HTTP_SERVICE_ADDRESS"),
+			csrfKey,
+			secureCookies,
+			cookieHashKey,
+			cookieBlockKey,
+			dbpool,
+			htr,
+			devMode,
+			frontendPath,
+		)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Could not create web server: %v\n", err)
 			os.Exit(1)
@@ -89,33 +135,14 @@ var serveCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(serveCmd)
 
-	serveCmd.Flags().StringP("http-service-address", "a", "127.0.0.1:3000", "HTTP service address")
-	viper.BindPFlag("http_service_address", serveCmd.Flags().Lookup("http-service-address"))
-
-	serveCmd.Flags().String("csrf-key", "", "CSRF key")
-	viper.BindPFlag("csrf_key", serveCmd.Flags().Lookup("csrf-key"))
-
-	serveCmd.Flags().String("cookie-hash-key", "", "Cookie hash key")
-	viper.BindPFlag("cookie_hash_key", serveCmd.Flags().Lookup("cookie-hash-key"))
-
-	serveCmd.Flags().String("cookie-block-key", "", "Cookie block key")
-	viper.BindPFlag("cookie_block_key", serveCmd.Flags().Lookup("cookie-block-key"))
-
-	serveCmd.Flags().Bool("secure-cookies", true, "Set Secure flag on cookies")
-	viper.BindPFlag("secure_cookies", serveCmd.Flags().Lookup("secure-cookies"))
-
-	serveCmd.Flags().StringP("database-url", "d", "", "Database URL or DSN")
-	viper.BindPFlag("database_url", serveCmd.Flags().Lookup("database-url"))
-
-	serveCmd.Flags().String("html-template-path", "html", "HTML template path")
-	viper.BindPFlag("html_template_path", serveCmd.Flags().Lookup("html-template-path"))
-
-	serveCmd.Flags().Bool("reload-html-templates", false, "Reload HTML templates")
-	viper.BindPFlag("reload_html_templates", serveCmd.Flags().Lookup("reload-html-templates"))
-
-	serveCmd.Flags().Bool("dev", false, "Development mode")
-	viper.BindPFlag("dev", serveCmd.Flags().Lookup("dev"))
-
-	serveCmd.Flags().String("frontend-path", "", "Read manifest.json from here and serve ./assets (empty means disable)")
-	viper.BindPFlag("frontend_path", serveCmd.Flags().Lookup("frontend-path"))
+	serveCmd.Flags().StringP("http-service-address", "a", "127.0.0.1:3000", "HTTP service address (env: HTTP_SERVICE_ADDRESS)")
+	serveCmd.Flags().String("csrf-key", "", "CSRF key (env: CSRF_KEY)")
+	serveCmd.Flags().String("cookie-hash-key", "", "Cookie hash key (env: COOKIE_HASH_KEY)")
+	serveCmd.Flags().String("cookie-block-key", "", "Cookie block key (env: COOKIE_BLOCK_KEY)")
+	serveCmd.Flags().Bool("secure-cookies", true, "Set Secure flag on cookies (env: SECURE_COOKIES)")
+	serveCmd.Flags().StringP("database-url", "d", "", "Database URL or DSN (env: DATABASE_URL)")
+	serveCmd.Flags().String("html-template-path", "html", "HTML template path (env: HTML_TEMPLATE_PATH)")
+	serveCmd.Flags().Bool("reload-html-templates", false, "Reload HTML templates (env: RELOAD_HTML_TEMPLATES)")
+	serveCmd.Flags().Bool("dev", false, "Development mode (env: DEV)")
+	serveCmd.Flags().String("frontend-path", "", "Read manifest.json from here and serve ./assets (env: FRONTEND_PATH)")
 }
