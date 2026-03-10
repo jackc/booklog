@@ -36,6 +36,25 @@ var serveCmd = &cobra.Command{
 			return ""
 		}
 
+		// Helper to get int config with CLI > Env > Default precedence
+		getInt := func(flagName, envVar string) int {
+			flag := cmd.Flags().Lookup(flagName)
+			if flag != nil && flag.Changed {
+				val, _ := strconv.Atoi(flag.Value.String())
+				return val
+			}
+			if envValue, ok := os.LookupEnv(envVar); ok {
+				if val, err := strconv.Atoi(envValue); err == nil {
+					return val
+				}
+			}
+			if flag != nil {
+				val, _ := strconv.Atoi(flag.Value.String())
+				return val
+			}
+			return 0
+		}
+
 		// Helper to get bool config with CLI > Env > Default precedence
 		// Returns (value, wasExplicitlySet)
 		getBool := func(flagName, envVar string) (bool, bool) {
@@ -109,7 +128,7 @@ var serveCmd = &cobra.Command{
 		htr := view.NewHTMLTemplateRenderer(getString("html-template-path", "HTML_TEMPLATE_PATH"), assetMap, reloadHTMLTemplates)
 
 		server, err := server.NewAppServer(
-			getString("http-service-address", "HTTP_SERVICE_ADDRESS"),
+			fmt.Sprintf("%s:%d", getString("bind-address", "BIND_ADDRESS"), getInt("port", "PORT")),
 			csrfKey,
 			secureCookies,
 			cookieHashKey,
@@ -135,7 +154,8 @@ var serveCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(serveCmd)
 
-	serveCmd.Flags().StringP("http-service-address", "a", "127.0.0.1:3000", "HTTP service address (env: HTTP_SERVICE_ADDRESS)")
+	serveCmd.Flags().StringP("bind-address", "a", "127.0.0.1", "Bind address (env: BIND_ADDRESS)")
+	serveCmd.Flags().IntP("port", "p", 3000, "Port (env: PORT)")
 	serveCmd.Flags().String("csrf-key", "", "CSRF key (env: CSRF_KEY)")
 	serveCmd.Flags().String("cookie-hash-key", "", "Cookie hash key (env: COOKIE_HASH_KEY)")
 	serveCmd.Flags().String("cookie-block-key", "", "Cookie block key (env: COOKIE_BLOCK_KEY)")
