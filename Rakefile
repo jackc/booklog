@@ -54,9 +54,18 @@ BUILD_TARGETS.each do |target|
     touch t.name
   end
 
+  # VERSION file with git commit hash
+  version_file = "#{dir}/VERSION"
+  task version_file do |t|
+    mkdir_p dir
+    commit = `git rev-parse HEAD`.chomp
+    dirty = `git status --porcelain`.strip.empty? ? "" : "-dirty"
+    File.write(t.name, "#{commit}#{dirty}\n")
+  end
+
   # Convenience task for full build directory
   desc "Build artifact for #{target[:os]}/#{target[:arch]}"
-  task dir => [binary, "#{html_dir}/.copied", "#{frontend_dir}/.copied"]
+  task dir => [binary, "#{html_dir}/.copied", "#{frontend_dir}/.copied", version_file]
 end
 
 desc "Build"
