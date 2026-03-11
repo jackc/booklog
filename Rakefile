@@ -7,6 +7,8 @@ file "build/frontend/.vite/manifest.json" => [*FileList["css/*.css"]] do
   sh "vite build"
 end
 
+# This task is for development convenience - it builds the binary for the current platform and has the convenient code
+# for debugging (no optimizations, no inlining). The build matrix tasks below are for CI and release builds.
 file "build/booklog" => FileList["Rakefile", "*.go", "go.*", "**/*.go"].exclude(/_test.go$/) do |t|
   sh "go build -o build/booklog"
   # To enable debugging
