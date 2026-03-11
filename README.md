@@ -5,25 +5,11 @@ Booklog is a simple tool to track read books.
 ## Development
 
 The preferred development environment is the provided devcontainer. There are VS Code tasks defined to automatically
-start the Go HTTP server and the Vite server.
+start the Go HTTP server and the Vite server. The backend server will be recompiled and restarted whenever any Go code
+changes.
 
-Tests are run with `rake`.
-
-```
-rake
-```
-
-There is a rake task that will automatically recompile and restart the backend server whenever any Go code changes.
-
-```
-rake rerun
-```
-
-In another terminal start the vite development server.
-
-```
-npx vite
-```
+If you are not using the VS Code tasks then you can manually run `rake rerun` and `npx vite` to start the Go HTTP server
+and Vite server respectively.
 
 Site will be available at: http://localhost:5173/
 
