@@ -34,6 +34,7 @@ The following environment variables must be set:
 * `TEST_DATABASE`: the test database name
 * `TEST_DATABASE_COUNT`: the number of test databases to use
 
-Set these variables in `.envrc`.
+They are preset in `.mise.toml`. If you want to use a different number of parallel tests change `TEST_DATABASE_COUNT` in
+`.mise.local.toml`.
 
 Run tests with `rake`.
