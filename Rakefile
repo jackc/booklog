@@ -70,7 +70,7 @@ BUILD_TARGETS.each do |target|
   # Tarball of the release directory
   tarball = "#{dir}.tar.gz"
   file tarball => dir do |t|
-    sh "tar -czf #{t.name} -C build #{target[:os]}_#{target[:arch]}"
+    sh "tar -czf #{t.name} -C #{dir} ."
   end
 end
 
