@@ -66,6 +66,12 @@ BUILD_TARGETS.each do |target|
   # Convenience task for full build directory
   desc "Build artifact for #{target[:os]}/#{target[:arch]}"
   task dir => [binary, "#{html_dir}/.copied", "#{frontend_dir}/.copied", version_file]
+
+  # Tarball of the release directory
+  tarball = "#{dir}.tar.gz"
+  file tarball => dir do |t|
+    sh "tar -czf #{t.name} -C build #{target[:os]}_#{target[:arch]}"
+  end
 end
 
 desc "Build"
