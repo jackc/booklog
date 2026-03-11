@@ -24,3 +24,25 @@ They are preset in `.mise.toml`. If you want to use a different number of parall
 `.mise.local.toml`.
 
 Run tests with `rake`.
+
+## Deployment
+
+Booklog can easily be deployed with [verna](https://github.com/jackc/verna).
+
+There are rake tasks that build artifacts suitable for deployment with verna and `deploy/caddy-handle-template.json`
+contains a preconfigured Caddy handle template.
+
+If these are used, then deployment is one-line command.
+
+```
+rake build/linux_amd64.tar.gz && verna app deploy build/linux_amd64.tar.gz
+```
+
+Set your verna config in `.mise.local.toml`. For example:
+
+```toml
+[env]
+
+VERNA_SSH_HOST = "booklog.example.com"
+VERNA_APP = "booklog"
+```

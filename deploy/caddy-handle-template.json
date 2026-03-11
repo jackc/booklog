@@ -1,0 +1,43 @@
+[
+  {
+    "handler": "subroute",
+    "routes": [
+      {
+        "handle": [
+          {
+            "handler": "headers",
+            "response": {
+              "set": {
+                "Cache-Control": [
+                  "public, max-age=31536000, immutable"
+                ]
+              }
+            }
+          },
+          {
+            "handler": "file_server",
+            "root": "{{.SlotDir}}/frontend/assets",
+            "pass_thru": true,
+            "precompressed": {
+              "gzip": {},
+              "zstd": {},
+              "br": {}
+            }
+          }
+        ]
+      },
+      {
+        "handle": [
+          {
+            "handler": "reverse_proxy",
+            "upstreams": [
+              {
+                "dial": "{{.Dial}}"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
