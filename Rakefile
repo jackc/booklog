@@ -3,7 +3,7 @@ require "fileutils"
 
 CLOBBER.include("build")
 
-file "build/frontend/manifest.json" => [*FileList["css/*.css"]] do
+file "build/frontend/.vite/manifest.json" => [*FileList["css/*.css"]] do
   sh "vite build"
 end
 
@@ -13,12 +13,52 @@ file "build/booklog" => FileList["Rakefile", "*.go", "go.*", "**/*.go"].exclude(
   # sh %q[go build -o build/booklog -gcflags="all=-N -l"]
 end
 
-file "build/booklog-linux" => [*FileList["**/*.go"]] do |t|
-  sh "GOOS=linux GOARCH=amd64 go build -o build/booklog-linux"
+# Build matrix: all OS/arch combinations
+BUILD_TARGETS = [
+  {os: "linux", arch: "amd64"},
+  {os: "linux", arch: "arm64"},
+  {os: "darwin", arch: "amd64"},
+  {os: "darwin", arch: "arm64"},
+].freeze
+
+GO_SOURCES = FileList["Rakefile", "*.go", "go.*", "**/*.go"].exclude(/_test.go$/)
+HTML_SOURCES = FileList["html/**/*.html"]
+
+# Generate file tasks for each target
+BUILD_TARGETS.each do |target|
+  dir = "build/#{target[:os]}_#{target[:arch]}"
+  ext = target[:os] == "windows" ? ".exe" : ""
+  binary = "#{dir}/booklog#{ext}"
+  html_dir = "#{dir}/html"
+  frontend_dir = "#{dir}/frontend"
+
+  # Binary depends on Go sources
+  file binary => GO_SOURCES do |t|
+    mkdir_p dir
+    sh "GOOS=#{target[:os]} GOARCH=#{target[:arch]} go build -o #{t.name}"
+  end
+
+  # HTML copy depends on source templates
+  file "#{html_dir}/.copied" => HTML_SOURCES do |t|
+    rm_rf html_dir
+    cp_r "html", html_dir
+    touch t.name
+  end
+
+  # Frontend depends on Vite build
+  file "#{frontend_dir}/.copied" => "build/frontend/.vite/manifest.json" do |t|
+    rm_rf frontend_dir
+    cp_r "build/frontend", frontend_dir
+    touch t.name
+  end
+
+  # Convenience task for full build directory
+  desc "Build artifact for #{target[:os]}/#{target[:arch]}"
+  task dir => [binary, "#{html_dir}/.copied", "#{frontend_dir}/.copied"]
 end
 
 desc "Build"
-task build: ["build/booklog", "build/frontend/manifest.json"]
+task build: ["build/booklog", "build/frontend/.vite/manifest.json"]
 
 desc "Run booklog"
 task run: :build do

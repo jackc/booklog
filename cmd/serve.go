@@ -118,7 +118,7 @@ var serveCmd = &cobra.Command{
 		var assetMap map[string]string
 		if frontendPath != "" {
 			var err error
-			assetMap, err = view.LoadManifest(filepath.Join(frontendPath, "manifest.json"))
+			assetMap, err = view.LoadManifest(filepath.Join(frontendPath, ".vite", "manifest.json"))
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to load manifest.json: %v\n", err)
 				os.Exit(1)

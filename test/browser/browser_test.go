@@ -59,7 +59,7 @@ func startServer(t *testing.T) *serverInstanceT {
 	cookieHashKey := make([]byte, 32)
 	cookieBlockKey := make([]byte, 32)
 
-	assetMap, err := view.LoadManifest(filepath.Join("..", "..", "build", "frontend", "manifest.json"))
+	assetMap, err := view.LoadManifest(filepath.Join("..", "..", "build", "frontend", ".vite", "manifest.json"))
 	require.NoError(t, err)
 
 	handler, err := server.NewAppServer("127.0.0.1:0", csrfKey, false, cookieHashKey, cookieBlockKey, db.PoolConnect(t, ctx), view.NewHTMLTemplateRenderer("../../html", assetMap, false), false, "../../build/frontend")
