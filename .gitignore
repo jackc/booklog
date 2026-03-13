@@ -2,6 +2,8 @@
 /.envrc
 /postgresql/tern.conf
 node_modules
+test-results
+playwright-report
 
 /test/config.yml
 

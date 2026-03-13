@@ -98,6 +98,12 @@ task "test:prepare" => [:build, "tmp/test/.databases-prepared"]
 desc "Run all tests"
 task test: "test:prepare" do
   sh "go test ./..."
+  sh "npx playwright test --config test/playwright/playwright.config.ts"
+end
+
+desc "Run Playwright browser tests"
+task "test:playwright" => "test:prepare" do
+  sh "npx playwright test --config test/playwright/playwright.config.ts"
 end
 
 task default: :test
