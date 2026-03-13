@@ -3,6 +3,7 @@
     "handler": "subroute",
     "routes": [
       {
+        "match": [{"path": ["/assets/*"]}],
         "handle": [
           {
             "handler": "headers",
@@ -16,8 +17,7 @@
           },
           {
             "handler": "file_server",
-            "root": "{{.SlotDir}}/frontend/assets",
-            "pass_thru": true,
+            "root": "{{.SlotDir}}/frontend",
             "precompressed": {
               "gzip": {},
               "zstd": {},

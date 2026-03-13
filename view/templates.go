@@ -86,7 +86,7 @@ func NewHTMLTemplateRenderer(templatePath string, assetMap map[string]string, li
 
 	if assetMap == nil {
 		funcMap["assetPath"] = func(name string) (string, error) {
-			return name, nil
+			return "/assets" + name, nil
 		}
 	} else {
 		funcMap["assetPath"] = func(name string) (string, error) {
