@@ -23,6 +23,8 @@ github.com/jackc/cachet v0.0.0-20230311211947-c9ca1bde8830 h1:YzlE5sS9UR5/AMLSEa
 github.com/jackc/cachet v0.0.0-20230311211947-c9ca1bde8830/go.mod h1:EdDu7KuTGTgklGe9gFc6ldVcQ7oaMVma44kNAEXQCic=
 github.com/jackc/errortree v0.0.0-20230218213547-c5e1d8612a3f h1:EyPO8Z4WMGcu1stbVBK6Q0EQ1MBOq0NdvmTFMQ84TqQ=
 github.com/jackc/errortree v0.0.0-20230218213547-c5e1d8612a3f/go.mod h1:sI6WvU4sj7pXEvSGzzWJrB6Nf278YaOHOPe4WwoxC+g=
+github.com/jackc/errortree v0.0.0-20250101171125-1f47da65cd29 h1:lj58pVaXUy9knwWVJli6IqlxLpFRGs6CnaG8C7v7VE0=
+github.com/jackc/errortree v0.0.0-20250101171125-1f47da65cd29/go.mod h1:sI6WvU4sj7pXEvSGzzWJrB6Nf278YaOHOPe4WwoxC+g=
 github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=
 github.com/jackc/pgpassfile v1.0.0/go.mod h1:CEx0iS5ambNFdcRtxPj5JhEz+xB6uRky5eyVu/W2HEg=
 github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 h1:iCEnooe7UlwOQYpKFhBabPMi4aNAfoODPEFNiAnClxo=

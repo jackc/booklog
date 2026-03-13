@@ -136,7 +136,6 @@ var serveCmd = &cobra.Command{
 			dbpool,
 			htr,
 			devMode,
-			frontendPath,
 		)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Could not create web server: %v\n", err)
@@ -164,5 +163,5 @@ func init() {
 	serveCmd.Flags().String("html-template-path", "html", "HTML template path (env: HTML_TEMPLATE_PATH)")
 	serveCmd.Flags().Bool("reload-html-templates", false, "Reload HTML templates (env: RELOAD_HTML_TEMPLATES)")
 	serveCmd.Flags().Bool("dev", false, "Development mode (env: DEV)")
-	serveCmd.Flags().String("frontend-path", "", "Read manifest.json from here and serve ./assets (env: FRONTEND_PATH)")
+	serveCmd.Flags().String("frontend-path", "", "Read manifest.json from here (env: FRONTEND_PATH)")
 }

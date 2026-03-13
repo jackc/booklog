@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"time"
@@ -61,7 +60,7 @@ type AppServer struct {
 	htr *view.HTMLTemplateRenderer
 }
 
-func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cookieHashKey []byte, cookieBlockKey []byte, dbpool *pgxpool.Pool, htr *view.HTMLTemplateRenderer, devMode bool, frontendPath string) (*AppServer, error) {
+func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cookieHashKey []byte, cookieBlockKey []byte, dbpool *pgxpool.Pool, htr *view.HTMLTemplateRenderer, devMode bool) (*AppServer, error) {
 
 	log := zerolog.New(os.Stdout).With().
 		Timestamp().
@@ -148,10 +147,6 @@ func NewAppServer(listenAddress string, csrfKey []byte, secureCookies bool, cook
 		r.Method("GET", "/books.csv", hb.New(BookExportCSV))
 	})
 
-	if frontendPath != "" {
-		fileServer(r, "/assets", http.Dir(filepath.Join(frontendPath, "assets")))
-	}
-
 	return appServer, nil
 }
 
@@ -183,20 +178,6 @@ func (s *AppServer) Shutdown(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func fileServer(r chi.Router, path string, root http.FileSystem) {
-	fs := http.StripPrefix(path, http.FileServer(root))
-
-	if path != "/" && path[len(path)-1] != '/' {
-		r.Get(path, http.RedirectHandler(path+"/", 301).ServeHTTP)
-		path += "/"
-	}
-	path += "*"
-
-	r.Get(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fs.ServeHTTP(w, r)
-	}))
 }
 
 func devModeHandler(devMode bool) func(http.Handler) http.Handler {

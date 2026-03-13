@@ -8,7 +8,7 @@ require (
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/securecookie v1.1.2
 	github.com/jackc/cachet v0.0.0-20230311211947-c9ca1bde8830
-	github.com/jackc/errortree v0.0.0-20230218213547-c5e1d8612a3f
+	github.com/jackc/errortree v0.0.0-20250101171125-1f47da65cd29
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/jackc/pgxutil v0.0.0-20231015020832-ec5434149869
 	github.com/jackc/structify v0.0.0-20230218213732-dd25d3a8012b
